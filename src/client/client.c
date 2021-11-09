@@ -112,7 +112,9 @@ void client_main() {
     window_add_widget(main_window, serverlistw);
     window_add_widget(main_window, serverlistcollapsebtnw);
 
-    server_list_add_server(serverlistw, "Test", "127.0.0.1", 4096);
+    for (int i = 0; i < config->server_count; i++) {
+        server_list_add_server(serverlistw, config->servers[i]->name, config->servers[i]->host, config->servers[i]->port);
+    }
 
     window_display(main_window);
 }

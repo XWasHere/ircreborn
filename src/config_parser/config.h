@@ -5,30 +5,17 @@
 #define CONFIG_TYPE_STRING 0x01
 #define CONFIG_TYPE_GROUP  0x02
 
-typedef struct config_group   config_group_t;
-typedef struct config_value   config_value_t;
-typedef        config_group_t config_t;
-
-struct config_group {
-    char*           group_type;
-
-    int             has_name;
-    char*           name;
-    
-    int             value_count;
-    config_value_t* values;
+typedef struct config_server server_t;
+struct config_server {
+    char* name;
+    char* host;
+    int   port;
 };
 
-struct config_value {
-    char* name;
-
-    int   value_type;
-
-    union values {
-        char*           stringv;
-        int             intv;
-        config_group_t* groupv;
-    };
+typedef struct config_file config_t;
+struct config_file {
+    int        server_count;
+    server_t** servers;
 };
 
 config_t* parse_config(int fd);

@@ -1,8 +1,14 @@
 TARGET   ?= linux
 
+ifeq ($(TARGET),win32)
+CC        = x86_64-w64-mingw32-gcc
+CC_ARGS  ?= 
+CC_FARGS  = -ggdb -Isrc -lgdi32
+else 
 CC       ?= gcc
 CC_ARGS  ?=
 CC_FARGS  = -ggdb -Isrc
+endif
 
 OBJS = \
 	build/main.o \
@@ -18,7 +24,7 @@ OBJS = \
 
 all: ircreborn
 
-.PHONY: binit
+.PHONY: binit clean
 
 build/%.o: src/%.c
 	$(CC) $(CC_ARGS) $(CC_FARGS) -c $< -o $@
@@ -33,8 +39,7 @@ binit:
 	mkdir -p build/ui/widgets
 
 ircreborn: binit  $(OBJS)
-ifeq ($(TARGET),linux)
-	$(CC) $(CC_ARGS) $(CC_FARGS) $(OBJS) -o ircreborn
-else ifeq ($(TARGET),win32)
-	$(CC) $(CC_ARGS) $(CC_FARGS) $(OBJS) -o ircreborn -lgdi32
-endif
+	$(CC) $(CC_ARGS) $(OBJS) -o ircreborn $(CC_FARGS) 
+
+clean:
+	rm -rf build
