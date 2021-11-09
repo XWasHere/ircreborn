@@ -1,3 +1,5 @@
+TARGET   ?= linux
+
 CC       ?= gcc
 CC_ARGS  ?=
 CC_FARGS  = -ggdb -Isrc
@@ -30,5 +32,9 @@ binit:
 	mkdir -p build/ui
 	mkdir -p build/ui/widgets
 
-ircreborn: binit  ${OBJS}
+ircreborn: binit  $(OBJS)
+ifeq ($(TARGET),linux)
+	$(CC) $(CC_ARGS) $(CC_FARGS) $(OBJS) -o ircreborn
+else ifeq ($(TARGET),win32)
 	$(CC) $(CC_ARGS) $(CC_FARGS) $(OBJS) -o ircreborn -lgdi32
+endif
