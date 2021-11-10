@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef WOE32 
+#ifdef WIN32 
 #include <windows.h> // yayyyyyyyyyyyy
 #endif
 
@@ -10,7 +10,7 @@ void gdb_breakpoint() {};
 
 char* format_last_error() {
     int errorcode;
-#ifdef WOE32
+#ifdef WIN32
     errorcode = GetLastError();
 #endif
     return format_error(errorcode);
@@ -19,8 +19,8 @@ char* format_last_error() {
 char* format_error(int errorcode) {
     char* error;
     char* errordesc;
-
-#ifdef WOE32
+    
+#ifdef WIN32
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types" // nobody asked
     FormatMessage(
