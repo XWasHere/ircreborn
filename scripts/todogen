@@ -13,4 +13,4 @@ BEGINFILE {
 	sub(".*// *TODO: ", "");
 	print "[" FNR "] " $0 "\n";
 }
-' ** > $1
+' `find -name "*.c" -or -name "*.h"` > $1
