@@ -7,6 +7,7 @@
 char* args_exec_name;
 int   args_is_server;
 char* args_config_path;
+int   args_test;
 
 void parse_args(int argc, char** argv) {
     args_exec_name = argv[0];
@@ -27,6 +28,9 @@ void parse_args(int argc, char** argv) {
         } else if (STREQ(argv[i], "--config")) {
             args_config_path = argv[i + 1];
             i += 1;
+            next;
+        } else if (STREQ(argv[i], "--test")) {
+            args_test = 1;
             next;
         }
 
