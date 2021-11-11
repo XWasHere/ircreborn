@@ -28,6 +28,8 @@
 
 ## ./src/ui/window.h
 
+[7] xorg support
+
 ## ./src/ui/window.c
 
 ## ./src/ui/widget.h
