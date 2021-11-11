@@ -10,6 +10,9 @@ int main(int argc, char** argv) {
     
     if (args_is_server) {
         printf(FMT_INFO("starting server\n"));
+    } else if (args_test) {
+        printf(FMT_INFO("running ircreborn tests\n"));
+        run_tests();
     } else {
         printf(FMT_INFO("starting client\n"));
         client_main();
