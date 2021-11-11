@@ -13,4 +13,4 @@ BEGINFILE {
 	sub(".*// *TODO: ", "");
 	print "[" FNR "] " $0 "\n";
 }
-' **.c > $1
+' ** > $1
