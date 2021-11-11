@@ -6,6 +6,7 @@
 #include <ui/window.h>
 #include <ui/widgets/button.h>
 #include <ui/widgets/scrollpane.h>
+#include <ui/widgets/textbox.h>
 #include <common/util.h>
 #include <common/args.h>
 #include <config_parser/config.h>
@@ -40,6 +41,7 @@ struct server {
 struct server** servers;
 int             server_count;
 
+widget_t* message_box;
 // server connection
 int sc;
 int sc_connected;
@@ -85,6 +87,8 @@ void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
 
             send_hello(sc, hi);
 
+            sc_connected = 1;
+
             return;
         }
     }
@@ -117,6 +121,12 @@ struct server* server_list_add_server(widget_t* serverlist, char* name, char* ho
     return s;
 }
 
+void message_submit(widget_t* tb, window_t* window, char* text, int len) {
+    if (sc_connected) {
+        printf("%s\n", text);
+    }
+}
+
 void client_main() {
 #ifdef WIN32
     wsadata = malloc(sizeof(WSADATA));
@@ -145,6 +155,15 @@ void client_main() {
     widget_t* serverlistcollapsebtnw = button_init();
     button_t* serverlistcollapsebtne = serverlistcollapsebtnw->extra_data;
     
+    message_box = textbox_init();
+    textbox_t* message_box_e = message_box->extra_data;
+    
+    message_box_e->submit = &message_submit;
+    message_box->x = 200;
+    message_box->y = 400;
+    message_box->width = 1000;
+    message_box->height = 20;
+    
     exitbtnw->x = 0;
     exitbtnw->y = 0;
     exitbtnw->width = 40;
@@ -170,6 +189,7 @@ void client_main() {
     window_add_widget(main_window, exitbtnw);
     window_add_widget(main_window, serverlistw);
     window_add_widget(main_window, serverlistcollapsebtnw);
+    window_add_widget(main_window, message_box);
 
     for (int i = 0; i < config->server_count; i++) {
         server_list_add_server(serverlistw, config->servers[i]->name, config->servers[i]->host, config->servers[i]->port);

@@ -100,6 +100,15 @@ LRESULT libui_window_proc(HWND window, UINT message, WPARAM thing, LPARAM othert
 
             return 0;
         }
+        case WM_CHAR: {
+            widget_t* focused = me->focused;
+            
+            if (focused == 0) return 0;
+
+            focused->keypress(focused, me, thing);
+            
+            return 0;
+        }
         default:
 //            printf(FMT_WARN("got unknown wm event 0x%04x\n"), message);
             return DefWindowProc(window, message, thing, otherthing);
@@ -164,6 +173,7 @@ void window_display(window_t* window) {
         if (ret == -1) {
             printf(FMT_FATL("something broke\n"));
         } else {
+            TranslateMessage(msg);
             DispatchMessage(msg);
             if (window->should_exit) {
                 printf("exiting\n");
@@ -179,4 +189,8 @@ void window_add_widget(window_t* window, void* __widget) {
     window->widgets[window->widget_count] = widget;
     widget->hovered = 0;
     window->widget_count++;    
+}
+
+void window_set_focus(window_t* window, void* __widget) {
+    window->focused = __widget;
 }

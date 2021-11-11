@@ -1,8 +1,6 @@
 #ifndef LIBUI_WIDGET_H
 #define LIBUI_WIDGET_H
 
-#include "window.h"
-
 typedef struct __widget widget_t;
 struct __widget {
     // position
@@ -27,6 +25,7 @@ struct __widget {
     void (*mousedown)(widget_t* widget, void* window, int x, int y);
     void (*mouseup)(widget_t* widget, void* window, int x, int y);
     void (*mousemove)(widget_t* widget, void* window, int x, int y);
+    void (*keypress)(widget_t* widget, void* window, char key);
 };
 
 widget_t* widget_init();

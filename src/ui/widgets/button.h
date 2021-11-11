@@ -2,6 +2,7 @@
 #define LIBUT_WIDGETS_BUTTON_H
 
 #include <ui/widget.h>
+#include <ui/window.h>
 #include <windows.h> // agony
 
 #define BUTTON_NULL 0x00

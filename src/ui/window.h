@@ -2,7 +2,6 @@
 #define IRCREBORN_UI_WINDOW_H
 
 #include <windows.h>
-#include "widget.h"
 
 // TODO: xorg support
 struct __window {
@@ -19,6 +18,7 @@ struct __window {
     
     // keeping track of stuff
     int        mouse_left_down;
+    void*      focused;
 
     // do i even need to explain this.
     int        should_exit;
@@ -30,5 +30,5 @@ typedef struct __window window_t;
 window_t* window_init      ();
 void      window_display   (window_t* window);
 void      window_add_widget(window_t* window, void* widget);
-
+void      window_set_focus (window_t* window, void* widget);
 #endif
