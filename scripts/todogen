@@ -1,0 +1,16 @@
+#!/bin/sh
+
+gawk '
+BEGIN {
+	print "# todo\n";
+}
+
+BEGINFILE {
+	print "## " FILENAME "\n";
+}
+
+/.*\/\/ *TODO: / {
+	sub(".*// *TODO: ", "");
+	print "[" FNR "] " $0 "\n";
+}
+' **.c > $1
