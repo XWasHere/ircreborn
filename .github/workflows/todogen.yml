@@ -15,7 +15,9 @@ jobs:
         run: sh ./scripts/todogen
         
       - name: commit
-        run: git commit -S -a -m "todogen"
-      
-      - name: push
-        run: git push
+        run: |
+          git config user.name  "todogen"
+          git config user.email "invalid"
+          git add todo.md
+          git commit -m "todogen"
+          git push origin master
