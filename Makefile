@@ -20,7 +20,10 @@ OBJS = \
 	build/ui/widget.o \
 	build/ui/widgets/button.o \
 	build/ui/widgets/scrollpane.o \
-	build/config_parser/config.o
+	build/config_parser/config.o \
+	build/networking/types.o \
+	build/tests/tests.o \
+	build/tests/test_nettypes.o
 
 all: ircreborn
 
@@ -37,6 +40,9 @@ binit:
 	mkdir -p build/config_parser
 	mkdir -p build/ui
 	mkdir -p build/ui/widgets
+	mkdir -p build/networking
+	mkdir -p build/tests
+	mkdir -p build/tests/tests
 
 ircreborn: binit  $(OBJS)
 	$(CC) $(CC_ARGS) $(OBJS) -o ircreborn $(CC_FARGS) 
