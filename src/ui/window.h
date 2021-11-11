@@ -4,6 +4,7 @@
 #include <windows.h>
 #include "widget.h"
 
+// TODO: xorg support
 struct __window {
     // windows api bullshit
     HWND       window;

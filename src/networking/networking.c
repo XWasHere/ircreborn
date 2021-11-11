@@ -1,5 +1,6 @@
 #include <networking/opcodes.h>
 #include <networking/packet.h>
+#include <networking/types.h>
 #include <common/util.h>
 
 #include <unistd.h>
@@ -17,13 +18,10 @@ void send_hello(int sock, hello_t* packet) {
 
     olen = 8 + 1 + 4 + strlen(packet->ident);
     
-    ((int*)obuf)[0] = OPCODE_HELLO;
-    ((int*)obuf)[1] = olen - 8;
-    
-    obuf[8] = packet->has_ident ? 1 : 0;
-    
-    ((int*)obuf + 9)[0] = strlen(packet->ident);
-    
-    memcpy(obuf + 13, packet->ident, strlen(packet->ident));
+    write_int    (obuf,     PACKET_HELLO);
+    write_int    (obuf + 4, olen - 8);    
+    write_bool   (obuf + 8, packet->has_ident);
+    write_string (obuf + 9, packet->ident, strlen(packet->ident));
+
     send(sock, obuf, olen, 0);
 }
