@@ -21,7 +21,6 @@ OBJS = \
 	build/ui/widgets/button.o \
 	build/ui/widgets/scrollpane.o \
 	build/config_parser/config.o \
-	build/networking/mpsock.o \
 	build/networking/networking.o
 
 all: ircreborn
