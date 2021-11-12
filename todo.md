@@ -46,7 +46,19 @@
 
 ## ./src/networking/types.h
 
+## ./src/networking/packet.h
+
+## ./src/networking/networking.h
+
+## ./src/networking/opcodes.h
+
 ## ./src/networking/types.c
 
+## ./src/networking/networking.c
+
 ## ./src/server/server.c
+
+[52] this should have code
+
+## ./src/server/server.h
 
