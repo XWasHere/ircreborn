@@ -1,3 +1,21 @@
+/*
+    ircreborn (the bad discord alternative)
+    Copyright (C) 2021 IRCReborn Devs
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include <common/util.h>
 #include <ui/widget.h>
 #include <ui/window.h>
@@ -19,7 +37,6 @@ LRESULT libui_window_proc(HWND window, UINT message, WPARAM thing, LPARAM othert
     window_t* me = resolve_window(window);
     switch (message) {
         case WM_CLOSE: {
-            printf("got exit signal\n");
             me->should_exit = 1;
             return 0;
         }
@@ -104,7 +121,7 @@ LRESULT libui_window_proc(HWND window, UINT message, WPARAM thing, LPARAM othert
             me->width  = me->client_rect.right  - me->client_rect.left;
 
             me->resized(me);
-            
+
             return 0;
         }
         case WM_CHAR: {
@@ -139,13 +156,13 @@ window_t* window_init() {
     window->window_class.hCursor       = LoadCursor(0, IDC_ARROW);
     window->window_class.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
     window->window_class.lpszMenuName  = 0;
-    window->window_class.lpszClassName = "LibUIDefault";
+    window->window_class.lpszClassName = "IRCRebornMain";
     window->class_thing                = RegisterClass(&window->window_class);
     
     window->window = CreateWindowEx(
         0,
-        "LibUIDefault",
-        "LibUI Window",
+        "IRCRebornMain",
+        "IRCReborn",
         WS_OVERLAPPEDWINDOW, 
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -190,7 +207,6 @@ void window_display(window_t* window) {
             TranslateMessage(msg);
             DispatchMessage(msg);
             if (window->should_exit) {
-                printf("exiting\n");
                 break;
             }
         }
