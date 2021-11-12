@@ -45,9 +45,20 @@ int             server_count;
 char**          labels;
 int             label_count;
 
-widget_t* messages_thing;
 
-widget_t* message_box;
+widget_t* messages_thing;
+widget_t* messagebox;
+window_t* main_window;
+widget_t* exitbtnw;
+button_t* exitbtne;
+widget_t* serverlistw;
+scroll_pane_t* serverliste;
+widget_t* serverlistcollapsebtnw;
+button_t* serverlistcollapsebtne;
+widget_t* messagesw;
+scroll_pane_t* messagese;
+textbox_t* messageboxe;
+
 // server connection
 int sc;
 int sc_connected;
@@ -196,6 +207,40 @@ void client_run_tasks(window_t* window) {
     }
 }
 
+void client_recalculate_sizes(window_t* window) {
+    exitbtnw->x = 0;
+    exitbtnw->y = 0;
+    exitbtnw->width = 40;
+    exitbtnw->height = 20;
+    
+    serverlistw->x = 0;
+    serverlistw->y = 20;
+    serverlistw->width = 200;
+    serverlistw->height = window->height - serverlistw->y;
+    
+    messagesw->x = serverlistw->x + serverlistw->width;
+    messagesw->y = 20;
+    messagesw->width = window->width - messagesw->x;
+    messagesw->height = window->height - messagesw->y - 20;
+
+    messagebox->x = serverlistw->x + serverlistw->width;
+    messagebox->y = window->height - 20;
+    messagebox->width = window->width - messagebox->x;
+    messagebox->height = 20;
+
+    for (int i = 0; i < server_count; i++) {
+        servers[i]->button->width = serverlistw->width - 20;
+    }
+
+    printf("%i\n", serverlistw->y);
+/*
+    serverlistcollapsebtnw->x = 200;
+    serverlistcollapsebtnw->y = 20;
+    serverlistcollapsebtnw->width = 20;
+    serverlistcollapsebtnw->height = 20;
+*/
+}
+
 void client_main() {
 #ifdef WIN32
     wsadata = malloc(sizeof(WSADATA));
@@ -215,58 +260,37 @@ void client_main() {
 
     servers = malloc(1);
 
-    window_t* main_window = window_init();
+    main_window = window_init();
     
-    widget_t* exitbtnw = button_init();
-    button_t* exitbtne = exitbtnw->extra_data;
-    widget_t* serverlistw = scroll_pane_init();
-    scroll_pane_t* serverliste = serverlistw->extra_data;
-    widget_t* serverlistcollapsebtnw = button_init();
-    button_t* serverlistcollapsebtne = serverlistcollapsebtnw->extra_data;
-    widget_t* messagesw = scroll_pane_init();
-    scroll_pane_t* messagese = messagesw->extra_data;
-    message_box = textbox_init();
-    textbox_t* message_box_e = message_box->extra_data;
+    exitbtnw = button_init();
+    exitbtne = exitbtnw->extra_data;
+    serverlistw = scroll_pane_init();
+    serverliste = serverlistw->extra_data;
+    serverlistcollapsebtnw = button_init();
+    serverlistcollapsebtne = serverlistcollapsebtnw->extra_data;
+    messagesw = scroll_pane_init();
+    messagese = messagesw->extra_data;
+    messagebox = textbox_init();
+    messageboxe = messagebox->extra_data;
     messages_thing = messagesw;
-    message_box->x = 200;
-    message_box->y = 400;
-    message_box->width = 1000;
-    message_box->height = 20;
     
-    message_box_e->submit = &message_submit;
+    messageboxe->submit = &message_submit;
 
-    exitbtnw->x = 0;
-    exitbtnw->y = 0;
-    exitbtnw->width = 40;
-    exitbtnw->height = 20;
     exitbtnw->clicked = &exit_button_clicked;
     exitbtne->type = BUTTON_TEXT;
     exitbtne->text = "exit";
     
-    serverlistw->x = 0;
-    serverlistw->y = 20;
-    serverlistw->width = 200;
-    serverlistw->height = 400;
-    
-    messagesw->x = 200;
-    messagesw->y = 20;
-    messagesw->width = 1000;
-    messagesw->height = 380;
-
-    serverlistcollapsebtnw->x = 200;
-    serverlistcollapsebtnw->y = 20;
-    serverlistcollapsebtnw->width = 20;
-    serverlistcollapsebtnw->height = 20;
     serverlistcollapsebtnw->clicked = &server_list_collapse_button_clicked;
     serverlistcollapsebtne->type = BUTTON_TEXT;
     serverlistcollapsebtne->text = "<";
     
     main_window->handle_bg_tasks = &client_run_tasks;
+    main_window->resized         = &client_recalculate_sizes;
 
     window_add_widget(main_window, exitbtnw);
     window_add_widget(main_window, serverlistw);
-    window_add_widget(main_window, serverlistcollapsebtnw);
-    window_add_widget(main_window, message_box);
+//    window_add_widget(main_window, serverlistcollapsebtnw);
+    window_add_widget(main_window, messagebox);
     window_add_widget(main_window, messagesw);
 
     for (int i = 0; i < config->server_count; i++) {

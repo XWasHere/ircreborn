@@ -48,6 +48,10 @@ struct __window {
     HINSTANCE  instance;
     RECT       client_rect;
 
+    // stuff
+    int        width;
+    int        height;
+
     // widgets
     widget_t** widgets; // cant use widget_t lmao
     int        widget_count;
@@ -60,6 +64,7 @@ struct __window {
     int        should_exit;
 
     void (*handle_bg_tasks)(window_t* window);
+    void (*resized)(window_t* window);
 };
 
 #endif

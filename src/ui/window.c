@@ -100,6 +100,11 @@ LRESULT libui_window_proc(HWND window, UINT message, WPARAM thing, LPARAM othert
             
             SetRect(&me->client_rect, a.x, a.y, b.x, b.y);
 
+            me->height = me->client_rect.bottom - me->client_rect.top;
+            me->width  = me->client_rect.right  - me->client_rect.left;
+
+            me->resized(me);
+            
             return 0;
         }
         case WM_CHAR: {
