@@ -74,6 +74,8 @@ void textbox_draw(widget_t* widget, window_t* window) {
         BeginPaint(window->window, ps);
 
         Rectangle(ps->hdc, rect->left, rect->top, rect->right, rect->bottom);
+        
+        SetRect(rect, widget->x + 1, widget->y + 1, widget->x + widget->width - 1, widget->y + widget->height - 1);
         DrawText(ps->hdc, tb->text, strlen(tb->text), rect, 0);
 
         EndPaint(window->window, ps);

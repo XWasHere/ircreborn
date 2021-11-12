@@ -31,6 +31,8 @@ void label_draw(widget_t* widget ,window_t* window) {
     BeginPaint(window->window, hi);
 
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
+    
+    SetRect(rect, widget->x + 1, widget->y + 1, widget->x + widget->width - 1, widget->y + widget->height - 1);
     DrawText(hi->hdc, label->text, strlen(label->text), rect, 0);
 
     EndPaint(window->window, hi);
