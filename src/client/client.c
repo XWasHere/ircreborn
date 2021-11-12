@@ -40,10 +40,10 @@
 #endif
 #ifdef WIN32
 #include <windows.h>
-#define ERRORNO GetLastError
+#define ERRORNO() GetLastError()
 #else
 #include <errno.h>
-#define ERRORNO errno
+#define ERRORNO() errno
 #endif
 
 #ifdef WIN32

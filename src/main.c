@@ -23,6 +23,7 @@
 #include <server/server.h>
 #include <tests/tests.h>
 
+
 int main(int argc, char** argv) {
     parse_args(argc, argv);
 
