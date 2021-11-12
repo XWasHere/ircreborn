@@ -1,7 +1,6 @@
 #ifndef NETWORKING_PACKET_H
 #define NETWORKING_PACKET_H
 
-#define PACKET_HELLO 0x0
 typedef struct p_hello hello_t;
 struct p_hello {
     // identity (server/client type)
@@ -9,6 +8,11 @@ struct p_hello {
     char* ident;
 };
 
-void send_hello(int fd, hello_t* packet);
+typedef struct p_message message_t;
+struct p_message {
+    char* message;
+};
 
+void send_hello(int fd, hello_t* packet);
+void send_message(int fd, message_t* packet);
 #endif

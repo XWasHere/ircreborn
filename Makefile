@@ -21,6 +21,7 @@ OBJS = \
 	build/ui/widgets/button.o \
 	build/ui/widgets/scrollpane.o \
 	build/ui/widgets/textbox.o \
+	build/ui/widgets/label.o \
 	build/config_parser/config.o \
 	build/networking/networking.o \
 	build/networking/types.o \

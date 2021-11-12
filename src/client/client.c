@@ -7,15 +7,18 @@
 #include <ui/widgets/button.h>
 #include <ui/widgets/scrollpane.h>
 #include <ui/widgets/textbox.h>
+#include <ui/widgets/label.h>
 #include <common/util.h>
 #include <common/args.h>
 #include <config_parser/config.h>
 #include <networking/networking.h>
+#include <networking/types.h>
 
 #ifdef WIN32
 #include <winsock2.h>
 #else
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #endif
 
 #ifdef WIN32
@@ -40,6 +43,10 @@ struct server {
 
 struct server** servers;
 int             server_count;
+char**          labels;
+int             label_count;
+
+widget_t* messages_thing;
 
 widget_t* message_box;
 // server connection
@@ -123,7 +130,70 @@ struct server* server_list_add_server(widget_t* serverlist, char* name, char* ho
 
 void message_submit(widget_t* tb, window_t* window, char* text, int len) {
     if (sc_connected) {
-        printf("%s\n", text);
+        message_t* msg = malloc(sizeof(message_t));
+
+        msg->message = malloc(len + 1);
+        memset(msg->message, 0,    len + 1);
+        memcpy(msg->message, text, len);
+
+        send_message(sc, msg);
+
+        free(msg->message);
+        free(msg);
+    }
+}
+
+void client_add_message(window_t* window, char* message) {
+    widget_t* label = label_init();
+    label_t*  lab   = label->extra_data;
+
+    lab->text = message;
+    lab->len = strlen(message);
+    
+    label->width = strlen(message) * 10;
+    label->height = 20;
+
+    scroll_pane_item_t* spi = scroll_pane_add_item(messages_thing, label);
+    spi->x = 0;
+    spi->y = label_count * 20;
+
+    label_count++;
+
+    if (label_count * 20 > messages_thing->height) {
+        ((scroll_pane_t*)messages_thing->extra_data)->pos = -(label_count * 20 - messages_thing->height);
+    }
+
+    messages_thing->draw(messages_thing, window);
+    printf("added message %s\n", lab->text);
+}
+
+void client_run_tasks(window_t* window) {
+    if (sc_connected) {
+        int data = 0;
+#ifdef WIN32
+        ioctlsocket(sc, FIONREAD, &data);
+#else
+        ioctl(sc, FIONREAD, &data);
+#endif
+
+        if (data) {
+            char* head = malloc(9);
+            memset(head, 0, 9);
+            recv(sc, head, 8, 0);
+
+            int op  = read_int(head);
+            int len = read_int(head + 4);
+
+            char* body = malloc(len + 1);
+            memset(body, 0, len + 1);
+            recv(sc, body, len, 0);
+
+            if (op == OPCODE_MESSAGE) {
+                nstring_t* msg = read_string(body);
+
+                client_add_message(message_box, msg->str);
+            }
+        }
     }
 }
 
@@ -154,16 +224,18 @@ void client_main() {
     scroll_pane_t* serverliste = serverlistw->extra_data;
     widget_t* serverlistcollapsebtnw = button_init();
     button_t* serverlistcollapsebtne = serverlistcollapsebtnw->extra_data;
-    
+    widget_t* messagesw = scroll_pane_init();
+    scroll_pane_t* messagese = messagesw->extra_data;
     message_box = textbox_init();
     textbox_t* message_box_e = message_box->extra_data;
-    
-    message_box_e->submit = &message_submit;
+    messages_thing = messagesw;
     message_box->x = 200;
     message_box->y = 400;
     message_box->width = 1000;
     message_box->height = 20;
     
+    message_box_e->submit = &message_submit;
+
     exitbtnw->x = 0;
     exitbtnw->y = 0;
     exitbtnw->width = 40;
@@ -177,6 +249,11 @@ void client_main() {
     serverlistw->width = 200;
     serverlistw->height = 400;
     
+    messagesw->x = 200;
+    messagesw->y = 20;
+    messagesw->width = 1000;
+    messagesw->height = 380;
+
     serverlistcollapsebtnw->x = 200;
     serverlistcollapsebtnw->y = 20;
     serverlistcollapsebtnw->width = 20;
@@ -185,11 +262,13 @@ void client_main() {
     serverlistcollapsebtne->type = BUTTON_TEXT;
     serverlistcollapsebtne->text = "<";
     
-    
+    main_window->handle_bg_tasks = &client_run_tasks;
+
     window_add_widget(main_window, exitbtnw);
     window_add_widget(main_window, serverlistw);
     window_add_widget(main_window, serverlistcollapsebtnw);
     window_add_widget(main_window, message_box);
+    window_add_widget(main_window, messagesw);
 
     for (int i = 0; i < config->server_count; i++) {
         server_list_add_server(serverlistw, config->servers[i]->name, config->servers[i]->host, config->servers[i]->port);

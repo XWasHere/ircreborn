@@ -94,6 +94,16 @@ void server_main() {
                     } else {
                         printf(FMT_INFO("got connection from client of unknown type\n"));
                     }
+                } else if (op == OPCODE_MESSAGE) {
+                    nstring_t* imsg = read_string(msgbuf);
+                    message_t* omsg = malloc(sizeof(message_t));
+
+                    omsg->message = imsg->str;
+
+                    // replicate
+                    for (int i = 1; i < pollfd_count; i++) {
+                        send_message(pollfds[i].fd, omsg);
+                    }
                 }
 
                 free(msgbuf);

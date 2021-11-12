@@ -7,6 +7,8 @@
 window_t** windows      = 0;
 int        window_count = 0;
 
+void __DEFAULT_window_handle_bg_tasks(window_t* a) {};
+
 window_t* resolve_window(HWND a) {
     for (int i = 0; i < window_count; i++) {
         if (windows[i]->window == a) return windows[i];
@@ -106,7 +108,11 @@ LRESULT libui_window_proc(HWND window, UINT message, WPARAM thing, LPARAM othert
             if (focused == 0) return 0;
 
             focused->keypress(focused, me, thing);
-            
+
+            return 0;
+        }
+        case WM_TIMER: {
+            me->handle_bg_tasks(me);
             return 0;
         }
         default:
@@ -153,7 +159,8 @@ window_t* window_init() {
     window->widget_count = 0;
     window->widgets = malloc(1);
     window->should_exit = 0;
-
+    window->handle_bg_tasks = &__DEFAULT_window_handle_bg_tasks;
+    
     windows = realloc(windows, sizeof(void*) * (window_count + 1));
 
     windows[window_count] = window;
@@ -168,6 +175,8 @@ void window_display(window_t* window) {
 
     MSG* msg = malloc(sizeof(MSG));
     int  ret;
+
+    SetTimer(window->window, 0, 10, 0);
 
     while (ret = GetMessage(msg, 0, 0, 0)) {
         if (ret == -1) {
