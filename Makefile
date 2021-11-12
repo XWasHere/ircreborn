@@ -25,8 +25,7 @@ OBJS = \
 	build/config_parser/config.o \
 	build/networking/networking.o \
 	build/networking/types.o \
-	build/tests/tests.o \
-	build/tests/test_nettypes.o
+	build/tests/tests.o
 
 all: ircreborn
 

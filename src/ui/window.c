@@ -132,7 +132,7 @@ window_t* window_init() {
     window->window_class.hInstance     = window->instance;
     window->window_class.hIcon         = LoadIcon(0, IDI_APPLICATION);
     window->window_class.hCursor       = LoadCursor(0, IDC_ARROW);
-    window->window_class.hbrBackground = COLOR_BACKGROUND;
+    window->window_class.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
     window->window_class.lpszMenuName  = 0;
     window->window_class.lpszClassName = "LibUIDefault";
     window->class_thing                = RegisterClass(&window->window_class);
@@ -192,14 +192,13 @@ void window_display(window_t* window) {
     }
 }
 
-void window_add_widget(window_t* window, void* __widget) {
-    widget_t* widget = __widget;
+void window_add_widget(window_t* window, widget_t* widget) {
     window->widgets = realloc(window->widgets, (window->widget_count+1) * sizeof(void*));
     window->widgets[window->widget_count] = widget;
     widget->hovered = 0;
     window->widget_count++;    
 }
 
-void window_set_focus(window_t* window, void* __widget) {
-    window->focused = __widget;
+void window_set_focus(window_t* window, widget_t* widget) {
+    window->focused = widget;
 }

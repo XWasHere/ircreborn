@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 #include <ui/window.h>
 #include <ui/widgets/button.h>
 #include <ui/widgets/scrollpane.h>
@@ -13,14 +16,10 @@
 #include <config_parser/config.h>
 #include <networking/networking.h>
 #include <networking/types.h>
-
-#ifdef WIN32
-#include <winsock2.h>
-#else
+#ifndef WIN32
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #endif
-
 #ifdef WIN32
 #include <windows.h>
 #define ERRORNO GetLastError
@@ -82,7 +81,7 @@ void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
 
             inet_pton(AF_INET, servers[i]->host, &addr->sin_addr);
 
-            if (connect(sc, addr, sizeof(struct sockaddr)) == -1) {
+            if (connect(sc, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
                 printf(FMT_FATL("connect(): %s"), format_error(WSAGetLastError()));
             }
 
@@ -164,15 +163,15 @@ void client_add_message(window_t* window, char* message) {
     }
 
     messages_thing->draw(messages_thing, window);
-    printf("added message %s\n", lab->text);
 }
 
 void client_run_tasks(window_t* window) {
     if (sc_connected) {
-        int data = 0;
 #ifdef WIN32
+        unsigned long data = 0;
         ioctlsocket(sc, FIONREAD, &data);
 #else
+        int data = 0;
         ioctl(sc, FIONREAD, &data);
 #endif
 
@@ -191,7 +190,7 @@ void client_run_tasks(window_t* window) {
             if (op == OPCODE_MESSAGE) {
                 nstring_t* msg = read_string(body);
 
-                client_add_message(message_box, msg->str);
+                client_add_message(window, msg->str);
             }
         }
     }

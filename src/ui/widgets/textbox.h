@@ -14,7 +14,7 @@ struct __textbox {
     int textlen;
     int cursorpos;
 
-    void (*submit)(widget_t* widget, void* window, char* text, int textlen);
+    void (*submit)(widget_t* widget, window_t* window, char* text, int textlen);
 };
 
 widget_t* textbox_init();

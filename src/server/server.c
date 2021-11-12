@@ -33,9 +33,13 @@ void server_main() {
     server_addr->sin_addr.s_addr = INADDR_ANY;
     server_addr->sin_port = htons(args_listen_port);
 
+#ifdef WIN32
+    setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (char*)&one, sizeof(one));
+#else
     setsockopt(server, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+#endif
 
-    bind(server, server_addr, sizeof(struct sockaddr_in));
+    bind(server, (struct sockaddr*)server_addr, sizeof(struct sockaddr_in));
 
     listen(server, 3);
 
@@ -56,7 +60,7 @@ void server_main() {
             int*                addr_len = malloc(4);
             addr_len[0]                  = sizeof(struct sockaddr_in);
 
-            int fd = accept(server, addr, addr_len);
+            int fd = accept(server, (struct sockaddr*)addr, addr_len);
             
             printf(FMT_INFO("accepted\n"));
 
