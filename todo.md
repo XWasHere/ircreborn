@@ -10,25 +10,33 @@
 
 ## ./src/tests/tests.c
 
-## ./src/tests/test_nettypes.c
-
 ## ./src/main.c
 
 ## ./src/config_parser/config.h
 
 ## ./src/config_parser/config.c
 
+## ./src/ui/uitypes.h
+
+[60] xorg support
+
 ## ./src/ui/widgets/scrollpane.c
+
+## ./src/ui/widgets/label.c
 
 ## ./src/ui/widgets/button.c
 
 ## ./src/ui/widgets/button.h
 
+## ./src/ui/widgets/label.h
+
+## ./src/ui/widgets/textbox.c
+
+## ./src/ui/widgets/textbox.h
+
 ## ./src/ui/widgets/scrollpane.h
 
 ## ./src/ui/window.h
-
-[7] xorg support
 
 ## ./src/ui/window.c
 
@@ -58,7 +66,7 @@
 
 ## ./src/server/server.c
 
-[52] this should have code
+[74] this should have code
 
 ## ./src/server/server.h
 
