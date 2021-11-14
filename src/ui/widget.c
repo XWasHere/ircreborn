@@ -27,7 +27,7 @@ void __DEFAULT_mouseout(widget_t* a, window_t* b) {}
 void __DEFAULT_mousedown(widget_t* a, window_t* b, int c, int d) {}
 void __DEFAULT_mouseup(widget_t* a, window_t* b, int c, int d) {}
 void __DEFAULT_mousemove(widget_t* a, window_t* b, int c, int d) {}
-void __DEFAULT_keypress(widget_t* a, window_t* b, char c) {}
+void __DEFAULT_keypress(widget_t* a, window_t* b, uint32_t c) {}
 
 widget_t* widget_init() {
     widget_t* widget = malloc(sizeof(widget_t));

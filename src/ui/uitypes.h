@@ -25,10 +25,16 @@
 #ifndef IRCREBORN_UITYPES_H
 #define IRCREBORN_UITYPES_H
 
+#include <stdint.h>
+#ifdef WIN32
 #include <windows.h>
+#else
+#include <xcb/xcb.h>
+#include <X11/Xlib.h>
+#endif
 
-typedef struct __widget widget_t;
-typedef struct __window window_t;
+typedef struct __widget   widget_t;
+typedef struct __window   window_t;
 
 struct __widget {
     // position
@@ -53,18 +59,31 @@ struct __widget {
     void (*mousedown)(widget_t* widget, window_t* window, int x, int y);
     void (*mouseup)(widget_t* widget, window_t* window, int x, int y);
     void (*mousemove)(widget_t* widget, window_t* window, int x, int y);
-    void (*keypress)(widget_t* widget, window_t* window, char key);
+    void (*keypress)(widget_t* widget, window_t* window, uint32_t key);
 };
 
 // this is a window.
 // TODO: xorg support
 struct __window {
+#ifdef WIN32
     // windows api bullshit
     HWND       window;
     WNDCLASS   window_class;
     ATOM       class_thing;
     HINSTANCE  instance;
     RECT       client_rect;
+#else
+    Display*          display;
+    xcb_connection_t* connection;
+    xcb_window_t      window;
+    xcb_gcontext_t    gc;
+    xcb_screen_t*     screen;
+    xcb_font_t        main_font;
+    int               lshift_state;
+    int               rshift_state;
+    int               lctrl_state;
+    int               rctrl_state;
+#endif
 
     // stuff
     int        width;

@@ -20,9 +20,14 @@
 #include <ui/widget.h>
 #include <ui/window.h>
 #include <common/util.h>
-#include <windows.h>
 #include <math.h>
 #include <stdio.h>
+
+#ifdef WIN32
+#include <windows.h>
+#else
+
+#endif
 
 void scroll_pane_draw(widget_t*, window_t*);
 void scroll_pane_mousein(widget_t*, window_t*);
@@ -70,6 +75,33 @@ scroll_pane_item_t* scroll_pane_add_item(widget_t* scrollpane, widget_t* widget)
 void scroll_pane_draw(widget_t* widget, window_t* window) {
     scroll_pane_t* sp = widget->extra_data;
 
+    int csize = 0;
+    for (int i = 0; i < sp->itemc; i++) {
+        int a = sp->items[i]->y + sp->items[i]->widget->height;
+        if (a > csize) csize = a;
+    }
+
+    sp->csize = csize;
+
+    // thumb position.
+    double tpos;
+    if (csize >= widget->height) {
+        tpos = (-sp->pos/(double)(csize))*(widget->height-40);
+    } else {
+        tpos = 0;
+    }
+
+    // thumb size
+    double tsize;
+    if (csize >= widget->height) {
+        tsize = (widget->height/(double)(csize))*(widget->height-40);
+    } else {
+        tsize = widget->height - 40;
+    }
+
+    sp->thumb_pos = ceil(tpos);
+
+#ifdef WIN32
     PAINTSTRUCT* hi   = malloc(sizeof(PAINTSTRUCT));
     RECT*        rect = malloc(sizeof(RECT));
 
@@ -103,32 +135,6 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
     );
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
-    int csize = 0;
-    for (int i = 0; i < sp->itemc; i++) {
-        int a = sp->items[i]->y + sp->items[i]->widget->height;
-        if (a > csize) csize = a;
-    }
-
-    sp->csize = csize;
-
-    // thumb position.
-    double tpos;
-    if (csize >= widget->height) {
-        tpos = (-sp->pos/(double)(csize))*(widget->height-40);
-    } else {
-        tpos = 0;
-    }
-
-    // thumb size
-    double tsize;
-    if (csize >= widget->height) {
-        tsize = (widget->height/(double)(csize))*(widget->height-40);
-    } else {
-        tsize = widget->height - 40;
-    }
-
-    sp->thumb_pos = ceil(tpos);
-
     SetRect(
         rect,
         widget->x + widget->width - 20,
@@ -139,6 +145,52 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     EndPaint(window->window, hi);
+#else
+    xcb_rectangle_t* rect = malloc(sizeof(xcb_rectangle_t) * 4);
+
+    rect[0].x      = widget->x;
+    rect[0].y      = widget->y;
+    rect[0].height = widget->height;
+    rect[0].width  = widget->width;
+    
+    uint32_t maskd    = XCB_GC_FOREGROUND;
+    uint32_t maskv[1] = { 
+        window->screen->white_pixel
+    };
+
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+
+    xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
+
+    maskv[0] = window->screen->black_pixel;
+    
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+
+    rect[1].x      = widget->x + widget->width - 20;
+    rect[1].y      = widget->y;
+    rect[1].width  = 20;
+    rect[1].height = 20;
+    rect[2].x      = widget->x + widget->width  - 20;
+    rect[2].y      = widget->y + widget->height - 20;
+    rect[2].width  = 20;
+    rect[2].height = 20;
+    rect[3].x      = widget->x + widget->width - 20;
+    rect[3].y      = widget->y + 20;
+    rect[3].width  = 20;
+    rect[3].height = ceil(tpos) + ceil(tsize);
+
+    xcb_poly_rectangle(window->connection, window->window, window->gc, 4, rect);
+#endif
 
     for (int i = 0; i < sp->itemc; i++) {
         scroll_pane_item_t* item = sp->items[i];
@@ -153,8 +205,10 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         }
     }
 
-    free(hi);
     free(rect);
+#ifdef WIN32
+    free(hi);
+#endif
 }
 
 void scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
@@ -206,9 +260,12 @@ void scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y) {
         a = a < 0 ? a : 0;
         a = a > -scroll_pane->csize + (scroll_pane->csize / (widget->height - 40)) * widget->height ? a : -scroll_pane->csize + (scroll_pane->csize / (widget->height - 40)) * widget->height;
         scroll_pane->pos = a;
+        if (scroll_pane->pos != scroll_pane->prev_pos) {
+            printf("%i\n", scroll_pane->pos);
+            scroll_pane->prev_pos = scroll_pane->pos;
+            widget->draw(widget, window);
+        }
     }
-
-    widget->draw(widget, window);
 }
 
 void scroll_pane_mousein(widget_t* widget, window_t* window) {

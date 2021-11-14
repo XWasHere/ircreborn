@@ -34,6 +34,6 @@
 
 char* format_last_error();
 char* format_error(int errorcode);
-void  gdb_breakpoint();
+void  debug_point();
 
 #endif

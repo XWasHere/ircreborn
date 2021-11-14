@@ -21,7 +21,12 @@
 
 #include <ui/widget.h>
 #include <ui/window.h>
+
+#ifdef WIN32
 #include <windows.h> // agony
+#else
+
+#endif
 
 #define BUTTON_NULL 0x00
 #define BUTTON_TEXT 0x01
@@ -34,9 +39,11 @@ struct __button {
 
     char* text;
 
+#ifdef WIN32
     COLORREF bg_color;
     COLORREF text_color;
     COLORREF border_color;
+#endif
 };
 
 widget_t* button_init();

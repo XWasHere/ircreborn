@@ -20,10 +20,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
 #include <ui/window.h>
 #include <ui/widgets/button.h>
 #include <ui/widgets/scrollpane.h>
@@ -34,16 +30,16 @@
 #include <config_parser/config.h>
 #include <networking/networking.h>
 #include <networking/types.h>
-#ifndef WIN32
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#endif
+
 #ifdef WIN32
 #include <windows.h>
-#define ERRORNO() GetLastError()
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #else
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <arpa/inet.h>
 #include <errno.h>
-#define ERRORNO() errno
 #endif
 
 #ifdef WIN32
@@ -99,7 +95,12 @@ void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
             
             if ((sc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
                 sc = 0;
-                printf(FMT_FATL("socket(): %i\n"), ERRORNO());
+
+#ifdef WIN32
+                printf(FMT_FATL("socket(): %i\n"), WSAGetLastError());
+#else
+                printf(FMT_FATL("%s\n"), format_last_error());
+#endif
                 return;
             }
 
@@ -111,7 +112,15 @@ void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
             inet_pton(AF_INET, servers[i]->host, &addr->sin_addr);
 
             if (connect(sc, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
+                sc = 0;
+
+#ifdef WIN32
                 printf(FMT_FATL("connect(): %s"), format_error(WSAGetLastError()));
+#else
+                printf(FMT_FATL("%s\n"), format_last_error());
+#endif
+
+                return;
             }
 
             hello_t* hi = malloc(sizeof(hello_t));
@@ -250,7 +259,6 @@ void client_recalculate_sizes(window_t* window) {
         servers[i]->button->width = serverlistw->width - 20;
     }
 
-    printf("%i\n", serverlistw->y);
 /*
     serverlistcollapsebtnw->x = 200;
     serverlistcollapsebtnw->y = 20;

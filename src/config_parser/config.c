@@ -67,7 +67,7 @@ config_t* parse_config(int fd) {
                                     while (1) {
                                         while (1) {
                                             read(fd, &c, 1);
-                                            if (!(c == '\t' || c == ' ' || c == '\n')) {
+                                            if (!(c == '\t' || c == ' ' || c == '\n' || c == '\r')) {
                                                 break;
                                             }
                                         }

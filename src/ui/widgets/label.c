@@ -19,10 +19,14 @@
 #include <ui/widget.h>
 #include <ui/window.h>
 #include <ui/widgets/label.h>
+#ifndef WIN32 
+#include <ui/util/font_search.h>
+#endif
 
 void label_draw(widget_t* widget ,window_t* window) {
     label_t* label = widget->extra_data;
-    
+
+#ifdef WIN32
     PAINTSTRUCT* hi = malloc(sizeof(PAINTSTRUCT));
     RECT *rect = malloc(sizeof(RECT));
     
@@ -39,6 +43,56 @@ void label_draw(widget_t* widget ,window_t* window) {
     
     free(hi);
     free(rect);
+#else
+    // literally copied from button.c
+    xcb_gcontext_t gc = xcb_generate_id(window->connection);
+
+    uint32_t maskd = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
+    uint32_t maskv[3] = {
+        window->screen->black_pixel,
+        window->screen->white_pixel,
+        window->main_font
+    };
+
+    xcb_create_gc(
+        window->connection,
+        gc,
+        window->window,
+        maskd,
+        maskv
+    );
+
+    xcb_image_text_8(
+        window->connection,
+        strlen(label->text),
+        window->window,
+        gc,
+        widget->x + 3,
+        widget->y + widget->height - 3,
+        label->text
+    );
+
+    xcb_free_gc(window->connection, gc);
+    
+    xcb_rectangle_t *rect = malloc(sizeof(xcb_rectangle_t));
+    
+    rect->x = widget->x;
+    rect->y = widget->y;
+    rect->width = widget->width;
+    rect->height = widget->height;
+    
+    xcb_poly_rectangle(
+        window->connection,
+        window->window,
+        window->gc,
+        1,
+        rect
+    );
+
+    xcb_flush(window->connection);
+    
+    free(rect);
+#endif
 }
 
 widget_t* label_init() {

@@ -19,17 +19,23 @@
 #include <common/util.h>
 #include <stdlib.h>
 #include <stdio.h>
-
 #ifdef WIN32 
 #include <windows.h> // yayyyyyyyyyyyy
+#else
+#include <sys/errno.h>
 #endif
 
-void gdb_breakpoint() {};
+void gdb_break() {}
+void debug_point() {
+    gdb_break();
+};
 
 char* format_last_error() {
     int errorcode;
 #ifdef WIN32
     errorcode = GetLastError();
+#else
+    errorcode = errno;
 #endif
     return format_error(errorcode);
 }
@@ -53,6 +59,8 @@ char* format_error(int errorcode) {
         0
     );
 #pragma GCC diagnostic pop
+#else
+    errordesc = strerror(errorcode);
 #endif
 
     error = malloc(strlen(errordesc) + 14);

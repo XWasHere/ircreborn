@@ -71,7 +71,7 @@ void server_main() {
 #ifdef WIN32
         WSAPoll(pollfds, pollfd_count, -1);
 #else
-        // TODO: this should have code
+        poll(pollfds, pollfd_count, -1);
 #endif
         if (pollfds[0].revents & POLLIN) {
             struct sockaddr_in* addr     = malloc(sizeof(struct sockaddr_in));

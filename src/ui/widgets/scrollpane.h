@@ -38,6 +38,7 @@ struct scroll_pane {
     int                  itemc;
 
     int                  pos;
+    int                  prev_pos;
     int                  csize;
 
     int                  thumb_dragging;

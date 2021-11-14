@@ -24,23 +24,41 @@
 
 #ifdef WIN32
 #include <windows.h>
+#else
+#include <xcb/xcb.h>
+#include <ui/util/font_search.h>
 #endif
 
 void __DEFAULT_textbox_submit(widget_t* a, window_t* b, char* c, int d) {};
 
-void textbox_keypress(widget_t* widget, window_t* window, char key) {
+void textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
     textbox_t* tb = widget->extra_data;
 
+    printf("%x\n", key);
+
+#ifdef WIN32
     if (key == 8) {
+#else
+    if (key == 0xff08) {
+#endif
         tb->textlen--;
         tb->cursorpos--;
         
         tb->text[tb->cursorpos] = 0;
     } else {
+#ifdef WIN32
         if ((key == 10 || key == 13) && tb->multiline == 0) {
+#else
+        if (key == 0xff0d && tb->multiline == 0) {
+#endif
             tb->submit(widget, window, tb->text, tb->textlen);
             return;
         }
+
+#ifndef WIN32
+        if (key == 0xff0d) key = '\n';
+#endif
+
         tb->textlen++;
 
         if (tb->text == 0) tb->text = malloc(1);
@@ -61,7 +79,8 @@ void textbox_clicked(widget_t* widget, window_t* window, int x, int y) {
 
 void textbox_draw(widget_t* widget, window_t* window) {
     textbox_t* tb = widget->extra_data;
-    
+
+#ifdef WIN32    
     PAINTSTRUCT* ps   = malloc(sizeof(PAINTSTRUCT));
     RECT*        rect = malloc(sizeof(RECT));
 
@@ -93,6 +112,75 @@ void textbox_draw(widget_t* widget, window_t* window) {
     
     free(ps);
     free(rect);
+#else
+    xcb_rectangle_t *rect = malloc(sizeof(xcb_rectangle_t));
+    
+    rect->x = widget->x;
+    rect->y = widget->y;
+    rect->width = widget->width;
+    rect->height = widget->height;
+    
+    uint32_t maskd = XCB_GC_FOREGROUND;
+    uint32_t maskv[3] = {
+        window->screen->white_pixel
+    };
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+
+    xcb_poly_fill_rectangle(
+        window->connection,
+        window->window,
+        window->gc,
+        1,
+        rect
+    );
+
+    maskd = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
+    maskv[0] = window->screen->black_pixel;
+    maskv[1] = window->screen->white_pixel;
+    maskv[2] = window->main_font;
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+
+    xcb_image_text_8(
+        window->connection,
+        strlen(tb->text ? tb->text : ""),
+        window->window,
+        window->gc,
+        widget->x + 3,
+        widget->y + widget->height - 3,
+        tb->text ? tb->text : ""
+    );
+
+    maskv[0] = window->screen->black_pixel;
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+    
+    xcb_poly_rectangle(
+        window->connection,
+        window->window,
+        window->gc,
+        1,
+        rect
+    );
+
+    xcb_flush(window->connection);
+    
+    // bye
+    free(rect);
+#endif
 }
 
 widget_t* textbox_init() {
