@@ -1,5 +1,6 @@
 \input texinfo
 @node Top, invoking ircreborn, (dir), (dir)
+welcome to the ircreborn manual! sorry that it's a bit lacking at the moment
 
 @menu
 * invoking ircreborn::
@@ -9,9 +10,9 @@
 @node invoking ircreborn, ircreborn client, Top, Top
 ircreborn only has a few arguments.
 
-the client can be started with "---client"
+the client can be started with @option{--client}
 
-the server can be started with "---server"
+the server can be started with @option{--server}
 @node ircreborn client, invoking the client, invoking ircreborn, Top
 heres the docs for the client
 
@@ -31,27 +32,31 @@ the format it uses is explained in the following sections
 @node server config block, ircreborn server, configuring the client, configuring the client
 this is the server config block :)
 
+@example
 server "<SERVER NAME>" @{
-
     <OPTIONS>
-
 @}
+@end example
 
 options can be:
 
+@example
 host "<IPV4 ADDRESS>"
+@end example
 
+@example
 port "<PORT>"
+@end example
 
 heres an example:
 
+@example
 server "example server" @{
-
     host "127.0.0.1"
-
     port 10010
-
 @}
+@end example
+
 @node ircreborn server, invoking the server, server config block, Top
 
 @menu
