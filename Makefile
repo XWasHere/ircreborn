@@ -28,15 +28,21 @@ OBJS = \
 	build/networking/types.o \
 	build/tests/tests.o
 
-all: ircreborn
+DOCS = \
+	build/docs/ircreborn.info
 
-.PHONY: binit clean __clean
+all: ircreborn docs
+
+.PHONY: binit clean __clean docs
 
 ifeq ($(MAKECMDGOALS),clean)
 else ifeq ($(MAKECMDGOALS),binit)
 else
 include $(OBJS:.o=.c.d)
 endif
+
+build/docs/%.info: docs/%.tex
+	makeinfo -o $@ $<
 
 build/%.c.d: src/%.c
 	$(CC) $(CC_ARGS) $(CC_FARGS) -M $< -o $@
@@ -56,6 +62,7 @@ binit:
 	mkdir -p build/networking
 	mkdir -p build/tests
 	mkdir -p build/tests/tests
+	mkdir -p build/docs
 
 ircreborn: binit  $(OBJS)
 	$(CC) $(CC_ARGS) $(OBJS) -o ircreborn $(CC_FARGS) 
@@ -64,3 +71,5 @@ __clean:
 	rm -rf build
 
 clean: __clean binit
+
+docs: $(DOCS)

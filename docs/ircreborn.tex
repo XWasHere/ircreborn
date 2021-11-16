@@ -1,0 +1,64 @@
+\input texinfo
+@node Top, invoking ircreborn, (dir), (dir)
+
+@menu
+* invoking ircreborn::
+* ircreborn client::
+* ircreborn server::
+@end menu
+@node invoking ircreborn, ircreborn client, Top, Top
+ircreborn only has a few arguments.
+
+the client can be started with "---client"
+
+the server can be started with "---server"
+@node ircreborn client, invoking the client, invoking ircreborn, Top
+heres the docs for the client
+
+@menu
+* invoking the client::
+* configuring the client::
+@end menu
+@node invoking the client, configuring the client, ircreborn client, ircreborn client
+the client is just started with @w{"ircreborn ---client"}, it currently has no arguments
+@node configuring the client, server config block, invoking the client, ircreborn client
+the ircreborn client is configured using a file in your home directory named ".ircreborn"
+the format it uses is explained in the following sections
+
+@menu
+* server config block::
+@end menu
+@node server config block, ircreborn server, configuring the client, configuring the client
+this is the server config block :)
+
+server "<SERVER NAME>" @{
+
+    <OPTIONS>
+
+@}
+
+options can be:
+
+host "<IPV4 ADDRESS>"
+
+port "<PORT>"
+
+heres an example:
+
+server "example server" @{
+
+    host "127.0.0.1"
+
+    port 10010
+
+@}
+@node ircreborn server, invoking the server, server config block, Top
+
+@menu
+* invoking the server::
+* configuring the server::
+@end menu
+@node invoking the server, configuring the server, ircreborn server, ircreborn server
+the ircreborn server is started using @w{"ircreborn ---server ---listen-port <PORT>"}
+@node configuring the server,, invoking the server, ircreborn server
+there is currently no way to configure the server
