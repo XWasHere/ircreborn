@@ -36,6 +36,6 @@ struct config_file {
     server_t** servers;
 };
 
-config_t* parse_config(int fd);
+config_t* cfgparser_parse_config(int fd);
 
 #endif

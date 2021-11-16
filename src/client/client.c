@@ -281,7 +281,7 @@ void client_main() {
 
     int configfd = open(args_config_path, O_RDONLY | O_CREAT);
     chmod(args_config_path, S_IWUSR | S_IRUSR);
-    config_t* config = parse_config(configfd);
+    config_t* config = cfgparser_parse_config(configfd);
     close(configfd);
 
     servers = malloc(1);

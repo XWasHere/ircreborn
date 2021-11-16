@@ -22,6 +22,105 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define get_char           cfgparser_get_char
+#define test_char          cfgparser_test_char
+#define test_str           cfgparser_test_str
+#define consume_whitespace cfgparser_consume_whitespace
+#define is_done            cfgparser_is_done
+#define read_string        cfgparser_read_string
+#define read_int           cfgparser_read_int
+#define parse_config       cfgparser_parse_config
+#define parse_pos          cfgparser_parse_pos
+#define parse_fd           cfgparser_parse_fd
+
+int parse_pos;
+int parse_fd;
+
+char get_char(int consume) {
+    char data;
+    if (pread(parse_fd, &data, 1, parse_pos) == 0) return -1;
+    if (consume) parse_pos++;
+    return data;
+}
+
+int test_char(char c, int consume) {
+    if (get_char(0) == c) {
+        if (consume) parse_pos++;
+        return 1;
+    } else return 0;
+}
+
+int test_str(char* str, int consume) {
+    int l = strlen(str);
+    char* data = malloc(l + 1);
+    memset(data, 0, l + 1);
+
+    pread(parse_fd, data, l, parse_pos);
+
+    if (STREQ(str, data)) {
+        if (consume) parse_pos += l;
+        return 1;
+    } else return 0;
+}
+
+void consume_whitespace() {
+    while (1) {
+        if (test_char('\t', 1)) {}
+        else if (test_char(' ', 1)) {}
+        else if (test_char('\n', 1)) {}
+        else if (test_char('\r', 1)) {}
+        else break;
+    }
+}
+
+int is_done() {
+    char junk;
+    if (pread(parse_fd, &junk, 1, parse_pos) != 1) return 1;
+    else return 0;
+}
+
+char* read_string() {
+    char* str = malloc(1);
+    int   l   = 0;
+
+    if (test_char('"', 1)) {
+        while (!test_char('"', 0)) {
+            l++;
+            str = realloc(str, l + 1);
+            str[l] = 0;
+            str[l-1] = get_char(1);
+        }
+
+        get_char(1);
+
+        return str;
+    }
+
+    free(str);
+    return -1;
+}
+
+int read_int() {
+    char* buf = malloc(1);
+    int   l   = 0;
+    int   res = 0;
+
+    while (1) {
+        char c = get_char(0);
+        if (c >= '0' && c <= '9') {
+            l++;
+            buf = realloc(buf, l + 1);
+            buf[c] = 0;
+            buf[l-1] = get_char(1);
+        } else break;
+    }
+
+    sscanf(buf, "%i", &res);
+    free(buf);
+
+    return res;
+}
+
 config_t* parse_config(int fd) {
     config_t *config = malloc(sizeof(config_t));
     
@@ -29,112 +128,34 @@ config_t* parse_config(int fd) {
     config->servers = malloc(1);
     
     char c;
+    parse_pos = 0;
+    parse_fd  = fd;
 
-    // not sorry
-    while (read(fd, &c, 1) == 1) {
-        if (c == 's') {
-            read(fd, &c, 1);
-            if (c == 'e') {
-                read(fd, &c, 1);
-                if (c == 'r') {
-                    read(fd, &c, 1);
-                    if (c == 'v') {
-                        read(fd, &c, 1);
-                        if (c == 'e') {
-                            read(fd, &c, 1);
-                            if (c == 'r') {
-                                server_t* server = malloc(sizeof(server_t));
-
-                                server->name = malloc(1);
-                                int nl = 0;
-
-                                read(fd, &c, 1);
-                                while (c == ' ') { read(fd, &c, 1); }
-                                read(fd, &c, 1);
-                                
-                                while (c != '"') {
-                                    nl++;
-                                    server->name = realloc(server->name, nl + 1);
-                                    server->name[nl] = 0;
-                                    server->name[nl-1] = c;
-                                    read(fd, &c, 1);
-                                }
-
-                                read(fd, &c, 1);
-                                while (c == ' ') { read(fd, &c, 1); }
-
-                                if (c == '{') {
-                                    while (1) {
-                                        while (1) {
-                                            read(fd, &c, 1);
-                                            if (!(c == '\t' || c == ' ' || c == '\n' || c == '\r')) {
-                                                break;
-                                            }
-                                        }
-
-                                        if (c == 'h') {
-                                            read(fd, &c, 1);
-                                            if (c == 'o') {
-                                                read(fd, &c, 1);
-                                                if (c == 's') {
-                                                    read(fd, &c, 1);
-                                                    if (c == 't') {
-                                                        read(fd, &c, 1);
-                                                        while (c == ' ') { read(fd, &c, 1); }
-                                                        read(fd, &c, 1);
-
-                                                        nl = 0;
-                                                        server->host = malloc(1);
-
-                                                        while (c != '"') {
-                                                            nl++;
-                                                            server->host = realloc(server->host, nl + 1);
-                                                            server->host[nl] = 0;
-                                                            server->host[nl-1] = c;
-                                                            read(fd, &c, 1);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        } else if (c == 'p') {
-                                            read(fd, &c, 1);
-                                            if (c == 'o') {
-                                                read(fd, &c, 1);
-                                                if (c == 'r') {
-                                                    read(fd, &c, 1);
-                                                    if (c == 't') {
-                                                        read(fd, &c, 1);
-                                                        while (c == ' ') { read(fd, &c, 1); }
-
-                                                        char* p = malloc(1);
-
-                                                        nl = 0;
-                                                        while (c >= '0' && c <= '9') {
-                                                            nl++;
-                                                            p = realloc(p, nl + 1);
-                                                            p[nl] = 0;
-                                                            p[nl-1] = c;
-                                                            read(fd, &c, 1);
-                                                        }
-
-                                                        sscanf(p, "%i", &server->port);
-                                                    }
-                                                }
-                                            }
-                                        } else if (c == '}') {
-                                            config->server_count++;
-                                            config->servers = realloc(config->servers, config->server_count * sizeof(void*));
-                                            config->servers[config->server_count - 1] = server;
-                                            printf(FMT_INFO("registered server \"%s:%i\" as \"%s\"\n"), server->host, server->port, server->name);
-                                            break;
-                                        } else {
-                                            printf(FMT_FATL("invalid config\n"));
-                                            exit(1);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+    while (!is_done()) {
+        consume_whitespace();
+        if (test_str("server", 1)) {
+            consume_whitespace();
+            server_t* server = malloc(sizeof(server_t));
+            server->name = read_string();
+            consume_whitespace();
+            if (test_char('{', 1)) {
+                while (1) {
+                    consume_whitespace();
+                    if (test_str("host", 1)) {
+                        consume_whitespace();
+                        server->host = read_string();
+                    } else if (test_str("port", 1)) {
+                        consume_whitespace();
+                        server->port = read_int();
+                    } else if (test_char('}', 1)) {
+                        config->server_count++;
+                        config->servers = realloc(config->servers, config->server_count * sizeof(void*));
+                        config->servers[config->server_count - 1] = server;
+                        printf(FMT_INFO("registered server \"%s:%i\" as \"%s\"\n"), server->host, server->port, server->name);
+                        break;
+                    } else {
+                        printf(FMT_FATL("invalid config\n"));
+                        exit(1);
                     }
                 }
             }
