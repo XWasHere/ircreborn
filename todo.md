@@ -18,7 +18,11 @@
 
 ## ./src/ui/uitypes.h
 
-[60] xorg support
+[66] xorg support
+
+## ./src/ui/util/font_search.h
+
+## ./src/ui/util/font_search.c
 
 ## ./src/ui/widgets/scrollpane.c
 
@@ -65,8 +69,6 @@
 ## ./src/networking/networking.c
 
 ## ./src/server/server.c
-
-[74] this should have code
 
 ## ./src/server/server.h
 
