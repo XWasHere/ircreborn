@@ -89,7 +89,17 @@ void server_main() {
         }
 
         for (int i = 1; i < pollfd_count; i++) {
-            if (pollfds[i].revents & POLLIN) {
+            if (pollfds[i].revents & POLLERR) {
+                printf(FMT_INFO("error\n"));
+                goto pollhup_handler;
+            } else if (pollfds[i].revents & POLLHUP) {
+                pollhup_handler:;
+                printf(FMT_INFO("bye\n"));
+                for (int ii = i; ii < pollfd_count - 1; ii++) {
+                    pollfds[ii] = pollfds[ii + 1];
+                }
+                pollfd_count--;
+            } else if (pollfds[i].revents & POLLIN) {
                 char c;
                 char* msgbuf = 0;
                 int   bufpos = 0;
@@ -98,47 +108,43 @@ void server_main() {
                 int   buflen = 0;
                 int   op     = 0;
 
-                recv(pollfds[i].fd, header, 8, 0);
+                if (recv(pollfds[i].fd, header, 8, 0) == 0) {
+                    printf(FMT_WARN("got 0 bytes of data. assuming broken connection. kicking\n"));
+                    close(pollfds[i].fd);
+                    goto pollhup_handler;
+                } else {
+                    op     = read_int(header);
+                    buflen = read_int(header + 4);
+                    
+                    msgbuf = malloc(buflen + 1);
+                    memset(msgbuf, 0, buflen + 1);
 
-                op     = read_int(header);
-                buflen = read_int(header + 4);
-                
-                msgbuf = malloc(buflen + 1);
-                memset(msgbuf, 0, buflen + 1);
+                    int res = recv(pollfds[i].fd, msgbuf, buflen, 0);
 
-                int res = recv(pollfds[i].fd, msgbuf, buflen, 0);
+                    if (op == OPCODE_HELLO) {
+                        int has_ident    = read_bool(msgbuf);
+                        nstring_t* ident = read_string(msgbuf + 1);
+                        if (has_ident) {
+                            printf(FMT_INFO("got connection from client of type \"%s\"\n"), ident->str);
+                        } else {
+                            printf(FMT_INFO("got connection from client of unknown type\n"));
+                        }
+                    } else if (op == OPCODE_MESSAGE) {
+                        nstring_t* imsg = read_string(msgbuf);
+                        message_t* omsg = malloc(sizeof(message_t));
 
-                if (op == OPCODE_HELLO) {
-                    int has_ident    = read_bool(msgbuf);
-                    nstring_t* ident = read_string(msgbuf + 1);
-                    if (has_ident) {
-                        printf(FMT_INFO("got connection from client of type \"%s\"\n"), ident->str);
-                    } else {
-                        printf(FMT_INFO("got connection from client of unknown type\n"));
+                        omsg->message = imsg->str;
+
+                        // replicate
+                        for (int i = 1; i < pollfd_count; i++) {
+                            send_message(pollfds[i].fd, omsg);
+                        }
                     }
-                } else if (op == OPCODE_MESSAGE) {
-                    nstring_t* imsg = read_string(msgbuf);
-                    message_t* omsg = malloc(sizeof(message_t));
 
-                    omsg->message = imsg->str;
-
-                    // replicate
-                    for (int i = 1; i < pollfd_count; i++) {
-                        send_message(pollfds[i].fd, omsg);
-                    }
+                    free(msgbuf);
+                    free(header);
+                    fflush(0);
                 }
-
-                free(msgbuf);
-                free(header);
-                fflush(0);
-            } else if (pollfds[i].revents & POLLERR) {
-                printf(FMT_INFO("error\n"));
-            } else if (pollfds[i].revents & POLLHUP) {
-                printf(FMT_INFO("bye\n"));
-                for (int ii = i; ii < pollfd_count - 1; ii++) {
-                    pollfds[ii] = pollfds[ii + 1];
-                }
-                pollfd_count--;
             }
         }
     }
