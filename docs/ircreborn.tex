@@ -23,7 +23,7 @@ heres the docs for the client
 @node invoking the client, configuring the client, ircreborn client, ircreborn client
 the client is just started with @w{"ircreborn ---client"}, it currently has no arguments
 @node configuring the client, server config block, invoking the client, ircreborn client
-the ircreborn client is configured using a file in your home directory named ".ircreborn"
+the ircreborn client is configured in "~/.ircreborn/client"
 the format it uses is explained in the following sections
 
 @menu
@@ -45,7 +45,7 @@ host "<IPV4 ADDRESS>"
 @end example
 
 @example
-port "<PORT>"
+port <PORT>
 @end example
 
 heres an example:
@@ -64,6 +64,20 @@ server "example server" @{
 * configuring the server::
 @end menu
 @node invoking the server, configuring the server, ircreborn server, ircreborn server
-the ircreborn server is started using @w{"ircreborn ---server ---listen-port <PORT>"}
+the ircreborn server is started using @w{"ircreborn ---server"}
+
+there is also one argument: @option{--listen-port <PORT>} which will override the listen port in the server config
 @node configuring the server,, invoking the server, ircreborn server
-there is currently no way to configure the server
+the server config file follows a very similar format to the client config. heres how it works
+
+heres the listen option, it specifies what port the server will listen on. (it defaults to 10010)
+
+@example
+listen <PORT>
+@end example
+
+heres an example config
+
+@example
+listen 10010
+@end example

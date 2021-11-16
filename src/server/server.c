@@ -16,12 +16,17 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #include <common/args.h>
 #include <common/util.h>
 #include <networking/networking.h>
 #include <networking/types.h>
+#include <config_parser/config.h>
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -40,6 +45,25 @@ void server_main() {
         exit(1);
     }
 #endif
+    char* config_path = args_config_path;
+    if (config_path == 0) {
+        config_path = malloc(255);
+        memset(config_path, 0, 255);
+#ifdef WIN32
+        strcat(config_path, getenv("USERPROFILE"));
+#else
+        strcat(config_path, getenv("HOME"));
+#endif
+        strcat(config_path, "/.ircreborn/server");
+    }
+
+    printf(FMT_INFO("reading config from %s\n"), config_path);
+
+    int configfd = open(config_path, O_RDONLY | O_CREAT);
+    chmod(config_path, S_IWUSR | S_IRUSR);
+    server_config_t* config = cfgparser_parse_server_config(configfd);
+    close(configfd);
+
     int one = 1;
 
     int server;
@@ -49,7 +73,7 @@ void server_main() {
 
     server_addr->sin_family = AF_INET;
     server_addr->sin_addr.s_addr = INADDR_ANY;
-    server_addr->sin_port = htons(args_listen_port);
+    server_addr->sin_port = htons(args_listen_port ? args_listen_port : config->listen_port);
 
 #ifdef WIN32
     setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (char*)&one, sizeof(one));
@@ -94,7 +118,6 @@ void server_main() {
                 goto pollhup_handler;
             } else if (pollfds[i].revents & POLLHUP) {
                 pollhup_handler:;
-                printf(FMT_INFO("bye\n"));
                 for (int ii = i; ii < pollfd_count - 1; ii++) {
                     pollfds[ii] = pollfds[ii + 1];
                 }

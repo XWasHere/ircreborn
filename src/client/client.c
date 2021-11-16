@@ -276,12 +276,23 @@ void client_main() {
         exit(1);
     }
 #endif
+    char* config_path = args_config_path;
+    if (config_path == 0) {
+        config_path = malloc(255);
+        memset(config_path, 0, 255);
+#ifdef WIN32
+        strcat(config_path, getenv("USERPROFILE"));
+#else
+        strcat(config_path, getenv("HOME"));
+#endif
+        strcat(config_path, "/.ircreborn/client");
+    }
 
-    printf(FMT_INFO("reading config from %s\n"), args_config_path);
+    printf(FMT_INFO("reading config from %s\n"), config_path);
 
-    int configfd = open(args_config_path, O_RDONLY | O_CREAT);
-    chmod(args_config_path, S_IWUSR | S_IRUSR);
-    config_t* config = cfgparser_parse_config(configfd);
+    int configfd = open(config_path, O_RDONLY | O_CREAT);
+    chmod(config_path, S_IWUSR | S_IRUSR);
+    client_config_t* config = cfgparser_parse_client_config(configfd);
     close(configfd);
 
     servers = malloc(1);

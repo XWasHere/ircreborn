@@ -30,13 +30,8 @@ int   args_test;
 
 void parse_args(int argc, char** argv) {
     args_exec_name = argv[0];
-
-#ifdef WIN32
-    args_config_path = getenv("USERPROFILE");
-#else
-    args_config_path = getenv("HOME");
-#endif
-    strcat(args_config_path, "/.ircreborn");
+    args_config_path = 0;
+    args_listen_port = 0;
     
 #define next goto common_args_next;
 

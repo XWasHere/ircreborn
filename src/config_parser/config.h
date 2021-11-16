@@ -23,19 +23,26 @@
 #define CONFIG_TYPE_STRING 0x01
 #define CONFIG_TYPE_GROUP  0x02
 
-typedef struct config_server server_t;
-struct config_server {
+typedef struct client_config_server client_config_server_t;
+typedef struct client_config_file client_config_t;
+typedef struct server_config_file server_config_t;
+
+struct client_config_server {
     char* name;
     char* host;
     int   port;
 };
 
-typedef struct config_file config_t;
-struct config_file {
-    int        server_count;
-    server_t** servers;
+struct client_config_file {
+    int                      server_count;
+    client_config_server_t** servers;
 };
 
-config_t* cfgparser_parse_config(int fd);
+struct server_config_file {
+    int                      listen_port;
+};
+
+client_config_t* cfgparser_parse_client_config(int fd);
+server_config_t* cfgparser_parse_server_config(int fd);
 
 #endif

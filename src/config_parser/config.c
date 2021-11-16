@@ -22,16 +22,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define get_char           cfgparser_get_char
-#define test_char          cfgparser_test_char
-#define test_str           cfgparser_test_str
-#define consume_whitespace cfgparser_consume_whitespace
-#define is_done            cfgparser_is_done
-#define read_string        cfgparser_read_string
-#define read_int           cfgparser_read_int
-#define parse_config       cfgparser_parse_config
-#define parse_pos          cfgparser_parse_pos
-#define parse_fd           cfgparser_parse_fd
+#define get_char            cfgparser_get_char
+#define test_char           cfgparser_test_char
+#define test_str            cfgparser_test_str
+#define consume_whitespace  cfgparser_consume_whitespace
+#define is_done             cfgparser_is_done
+#define read_string         cfgparser_read_string
+#define read_int            cfgparser_read_int
+#define parse_client_config cfgparser_parse_client_config
+#define parse_server_config cfgparser_parse_server_config
+#define parse_pos           cfgparser_parse_pos
+#define parse_fd            cfgparser_parse_fd
 
 int parse_pos;
 int parse_fd;
@@ -121,13 +122,12 @@ int read_int() {
     return res;
 }
 
-config_t* parse_config(int fd) {
-    config_t *config = malloc(sizeof(config_t));
+client_config_t* parse_client_config(int fd) {
+    client_config_t *config = malloc(sizeof(client_config_t));
     
     config->server_count = 0;
     config->servers = malloc(1);
     
-    char c;
     parse_pos = 0;
     parse_fd  = fd;
 
@@ -135,7 +135,7 @@ config_t* parse_config(int fd) {
         consume_whitespace();
         if (test_str("server", 1)) {
             consume_whitespace();
-            server_t* server = malloc(sizeof(server_t));
+            client_config_server_t* server = malloc(sizeof(client_config_server_t));
             server->name = read_string();
             consume_whitespace();
             if (test_char('{', 1)) {
@@ -159,6 +159,25 @@ config_t* parse_config(int fd) {
                     }
                 }
             }
+        }
+    }
+
+    return config;
+}
+
+server_config_t* parse_server_config(int fd) {
+    server_config_t* config = malloc(sizeof(server_config_t));
+
+    config->listen_port = 10010;
+
+    parse_pos = 0;
+    parse_fd  = fd;
+
+    while (!is_done()) {
+        consume_whitespace();
+        if (test_str("listen", 1)) {
+            consume_whitespace();
+            config->listen_port = read_int();
         }
     }
 
