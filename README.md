@@ -15,3 +15,5 @@ theres a few features planned at the moment
 - [ ] channels
 - [ ] gui configuration editor
 - [ ] plugins
+- [ ] emojis
+- [ ] themes
