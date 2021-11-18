@@ -1,9 +1,19 @@
 # ircreborn
 
-go outside
-
 ## what is this
 
-ircreborn is a really bad discord alternative. it barely works and may randomly break.
+well. ircreborn was created because i felt that all the good platforms had too many paywalled features. (also because discord has been going downhill recently in my opinion)
 
-oh yeah it doesnt support encryption either have fun :3
+## planned features
+
+theres a few features planned at the moment
+
+- [ ] nicknames
+- [ ] server logins 
+- [ ] encryption
+- [ ] profile pictures
+- [ ] channels
+- [ ] gui configuration editor
+- [ ] plugins
+- [ ] emojis
+- [ ] themes
