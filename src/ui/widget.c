@@ -40,6 +40,8 @@ widget_t* widget_init() {
     widget->mouseup = &__DEFAULT_mouseup;
     widget->mousemove = &__DEFAULT_mousemove;
     widget->keypress = &__DEFAULT_keypress;
-
+    widget->x = 0;
+    widget->y = 0;
+    
     return widget;
 }

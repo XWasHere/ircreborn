@@ -114,13 +114,15 @@ void button_draw(widget_t* widget, window_t* window) {
         maskv
     );
 
-    xcb_poly_fill_rectangle(
-        window->connection,
-        window->window,
-        window->gc,
-        1,
-        rect
-    );
+    if (button->type != BUTTON_INVIS) {
+        xcb_poly_fill_rectangle(
+            window->connection,
+            window->window,
+            window->gc,
+            1,
+            rect
+        );
+    }
 
     if (button->type == BUTTON_TEXT) {
         maskd = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
@@ -155,13 +157,15 @@ void button_draw(widget_t* widget, window_t* window) {
         maskv
     );
 
-    xcb_poly_rectangle(
-        window->connection,
-        window->window,
-        window->gc,
-        1,
-        rect
-    );
+    if (button->type != BUTTON_INVIS) {
+        xcb_poly_rectangle(
+            window->connection,
+            window->window,
+            window->gc,
+            1,
+            rect
+        );
+    }
 
     xcb_flush(window->connection);
     

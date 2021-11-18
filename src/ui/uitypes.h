@@ -47,7 +47,10 @@ struct __widget {
 
     // for widgets
     void* extra_data;
-
+    void* extra_data_2;
+    void* extra_data_3;
+    void* extra_data_4;
+    
     // for measuring the state in the window code
     int hovered;
 

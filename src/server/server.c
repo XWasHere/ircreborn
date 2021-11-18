@@ -47,7 +47,7 @@ int             client_count = 0;
 struct client** clients;
 
 struct client* find_client(int fd) {
-    for (int i = 0; i < client_count) {
+    for (int i = 0; i < client_count; i++) {
         if (clients[i]->fd == fd) return clients[i];
     }
     return -1;
@@ -189,7 +189,9 @@ void server_main() {
                             send_message(pollfds[i].fd, omsg);
                         }
                     } else if (op == OPCODE_SET_NICKNAME) {
-                        
+                        nstring_t* nick = read_string(msgbuf);
+
+                        printf("client tried to set nickname to %s\n", nick->str);
                     }
 
                     free(msgbuf);

@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <ui/window.h>
 #include <ui/widgets/button.h>
+#include <ui/widgets/menubar.h>
 #include <ui/widgets/scrollpane.h>
 #include <ui/widgets/textbox.h>
 #include <ui/widgets/label.h>
@@ -62,9 +63,11 @@ int             label_count;
 
 widget_t* messages_thing;
 widget_t* messagebox;
+widget_t* stripw;
+menubar_t* stripe;
+menu_t* filemenu;
+menu_t* servermenu; 
 window_t* main_window;
-widget_t* exitbtnw;
-button_t* exitbtne;
 widget_t* serverlistw;
 scroll_pane_t* serverliste;
 widget_t* serverlistcollapsebtnw;
@@ -79,7 +82,7 @@ int sc_connected;
 
 int nextpos = 0;
 
-void exit_button_clicked(widget_t* widget, window_t* window, int x, int y) {
+void exit_button_clicked() {
     printf(FMT_INFO("user requested exit. goodbye\n"));
     exit(0);
 }
@@ -245,10 +248,10 @@ void client_run_tasks(window_t* window) {
 }
 
 void client_recalculate_sizes(window_t* window) {
-    exitbtnw->x = 0;
-    exitbtnw->y = 0;
-    exitbtnw->width = 40;
-    exitbtnw->height = 20;
+    stripw->x = 0;
+    stripw->y = 0;
+    stripw->width = window->width;
+    stripw->height = 20;
     
     serverlistw->x = 0;
     serverlistw->y = 20;
@@ -309,8 +312,14 @@ void client_main() {
 
     main_window = window_init();
     
-    exitbtnw = button_init();
-    exitbtne = exitbtnw->extra_data;
+    stripw = menubar_init();
+    stripe = stripw->extra_data;
+    
+    filemenu   = menubar_add_menu(stripw, "file");
+    servermenu = menubar_add_menu(stripw, "server");
+
+    menu_add_button(filemenu, "exit", exit_button_clicked);
+    
     serverlistw = scroll_pane_init();
     serverliste = serverlistw->extra_data;
     serverlistcollapsebtnw = button_init();
@@ -323,9 +332,9 @@ void client_main() {
     
     messageboxe->submit = &message_submit;
 
-    exitbtnw->clicked = &exit_button_clicked;
-    exitbtne->type = BUTTON_TEXT;
-    exitbtne->text = "exit";
+//    exitbtnw->clicked = &exit_button_clicked;
+//    exitbtne->type = BUTTON_TEXT;
+//    exitbtne->text = "exit";
     
     serverlistcollapsebtnw->clicked = &server_list_collapse_button_clicked;
     serverlistcollapsebtne->type = BUTTON_TEXT;
@@ -334,7 +343,7 @@ void client_main() {
     main_window->handle_bg_tasks = &client_run_tasks;
     main_window->resized         = &client_recalculate_sizes;
 
-    window_add_widget(main_window, exitbtnw);
+    window_add_widget(main_window, stripw);
     window_add_widget(main_window, serverlistw);
 //    window_add_widget(main_window, serverlistcollapsebtnw);
     window_add_widget(main_window, messagebox);

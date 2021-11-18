@@ -28,8 +28,9 @@
 
 #endif
 
-#define BUTTON_NULL 0x00
-#define BUTTON_TEXT 0x01
+#define BUTTON_NULL  0x00
+#define BUTTON_TEXT  0x01
+#define BUTTON_INVIS 0x02
 
 typedef struct __button button_t;
 struct __button {

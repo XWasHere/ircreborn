@@ -215,7 +215,6 @@ window_t* window_init() {
         0
     );
 #else
-    debug_point();
     window->display = XOpenDisplay(0);
 
     // connect to xorg
@@ -349,7 +348,6 @@ void window_display(window_t* window) {
         }
     }
 #else
-    debug_point();
 
     // see https://marc.info/?l=freedesktop-xcb&m=129381953404497 for the close solution
 
