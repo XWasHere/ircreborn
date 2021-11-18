@@ -280,6 +280,10 @@ void client_recalculate_sizes(window_t* window) {
 */
 }
 
+void open_set_nickname_dialog() {
+    printf(FMT_INFO("if i wasn't lazy, this would set your nickname\n"));
+}
+
 void client_main() {
 #ifdef WIN32
     wsadata = malloc(sizeof(WSADATA));
@@ -316,9 +320,9 @@ void client_main() {
     stripe = stripw->extra_data;
     
     filemenu   = menubar_add_menu(stripw, "file");
-    servermenu = menubar_add_menu(stripw, "server");
-
     menu_add_button(filemenu, "exit", exit_button_clicked);
+    servermenu = menubar_add_menu(stripw, "server");
+    menu_add_button(servermenu, "set nickname", open_set_nickname_dialog);
     
     serverlistw = scroll_pane_init();
     serverliste = serverlistw->extra_data;
@@ -331,10 +335,6 @@ void client_main() {
     messages_thing = messagesw;
     
     messageboxe->submit = &message_submit;
-
-//    exitbtnw->clicked = &exit_button_clicked;
-//    exitbtne->type = BUTTON_TEXT;
-//    exitbtne->text = "exit";
     
     serverlistcollapsebtnw->clicked = &server_list_collapse_button_clicked;
     serverlistcollapsebtne->type = BUTTON_TEXT;
@@ -345,7 +345,6 @@ void client_main() {
 
     window_add_widget(main_window, stripw);
     window_add_widget(main_window, serverlistw);
-//    window_add_widget(main_window, serverlistcollapsebtnw);
     window_add_widget(main_window, messagebox);
     window_add_widget(main_window, messagesw);
 
