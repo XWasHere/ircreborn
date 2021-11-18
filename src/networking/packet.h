@@ -31,6 +31,13 @@ struct p_message {
     char* message;
 };
 
+typedef struct p_set_nickname set_nickname_t;
+struct p_set_nickname {
+    char* nickname;
+};
+
 void send_hello(int fd, hello_t* packet);
 void send_message(int fd, message_t* packet);
+void send_set_nickname(int fd, set_nickname_t* packet);
+
 #endif

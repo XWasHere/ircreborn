@@ -221,6 +221,9 @@ void client_run_tasks(window_t* window) {
             int op  = read_int(head);
             int len = read_int(head + 4);
 
+            // the nice thing about doing it this way, is even 
+            // if the client gets a message it doesn't recognize,
+            // it wont crash
             char* body = malloc(len + 1);
             memset(body, 0, len + 1);
             recv(sc, body, len, 0);
@@ -229,6 +232,13 @@ void client_run_tasks(window_t* window) {
                 nstring_t* msg = read_string(body);
 
                 client_add_message(window, msg->str);
+            } else if (op == OPCODE_SET_NICKNAME) {
+                nstring_t* nick = read_string(body);
+                
+                char* notify_message = malloc(sizeof("you are now known as \"") - 1 + nick->len + sizeof("\""));
+                sprintf(notify_message, "you are now known as \"%s\"", nick->str);
+
+                client_add_message(window, notify_message);
             }
         }
     }

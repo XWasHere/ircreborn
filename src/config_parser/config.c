@@ -178,6 +178,10 @@ server_config_t* parse_server_config(int fd) {
         if (test_str("listen", 1)) {
             consume_whitespace();
             config->listen_port = read_int();
+        } else if (test_str("default_nick", 1)) {
+            if (test_str("string",1)) {
+                
+            }
         }
     }
 

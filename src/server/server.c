@@ -36,6 +36,23 @@
 #include <poll.h>
 #endif
 
+struct client {
+    int fd;
+
+    int has_nickname;
+    char* nickname;
+};
+
+int             client_count = 0;
+struct client** clients;
+
+struct client* find_client(int fd) {
+    for (int i = 0; i < client_count) {
+        if (clients[i]->fd == fd) return clients[i];
+    }
+    return -1;
+}
+
 void server_main() {
 #ifdef WIN32
     WSADATA* wsadata = malloc(sizeof(WSADATA));
@@ -85,9 +102,11 @@ void server_main() {
 
     listen(server, 3);
 
-    int            pollfd_count = 1;
-    struct pollfd* pollfds      = malloc(sizeof(struct pollfd));
-    
+    int             pollfd_count = 1;
+    struct pollfd*  pollfds      = malloc(sizeof(struct pollfd));
+    clients                      = malloc(1);
+
+
     pollfds[0].fd = server;
     pollfds[0].events = POLLIN;
 
@@ -103,7 +122,7 @@ void server_main() {
             addr_len[0]                  = sizeof(struct sockaddr_in);
 
             int fd = accept(server, (struct sockaddr*)addr, addr_len);
-            
+
             printf(FMT_INFO("accepted\n"));
 
             pollfd_count++;
@@ -147,11 +166,18 @@ void server_main() {
                     if (op == OPCODE_HELLO) {
                         int has_ident    = read_bool(msgbuf);
                         nstring_t* ident = read_string(msgbuf + 1);
-                        if (has_ident) {
-                            printf(FMT_INFO("got connection from client of type \"%s\"\n"), ident->str);
-                        } else {
-                            printf(FMT_INFO("got connection from client of unknown type\n"));
-                        }
+                        client_count++;
+                        clients = realloc(clients, sizeof(void*) * client_count);
+                        struct client* c = malloc(sizeof(struct client));
+                        clients[client_count - 1] = c;
+                        c->nickname = malloc(5);
+                        
+                        strcpy(c->nickname, "anon");
+                        c->fd = pollfds[i].fd;
+                        set_nickname_t* snpacket = malloc(sizeof(set_nickname_t));
+                        snpacket->nickname = "anon";
+                        send_set_nickname(c->fd, snpacket);
+                        free(snpacket);
                     } else if (op == OPCODE_MESSAGE) {
                         nstring_t* imsg = read_string(msgbuf);
                         message_t* omsg = malloc(sizeof(message_t));
@@ -162,6 +188,8 @@ void server_main() {
                         for (int i = 1; i < pollfd_count; i++) {
                             send_message(pollfds[i].fd, omsg);
                         }
+                    } else if (op == OPCODE_SET_NICKNAME) {
+                        
                     }
 
                     free(msgbuf);
