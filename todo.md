@@ -44,7 +44,15 @@
 
 ## ./src/ui/widget.h
 
+## ./src/ui/widgets/menubar.c
+
+## ./src/ui/widgets/frame.c
+
+## ./src/ui/widgets/frame.h
+
 ## ./src/ui/widgets/textbox.c
+
+## ./src/ui/widgets/menubar.h
 
 ## ./src/ui/widgets/scrollpane.c
 
@@ -64,7 +72,7 @@
 
 ## ./src/ui/uitypes.h
 
-[66] xorg support
+[69] xorg support
 
 ## ./src/ui/util/font_search.h
 
