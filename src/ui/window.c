@@ -381,6 +381,9 @@ window_t* window_init() {
 }
 
 void window_set_type(window_t* window, int type) {
+#ifdef WIN32
+
+#else
     xcb_intern_atom_cookie_t wmtypecookie       = xcb_intern_atom(window->connection, 0, 19, "_NET_WM_WINDOW_TYPE");
     xcb_intern_atom_reply_t* wmtype             = xcb_intern_atom_reply(window->connection, wmtypecookie, 0);
     xcb_intern_atom_cookie_t wmtypedialogcookie = xcb_intern_atom(window->connection, 0, 26, "_NET_WM_WINDOW_TYPE_DIALOG");
@@ -389,9 +392,13 @@ void window_set_type(window_t* window, int type) {
     if (type == WINDOW_WM_TYPE_DIALOG) {
         xcb_change_property(window->connection, XCB_PROP_MODE_REPLACE, window->window, wmtype->atom, 4, 32, 1, &wmtypedialog->atom);
     }
+#endif
 }
 
 void window_set_size(window_t* window, int width, int height) {
+#ifdef WIN32
+
+#else
     uint16_t propd = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
     uint32_t propv[2] = {
         width,
@@ -403,6 +410,7 @@ void window_set_size(window_t* window, int width, int height) {
         window->window, 
         propd, propv
     );
+#endif
 }
 
 void window_display(window_t* window) {

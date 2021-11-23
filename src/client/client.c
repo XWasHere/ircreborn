@@ -33,6 +33,7 @@
 #include <networking/networking.h>
 #include <networking/types.h>
 #include <client/set_nickname_dialog.h>
+#include <client/license_dialog.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -70,6 +71,7 @@ widget_t* stripw;
 menubar_t* stripe;
 menu_t* filemenu;
 menu_t* servermenu; 
+menu_t* helpmenu;
 window_t* main_window;
 widget_t* serverlistw;
 scroll_pane_t* serverliste;
@@ -345,7 +347,9 @@ void client_main() {
     menu_add_button(filemenu, "exit", exit_button_clicked);
     servermenu = menubar_add_menu(stripw, "server");
     menu_add_button(servermenu, "set nickname", open_set_nickname_dialog);
-    
+    helpmenu  = menubar_add_menu(stripw, "help");
+    menu_add_button(helpmenu, "license", open_license_dialog);    
+
     serverlistw = scroll_pane_init();
     serverliste = serverlistw->extra_data;
     serverlistcollapsebtnw = button_init();

@@ -16,9 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef IRCREBORN_CLIENT_SET_NICKNAME_DIALOG
-#define IRCREBORN_CLIENT_SET_NICKNAME_DIALOG
+#ifndef IRCREBORN_LICENSE_DIALOG_H
+#define IRCREBORN_LICENSE_DIALOG_H
 
-void open_set_nickname_dialog();
+void open_license_dialog();
 
 #endif

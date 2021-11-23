@@ -15,6 +15,7 @@ OBJS = \
 	build/server/server.o \
 	build/client/client.o \
 	build/client/set_nickname_dialog.o \
+	build/client/license_dialog.o \
 	build/common/args.o \
 	build/common/util.o \
 	build/ui/window.o \
@@ -29,7 +30,8 @@ OBJS = \
 	build/config_parser/config.o \
 	build/networking/networking.o \
 	build/networking/types.o \
-	build/tests/tests.o
+	build/tests/tests.o \
+	build/compat/stdio.o
 
 DOCS = \
 	build/docs/ircreborn.info
@@ -66,6 +68,7 @@ binit:
 	mkdir -p build/tests
 	mkdir -p build/tests/tests
 	mkdir -p build/docs
+	mkdir -p build/compat
 
 ircreborn: binit  $(OBJS)
 	$(CC) $(CC_ARGS) $(OBJS) -o ircreborn $(CC_FARGS) 
