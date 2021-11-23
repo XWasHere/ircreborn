@@ -42,6 +42,7 @@ widget_t* widget_init() {
     widget->keypress = &__DEFAULT_keypress;
     widget->x = 0;
     widget->y = 0;
+    widget->z = 0;
     
     return widget;
 }

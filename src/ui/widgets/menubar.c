@@ -31,7 +31,7 @@ void menubar_draw(widget_t* widget, window_t* window) {
     }
 }
 
-void menubar_clicked(widget_t* widget, window_t* window, int x, int y) {
+int menubar_clicked(widget_t* widget, window_t* window, int x, int y) {
     menubar_t* menubar = widget->extra_data;
 
     window_paint(window);
@@ -39,14 +39,17 @@ void menubar_clicked(widget_t* widget, window_t* window, int x, int y) {
     if (y < 20) {
         for (int i = 0; i < menubar->menu_count; i++) menubar->menus[i]->is_open = 0;        
         menubar->container->clicked(menubar->container, window, x, y);
+        return 1;
     } else {
         for (int i = 0; i < menubar->menu_count; i++) {
             menu_t* menu = menubar->menus[i];
             if (menu->is_open) {
                 menu->container->clicked(menu->container, window, x, y);
                 for (int i = 0; i < menubar->menu_count; i++) menubar->menus[i]->is_open = 0;
+                return 1;
             }
         }
+        return 0;
     }
 }
 
@@ -78,6 +81,9 @@ void menubar_button_clicked(widget_t* widget, window_t* window) {
     menubar_t* menubar = menu->widget->extra_data_2;
     menu->is_open = 1;
     menu->container->draw(menu->container, window);
+    
+    // this stupid hack makes sure that the menu closes if the user
+    // clicks elsewhere
     menubar->widget->height = 10000;
 }
 

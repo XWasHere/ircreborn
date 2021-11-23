@@ -75,6 +75,10 @@ button_t* serverlistcollapsebtne;
 widget_t* messagesw;
 scroll_pane_t* messagese;
 textbox_t* messageboxe;
+widget_t* dialogthingw;
+frame_t* dialogthinge;
+widget_t* dialogbgw;
+button_t* dialogbge;
 
 // server connection
 int sc;
@@ -316,8 +320,9 @@ void client_main() {
 
     main_window = window_init();
     
-    stripw = menubar_init();
-    stripe = stripw->extra_data;
+    stripw    = menubar_init();
+    stripe    = stripw->extra_data;
+    stripw->z = 1000;    
     
     filemenu   = menubar_add_menu(stripw, "file");
     menu_add_button(filemenu, "exit", exit_button_clicked);

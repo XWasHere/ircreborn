@@ -40,6 +40,7 @@ struct __widget {
     // position
     int x;
     int y;
+    int z;
 
     // size
     int width;
@@ -56,11 +57,11 @@ struct __widget {
 
     // draw function prototype (pretend window is window_t*)
     void (*draw)(widget_t* widget, window_t* window);
-    void (*clicked)(widget_t* widget, window_t* window, int x, int y);
+    int  (*clicked)(widget_t* widget, window_t* window, int x, int y);
     void (*mousein)(widget_t* widget, window_t* window);
     void (*mouseout)(widget_t* widget, window_t* window);
     void (*mousedown)(widget_t* widget, window_t* window, int x, int y);
-    void (*mouseup)(widget_t* widget, window_t* window, int x, int y);
+    int  (*mouseup)(widget_t* widget, window_t* window, int x, int y);
     void (*mousemove)(widget_t* widget, window_t* window, int x, int y);
     void (*keypress)(widget_t* widget, window_t* window, uint32_t key);
 };

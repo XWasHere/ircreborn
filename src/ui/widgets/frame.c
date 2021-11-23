@@ -32,7 +32,7 @@ void frame_draw(widget_t* widget, window_t* window) {
     }
 }
 
-void frame_click(widget_t* widget, window_t* window, int x, int y) {
+int frame_click(widget_t* widget, window_t* window, int x, int y) {
     frame_t* frame = widget->extra_data;
 
     for (int i = 0; i < frame->item_count; i++) {
@@ -42,6 +42,8 @@ void frame_click(widget_t* widget, window_t* window, int x, int y) {
             target->clicked(target, window, x, y);
         }
     }
+
+    return 1;
 }
 
 widget_t* frame_init() {

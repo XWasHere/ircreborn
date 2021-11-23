@@ -32,7 +32,7 @@
 void scroll_pane_draw(widget_t*, window_t*);
 void scroll_pane_mousein(widget_t*, window_t*);
 void scroll_pane_mouseout(widget_t*, window_t*);
-void scroll_pane_clicked(widget_t*, window_t*, int, int);
+int  scroll_pane_clicked(widget_t*, window_t*, int, int);
 void scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y);
 void scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y);
 void scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y);
@@ -211,7 +211,7 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
 #endif
 }
 
-void scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
+int scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
     scroll_pane_t* pane = widget->extra_data;
 
     if (widget->x + widget->width - 20 < x) {
@@ -231,6 +231,8 @@ void scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
             }
         }
     }
+
+    return 1;
 }
 
 void scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y) {

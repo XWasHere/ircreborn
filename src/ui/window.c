@@ -44,6 +44,44 @@ window_t* resolve_window(HWND a) {
 }
 #endif
 
+// this is bad. really bad.
+widget_t** window_sort_z(window_t* window) {
+    widget_t** sorted   = malloc(window->widget_count * sizeof(void*));
+    widget_t** unsorted = malloc(window->widget_count * sizeof(void*));
+    int        ulen     = window->widget_count;
+    int        slen     = 0;
+
+    memcpy(unsorted, window->widgets, window->widget_count * sizeof(void*));
+
+    while (ulen > 0) {
+        widget_t*  hi = unsorted[0];
+        widget_t** nunsorted = malloc(window->widget_count * sizeof(void*));
+        int        nlen = 0;
+
+        for (int i = 0; i < ulen; i++) {        
+            if (hi->z < unsorted[i]->z) {
+                hi = unsorted[i];
+            }
+        }
+
+        sorted[slen] = hi;
+        
+        for (int i = 0; i < ulen; i++) {
+            if (unsorted[i] != hi) {
+                nunsorted[nlen] = unsorted[i];
+                nlen++;
+            }
+        }
+
+        ulen--;
+        slen++;
+
+        unsorted = nunsorted;
+    }
+
+    return sorted;
+}
+
 void window_close(window_t* window) {
     window->should_exit = 1;
 }
@@ -68,12 +106,23 @@ void window_left_mouse_down(window_t* window, int x, int y) {
 void window_left_mouse_up(window_t* window, int x, int y) {
     window->mouse_left_down = 0;
 
+    int clickdone = 0;
+    int updone    = 0;
+
+    widget_t** widgets = window_sort_z(window);
+
     // this is a click B)
     for (int i = 0; i < window->widget_count; i++) {
-        widget_t* widget = window->widgets[i];
+        widget_t* widget = widgets[i];
         if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
-            widget->mouseup(widget, window, x, y);
-            widget->clicked(widget, window, x, y);
+            if (!updone) {
+                updone = widget->mouseup(widget, window, x, y);
+            }
+            if (!clickdone) {
+                clickdone = widget->clicked(widget, window, x, y);
+            }
+
+            printf("%i\n", clickdone);
         }
     }
 }
@@ -477,6 +526,10 @@ void window_add_widget(window_t* window, widget_t* widget) {
     window->widgets[window->widget_count] = widget;
     widget->hovered = 0;
     window->widget_count++;    
+}
+
+void window_remove_widget(window_t* window, widget_t* widget) {
+
 }
 
 void window_set_focus(window_t* window, widget_t* widget) {

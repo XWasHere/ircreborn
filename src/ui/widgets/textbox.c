@@ -34,8 +34,6 @@ void __DEFAULT_textbox_submit(widget_t* a, window_t* b, char* c, int d) {};
 void textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
     textbox_t* tb = widget->extra_data;
 
-    printf("%x\n", key);
-
 #ifdef WIN32
     if (key == 8) {
 #else
@@ -73,8 +71,9 @@ void textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
     widget->draw(widget, window);
 }
 
-void textbox_clicked(widget_t* widget, window_t* window, int x, int y) {
+int textbox_clicked(widget_t* widget, window_t* window, int x, int y) {
     window_set_focus(window, widget);
+    return 1;
 }
 
 void textbox_draw(widget_t* widget, window_t* window) {
