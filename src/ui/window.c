@@ -355,6 +355,7 @@ window_t* window_init() {
     fr->want_spacing = 1;
     fr->spacing      = FSEARCH_SPACING_MONO;
     window->main_font = request_font(window->connection, fr);
+    
     free(fr);
 #endif
 
@@ -362,18 +363,46 @@ window_t* window_init() {
         windows = malloc(sizeof(void*));
     }
 
+    window->height = 0;
+    window->width = 0;
+    
     window->widget_count = 0;
     window->widgets = malloc(1);
     window->should_exit = 0;
     window->handle_bg_tasks = &__DEFAULT_window_handle_bg_tasks;
     window->resized = __DEFAULT_window_handle_resize;
-    
+
     windows = realloc(windows, sizeof(void*) * (window_count + 1));
 
     windows[window_count] = window;
     window_count++;
 
     return window;
+}
+
+void window_set_type(window_t* window, int type) {
+    xcb_intern_atom_cookie_t wmtypecookie       = xcb_intern_atom(window->connection, 0, 19, "_NET_WM_WINDOW_TYPE");
+    xcb_intern_atom_reply_t* wmtype             = xcb_intern_atom_reply(window->connection, wmtypecookie, 0);
+    xcb_intern_atom_cookie_t wmtypedialogcookie = xcb_intern_atom(window->connection, 0, 26, "_NET_WM_WINDOW_TYPE_DIALOG");
+    xcb_intern_atom_reply_t* wmtypedialog       = xcb_intern_atom_reply(window->connection, wmtypedialogcookie, 0);
+    
+    if (type == WINDOW_WM_TYPE_DIALOG) {
+        xcb_change_property(window->connection, XCB_PROP_MODE_REPLACE, window->window, wmtype->atom, 4, 32, 1, &wmtypedialog->atom);
+    }
+}
+
+void window_set_size(window_t* window, int width, int height) {
+    uint16_t propd = XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT;
+    uint32_t propv[2] = {
+        width,
+        height
+    };
+
+    xcb_configure_window(
+        window->connection, 
+        window->window, 
+        propd, propv
+    );
 }
 
 void window_display(window_t* window) {

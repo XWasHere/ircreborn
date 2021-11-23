@@ -42,6 +42,8 @@ int set_nickname_dialog_ok_clicked() {
 
 void open_set_nickname_dialog() {
     dialog = window_init();
+    
+    window_set_type(dialog, WINDOW_WM_TYPE_DIALOG);
 
     if (sc_connected) {
         textw   = label_init();
@@ -89,6 +91,8 @@ void open_set_nickname_dialog() {
         window_add_widget(dialog, entryw);
         window_add_widget(dialog, okw);
         window_add_widget(dialog, cancelw);
+
+        window_set_size(dialog, 340, 100);
     } else {
         printf(FMT_WARN("connect to a server before setting your nickname you phycopath\n"));
 
@@ -117,6 +121,8 @@ void open_set_nickname_dialog() {
         
         window_add_widget(dialog, textw);
         window_add_widget(dialog, okw);
+
+        window_set_size(dialog, 320, 70);
     }
     
     window_display(dialog);
