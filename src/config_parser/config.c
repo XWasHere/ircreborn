@@ -52,16 +52,28 @@ int test_char(char c, int consume) {
 }
 
 int test_str(char* str, int consume) {
+
     int l = strlen(str);
     char* data = malloc(l + 1);
     memset(data, 0, l + 1);
 
+#ifdef WIN32
+    int pos = lseek(parse_fd, 0, SEEK_CUR);
+    lseek(parse_fd, parse_pos, SEEK_SET);
+    read(parse_fd, data, l);
+    lseek(parse_fd, pos, SEEK_SET);
+#else
     pread(parse_fd, data, l, parse_pos);
+#endif
 
     if (STREQ(str, data)) {
         if (consume) parse_pos += l;
+        free(data);
         return 1;
-    } else return 0;
+    } else {
+        free(data);
+        return 0;
+    }
 }
 
 void consume_whitespace() {
@@ -93,7 +105,6 @@ char* read_string() {
         }
 
         get_char(1);
-
         return str;
     }
 
@@ -128,10 +139,10 @@ client_config_t* parse_client_config(int fd) {
     config->server_count = 0;
     config->servers = malloc(1);
     config->nickname_width = 320;
-    
+
     parse_pos = 0;
     parse_fd  = fd;
-
+    
     while (!is_done()) {
         consume_whitespace();
         if (test_str("server", 1)) {

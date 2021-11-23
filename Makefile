@@ -31,7 +31,7 @@ OBJS = \
 	build/networking/networking.o \
 	build/networking/types.o \
 	build/tests/tests.o \
-	build/compat/stdio.o
+	build/compat/compat.o
 
 DOCS = \
 	build/docs/ircreborn.info
