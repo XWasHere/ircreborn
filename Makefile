@@ -14,6 +14,7 @@ OBJS = \
 	build/main.o \
 	build/server/server.o \
 	build/client/client.o \
+	build/client/set_nickname_dialog.o \
 	build/common/args.o \
 	build/common/util.o \
 	build/ui/window.o \

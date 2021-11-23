@@ -34,6 +34,7 @@ struct client_config_server {
 };
 
 struct client_config_file {
+    int                      nickname_width;
     int                      server_count;
     client_config_server_t** servers;
 };

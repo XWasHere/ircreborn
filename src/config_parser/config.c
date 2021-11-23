@@ -127,6 +127,7 @@ client_config_t* parse_client_config(int fd) {
     
     config->server_count = 0;
     config->servers = malloc(1);
+    config->nickname_width = 320;
     
     parse_pos = 0;
     parse_fd  = fd;
@@ -159,6 +160,9 @@ client_config_t* parse_client_config(int fd) {
                     }
                 }
             }
+        } else if (test_str("nick_width", 1)) {
+            consume_whitespace();
+            config->nickname_width = read_int();
         }
     }
 

@@ -21,4 +21,7 @@
 
 void client_main();
 
+extern int sc_connected;
+extern int sc;
+
 #endif

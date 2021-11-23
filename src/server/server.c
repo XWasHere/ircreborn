@@ -38,19 +38,87 @@
 
 struct client {
     int fd;
-
     int has_nickname;
     char* nickname;
 };
 
+int             pollfd_count = 0;
+struct pollfd*  pollfds;
 int             client_count = 0;
 struct client** clients;
 
-struct client* find_client(int fd) {
+int find_client_id(int fd) {
     for (int i = 0; i < client_count; i++) {
-        if (clients[i]->fd == fd) return clients[i];
+        if (clients[i]->fd == fd) return i;
     }
     return -1;
+}
+
+int find_client_id_from_client(struct client* client) {
+    for (int i = 0; i < client_count; i++) {
+        if (clients[i] == client) return i;
+    }
+    return -1;
+}
+
+struct client* find_client(int fd) {
+    int i = find_client_id(fd);
+    if (i != -1) {
+        return clients[i];
+    }
+    return -1;
+}
+
+void send_client_message(struct client* client, char* msg, char* name) {
+    message_t* message = malloc(sizeof(message_t));
+
+    message->message = msg;
+    message->name    = name;
+
+    send_message(client->fd, message);
+
+    free(message);
+}
+
+void send_all_message(char* msg, char* name) {
+    for (int i = 0; i < client_count; i++) {
+        send_client_message(clients[i], msg, name);
+    }
+}
+
+void disconnect_client(struct client* client, int send_message, int automatic, int has_reason, char* reason) {
+    int cid = find_client_id_from_client(client);
+    
+    for (int i = cid; i < client_count - 1; i++) {
+        clients[i] = clients[i + 1];
+    }
+
+    if (send_message) {
+        char* buf = malloc(strlen("\"")+strlen(client->nickname)+automatic?strlen("\" auto disconnected by server"):strlen("\" disconnected")+has_reason?strlen(" [ ")+strlen(reason)+strlen(" ] "):0+1);
+        sprintf(
+            buf,
+            "\"%s\" %s%s%s%s", 
+            client->nickname,
+            automatic?"auto-disconnected by server":"disconnected",
+            has_reason?" [ ":"",
+            has_reason?reason:"",
+            has_reason?" ]":"");
+        send_all_message(buf, "==");
+        free(buf);
+    }
+
+    client_count--;
+}
+
+void disconnect_socket(int fd, int send_message, int automatic, int has_reason, char* reason) {
+    int cid = find_client_id(fd);
+    if (cid != -1) {
+        disconnect_client(clients[cid], send_message, automatic, has_reason, reason);
+    }
+    for (int i = fd; i < pollfd_count - 1; i++) {
+        pollfds[i] = pollfds[i + 1];
+    }
+    pollfd_count--;
 }
 
 void server_main() {
@@ -102,10 +170,9 @@ void server_main() {
 
     listen(server, 3);
 
-    int             pollfd_count = 1;
-    struct pollfd*  pollfds      = malloc(sizeof(struct pollfd));
-    clients                      = malloc(1);
-
+    pollfd_count = 1;
+    pollfds      = malloc(sizeof(struct pollfd));
+    clients      = malloc(1);
 
     pollfds[0].fd = server;
     pollfds[0].events = POLLIN;
@@ -134,13 +201,9 @@ void server_main() {
         for (int i = 1; i < pollfd_count; i++) {
             if (pollfds[i].revents & POLLERR) {
                 printf(FMT_INFO("error\n"));
-                goto pollhup_handler;
+                disconnect_socket(pollfds[i].fd, 1, 1, 1, "fatal error");
             } else if (pollfds[i].revents & POLLHUP) {
-                pollhup_handler:;
-                for (int ii = i; ii < pollfd_count - 1; ii++) {
-                    pollfds[ii] = pollfds[ii + 1];
-                }
-                pollfd_count--;
+                disconnect_socket(pollfds[i].fd, 1, 1, 1, "connection lost");
             } else if (pollfds[i].revents & POLLIN) {
                 char c;
                 char* msgbuf = 0;
@@ -153,7 +216,7 @@ void server_main() {
                 if (recv(pollfds[i].fd, header, 8, 0) == 0) {
                     printf(FMT_WARN("got 0 bytes of data. assuming broken connection. kicking\n"));
                     close(pollfds[i].fd);
-                    goto pollhup_handler;
+                    disconnect_socket(pollfds[i].fd, 1, 1, 1, "read error");
                 } else {
                     op     = read_int(header);
                     buflen = read_int(header + 4);
@@ -179,19 +242,23 @@ void server_main() {
                         send_set_nickname(c->fd, snpacket);
                         free(snpacket);
                     } else if (op == OPCODE_MESSAGE) {
+                        struct client* c = find_client(pollfds[i].fd);
                         nstring_t* imsg = read_string(msgbuf);
-                        message_t* omsg = malloc(sizeof(message_t));
-
-                        omsg->message = imsg->str;
-
-                        // replicate
-                        for (int i = 1; i < pollfd_count; i++) {
-                            send_message(pollfds[i].fd, omsg);
-                        }
+                        send_all_message(imsg->str, c->nickname);
                     } else if (op == OPCODE_SET_NICKNAME) {
+                        struct client* c = find_client(pollfds[i].fd);
                         nstring_t* nick = read_string(msgbuf);
+                        set_nickname_t* packet = malloc(sizeof(set_nickname_t));
 
-                        printf("client tried to set nickname to %s\n", nick->str);
+                        printf(FMT_INFO("client set nickname %s -> %s\n"), c->nickname, nick->str);
+
+                        c->nickname = nick->str;
+                        packet->nickname = c->nickname;
+
+                        send_set_nickname(c->fd, packet);
+
+                        free(packet);
+                        free(nick);
                     }
 
                     free(msgbuf);

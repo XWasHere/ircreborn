@@ -29,6 +29,7 @@ struct p_hello {
 typedef struct p_message message_t;
 struct p_message {
     char* message;
+    char* name;
 };
 
 typedef struct p_set_nickname set_nickname_t;

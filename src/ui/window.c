@@ -35,6 +35,7 @@ window_t** windows      = 0;
 int        window_count = 0;
 
 void __DEFAULT_window_handle_bg_tasks(window_t* a) {};
+void __DEFAULT_window_handle_resize(window_t* a) {};
 
 #ifdef WIN32
 window_t* resolve_window(HWND a) {
@@ -110,9 +111,10 @@ void window_left_mouse_up(window_t* window, int x, int y) {
     int updone    = 0;
 
     widget_t** widgets = window_sort_z(window);
+    int        widget_count = window->widget_count;
 
     // this is a click B)
-    for (int i = 0; i < window->widget_count; i++) {
+    for (int i = 0; i < widget_count; i++) {
         widget_t* widget = widgets[i];
         if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
             if (!updone) {
@@ -121,8 +123,6 @@ void window_left_mouse_up(window_t* window, int x, int y) {
             if (!clickdone) {
                 clickdone = widget->clicked(widget, window, x, y);
             }
-
-            printf("%i\n", clickdone);
         }
     }
 }
@@ -366,6 +366,7 @@ window_t* window_init() {
     window->widgets = malloc(1);
     window->should_exit = 0;
     window->handle_bg_tasks = &__DEFAULT_window_handle_bg_tasks;
+    window->resized = __DEFAULT_window_handle_resize;
     
     windows = realloc(windows, sizeof(void*) * (window_count + 1));
 

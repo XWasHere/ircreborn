@@ -26,11 +26,13 @@
 #include <ui/widgets/scrollpane.h>
 #include <ui/widgets/textbox.h>
 #include <ui/widgets/label.h>
+#include <ui/widgets/frame.h>
 #include <common/util.h>
 #include <common/args.h>
 #include <config_parser/config.h>
 #include <networking/networking.h>
 #include <networking/types.h>
+#include <client/set_nickname_dialog.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -60,6 +62,7 @@ int             server_count;
 char**          labels;
 int             label_count;
 
+client_config_t* config;
 
 widget_t* messages_thing;
 widget_t* messagebox;
@@ -177,6 +180,8 @@ void message_submit(widget_t* tb, window_t* window, char* text, int len) {
         message_t* msg = malloc(sizeof(message_t));
 
         msg->message = malloc(len + 1);
+        msg->name    = ""; // ignored
+
         memset(msg->message, 0,    len + 1);
         memcpy(msg->message, text, len);
 
@@ -187,19 +192,34 @@ void message_submit(widget_t* tb, window_t* window, char* text, int len) {
     }
 }
 
-void client_add_message(window_t* window, char* message) {
-    widget_t* label = label_init();
-    label_t*  lab   = label->extra_data;
+void client_add_message(window_t* window, char* message, char* name) {
+    widget_t* msglw  = label_init();
+    widget_t* namelw = label_init();
 
-    lab->text = message;
-    lab->len = strlen(message);
+    label_t*  msgle  = msglw->extra_data;
+    label_t*  namele = namelw->extra_data;
+
+
+    msglw->width = strlen(message) * 10;
+    msglw->height = 20;
     
-    label->width = strlen(message) * 10;
-    label->height = 20;
+    namelw->width = config->nickname_width;
+    namelw->height = 20;
 
-    scroll_pane_item_t* spi = scroll_pane_add_item(messages_thing, label);
-    spi->x = 0;
-    spi->y = label_count * 20;
+    msgle->text = message;
+    msgle->len = strlen(message);
+    
+    namele->text = name;
+    namele->len = strlen(name);
+
+    scroll_pane_item_t* msgli  = scroll_pane_add_item(messages_thing, msglw);
+    scroll_pane_item_t* nameli = scroll_pane_add_item(messages_thing, namelw);
+
+    msgli->x = config->nickname_width;
+    msgli->y = label_count * 20;
+
+    nameli->x = 0;
+    nameli->y = label_count * 20;
 
     label_count++;
 
@@ -236,16 +256,17 @@ void client_run_tasks(window_t* window) {
             recv(sc, body, len, 0);
 
             if (op == OPCODE_MESSAGE) {
-                nstring_t* msg = read_string(body);
+                nstring_t* msg  = read_string(body);
+                nstring_t* name = read_string(body + 4 + msg->len); 
 
-                client_add_message(window, msg->str);
+                client_add_message(window, msg->str, name->str);
             } else if (op == OPCODE_SET_NICKNAME) {
                 nstring_t* nick = read_string(body);
                 
                 char* notify_message = malloc(sizeof("you are now known as \"") - 1 + nick->len + sizeof("\""));
                 sprintf(notify_message, "you are now known as \"%s\"", nick->str);
 
-                client_add_message(window, notify_message);
+                client_add_message(window, notify_message, " == ");
             }
         }
     }
@@ -284,10 +305,6 @@ void client_recalculate_sizes(window_t* window) {
 */
 }
 
-void open_set_nickname_dialog() {
-    printf(FMT_INFO("if i wasn't lazy, this would set your nickname\n"));
-}
-
 void client_main() {
 #ifdef WIN32
     wsadata = malloc(sizeof(WSADATA));
@@ -313,7 +330,7 @@ void client_main() {
 
     int configfd = open(config_path, O_RDONLY | O_CREAT);
     chmod(config_path, S_IWUSR | S_IRUSR);
-    client_config_t* config = cfgparser_parse_client_config(configfd);
+    config = cfgparser_parse_client_config(configfd);
     close(configfd);
 
     servers = malloc(1);
