@@ -1,6 +1,10 @@
 # todo
 
+## ./src/client/set_nickname_dialog.h
+
 ## ./src/client/client.c
+
+## ./src/client/set_nickname_dialog.c
 
 ## ./src/client/client.h
 
@@ -72,7 +76,7 @@
 
 ## ./src/ui/uitypes.h
 
-[69] xorg support
+[70] xorg support
 
 ## ./src/ui/util/font_search.h
 
