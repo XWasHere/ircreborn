@@ -93,7 +93,7 @@ void disconnect_client(struct client* client, int send_message, int automatic, i
     }
 
     if (send_message) {
-        char* buf = malloc(strlen("\"")+strlen(client->nickname)+automatic?strlen("\" auto disconnected by server"):strlen("\" disconnected")+has_reason?strlen(" [ ")+strlen(reason)+strlen(" ] "):0+1);
+        char* buf = malloc(SSTRLEN("\"")+strlen(client->nickname)+automatic?SSTRLEN("\" auto disconnected by server"):SSTRLEN("\" disconnected")+has_reason?SSTRLEN(" [ ")+strlen(reason)+SSTRLEN(" ] "):0+1);
         sprintf(
             buf,
             "\"%s\" %s%s%s%s", 

@@ -328,7 +328,7 @@ window_t* window_init() {
         XCB_ATOM_WM_NAME,
         XCB_ATOM_STRING,
         8,
-        strlen("IRCReborn"),
+        SSTRLEN("IRCReborn"),
         "IRCReborn"
     );
 
@@ -339,7 +339,7 @@ window_t* window_init() {
         XCB_ATOM_WM_CLASS,
         XCB_ATOM_STRING,
         8,
-        strlen("IRCReborn"),
+        SSTRLEN("IRCReborn"),
         "IRCReborn"
     );
 

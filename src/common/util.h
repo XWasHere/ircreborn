@@ -26,7 +26,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#define SSTRLEN(a) (sizeof(a) - 1)
 #define STREQ(a, b) (strcmp(a, b) == 0)
+#define STRNE(a, b) (!(STREQ(a, b)))
 
 #define PINFO(format, ...) printf(" == | " format, ##__VA_ARGS__)
 #define PWARN(format, ...) printf(" !  | " format, ##__VA_ARGS__)

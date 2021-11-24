@@ -264,7 +264,7 @@ void client_run_tasks(window_t* window) {
             } else if (op == OPCODE_SET_NICKNAME) {
                 nstring_t* nick = read_string(body);
                 
-                char* notify_message = malloc(sizeof("you are now known as \"") - 1 + nick->len + sizeof("\""));
+                char* notify_message = malloc(SSTRLEN("you are now known as \"") + nick->len + sizeof("\""));
                 sprintf(notify_message, "you are now known as \"%s\"", nick->str);
 
                 client_add_message(window, notify_message, " == ");
