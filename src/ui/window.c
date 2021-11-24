@@ -425,7 +425,7 @@ void window_display(window_t* window) {
 
     while (ret = GetMessage(msg, 0, 0, 0)) {
         if (ret == -1) {
-            printf(FMT_FATL("something broke\n"));
+            PFATL("something broke\n");
         } else {
             TranslateMessage(msg);
             DispatchMessage(msg);
@@ -473,7 +473,7 @@ void window_display(window_t* window) {
                     if (type == delete->atom) {
                         window_close(window);
                     } else {
-                        printf(FMT_WARN("got unknown message from the window manager, ignoring (%i)\n"), type);
+                        PWARN("got unknown message from the window manager, ignoring (%i)\n", type);
                     }
 
                     break;
@@ -494,7 +494,7 @@ void window_display(window_t* window) {
                     if (event->detail == XCB_BUTTON_INDEX_1) {
                         window_left_mouse_down(window, event->event_x, event->event_y);
                     } else {
-                        printf(FMT_WARN("got unknown button press type %i\n"), event->detail);
+                        PWARN("got unknown button press type %i\n", event->detail);
                     }
                     
                     break;
@@ -505,7 +505,7 @@ void window_display(window_t* window) {
                     if (event->detail == XCB_BUTTON_INDEX_1) {
                         window_left_mouse_up(window, event->event_x, event->event_y);
                     } else {
-                        printf(FMT_WARN("got unknown button press type %i\n"), event->detail);
+                        PWARN("got unknown button press type %i\n", event->detail);
                     }
 
                     break;
@@ -542,7 +542,7 @@ void window_display(window_t* window) {
                     break;
                 }
                 default: {
-                    printf(FMT_WARN("got unknown message from xcb %i\n"), e->response_type & ~0x80);
+                    PWARN("got unknown message from xcb %i\n", e->response_type & ~0x80);
                     break;
                 }
             }

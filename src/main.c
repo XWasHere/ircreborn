@@ -27,16 +27,16 @@
 int main(int argc, char** argv) {
     parse_args(argc, argv);
 
-    printf(FMT_INFO("%s v1.0.0\n"), args_exec_name);
+    PINFO("%s v1.0.0\n", args_exec_name);
     
     if (args_is_server) {
-        printf(FMT_INFO("starting server\n"));
+        PINFO("starting server\n");
         server_main();
     } else if (args_test) {
-        printf(FMT_INFO("running ircreborn tests\n"));
+        PINFO("running ircreborn tests\n");
         run_tests();
     } else {
-        printf(FMT_INFO("starting client\n"));
+        PINFO("starting client\n");
         client_main();
     }
 }

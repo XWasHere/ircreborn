@@ -143,10 +143,10 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                         config->server_count++;
                         config->servers = realloc(config->servers, config->server_count * sizeof(void*));
                         config->servers[config->server_count - 1] = server;
-                        printf(FMT_INFO("registered server \"%s:%i\" as \"%s\"\n"), server->host, server->port, server->name);
+                        PINFO("registered server \"%s:%i\" as \"%s\"\n", server->host, server->port, server->name);
                         break;
                     } else {
-                        printf(FMT_FATL("invalid config\n"));
+                        PFATL("invalid config\n");
                         exit(1);
                     }
                 }

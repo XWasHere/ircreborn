@@ -24,13 +24,14 @@
 #endif 
 
 #include <string.h>
+#include <stdio.h>
 
 #define STREQ(a, b) (strcmp(a, b) == 0)
 
-#define FMT_INFO(a) " == | " a
-#define FMT_WARN(a) " !  | " a
-#define FMT_FATL(a) " !! | " a // i know its spelled fatal.
-#define FMT_CONT(a) "    | " a
+#define PINFO(format, ...) printf(" == | " format, ##__VA_ARGS__)
+#define PWARN(format, ...) printf(" !  | " format, ##__VA_ARGS__)
+#define PFATL(format, ...) printf(" !! | " format, ##__VA_ARGS__) // i know its spelled fatal.
+#define PCONT(format, ...) printf("    | " format, ##__VA_ARGS__)
 
 char* format_last_error();
 char* format_error(int errorcode);

@@ -92,26 +92,26 @@ int sc_connected;
 int nextpos = 0;
 
 void exit_button_clicked() {
-    printf(FMT_INFO("user requested exit. goodbye\n"));
+    PINFO("user requested exit. goodbye\n");
     exit(0);
 }
 
 void server_list_collapse_button_clicked(widget_t* widget, window_t* window, int x, int y) {
-    printf(FMT_INFO("server list collapsed\n"));
+    PINFO("server list collapsed\n");
 }
 
 void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
-            printf(FMT_INFO("connecting to server %s\n"), servers[i]->name);
+            PINFO("connecting to server %s\n", servers[i]->name);
             
             if ((sc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
                 sc = 0;
 
 #ifdef WIN32
-                printf(FMT_FATL("socket(): %i\n"), WSAGetLastError());
+                PFATL("socket(): %i\n", WSAGetLastError());
 #else
-                printf(FMT_FATL("%s\n"), format_last_error());
+                PFATL("%s\n", format_last_error());
 #endif
                 return;
             }
@@ -127,9 +127,9 @@ void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
                 sc = 0;
 
 #ifdef WIN32
-                printf(FMT_FATL("connect(): %s"), format_error(WSAGetLastError()));
+                PFATL("connect(): %s", format_error(WSAGetLastError()));
 #else
-                printf(FMT_FATL("%s\n"), format_last_error());
+                PFATL("%s\n", format_last_error());
 #endif
 
                 return;
@@ -310,8 +310,8 @@ void client_main() {
 #ifdef WIN32
     wsadata = malloc(sizeof(WSADATA));
     if (WSAStartup(MAKEWORD(2,2), wsadata)) {
-        printf(FMT_FATL("failed to start winsock, aborting\n"));
-        printf(FMT_FATL("%s"), format_error(WSAGetLastError()));
+        PFATL("failed to start winsock, aborting\n");
+        PFATL("%s", format_error(WSAGetLastError()));
         exit(1);
     }
 #endif
@@ -327,7 +327,7 @@ void client_main() {
         strcat(config_path, "/.ircreborn/client");
     }
 
-    printf(FMT_INFO("reading config from %s\n"), config_path);
+    PINFO("reading config from %s\n", config_path);
 
     int configfd = open(config_path, O_RDONLY | O_CREAT);
     chmod(config_path, S_IWUSR | S_IRUSR);

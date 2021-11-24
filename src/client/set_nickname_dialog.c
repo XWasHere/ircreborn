@@ -112,7 +112,7 @@ void open_set_nickname_dialog() {
 
         window_set_size(dialog, 340, 100);
     } else {
-        printf(FMT_WARN("connect to a server before setting your nickname you phycopath\n"));
+        PWARN("connect to a server before setting your nickname you phycopath\n");
 
         textw   = label_init();
         okw     = button_init();
