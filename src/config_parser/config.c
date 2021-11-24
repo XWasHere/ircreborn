@@ -22,49 +22,29 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define get_char            cfgparser_get_char
-#define test_char           cfgparser_test_char
-#define test_str            cfgparser_test_str
-#define consume_whitespace  cfgparser_consume_whitespace
-#define is_done             cfgparser_is_done
-#define read_string         cfgparser_read_string
-#define read_int            cfgparser_read_int
-#define parse_client_config cfgparser_parse_client_config
-#define parse_server_config cfgparser_parse_server_config
-#define parse_pos           cfgparser_parse_pos
-#define parse_fd            cfgparser_parse_fd
-
 int parse_pos;
 int parse_fd;
 
-char get_char(int consume) {
+static char get_char(int consume) {
     char data;
     if (pread(parse_fd, &data, 1, parse_pos) == 0) return -1;
     if (consume) parse_pos++;
     return data;
 }
 
-int test_char(char c, int consume) {
+static int test_char(char c, int consume) {
     if (get_char(0) == c) {
         if (consume) parse_pos++;
         return 1;
     } else return 0;
 }
 
-int test_str(char* str, int consume) {
-
+static int test_str(char* str, int consume) {
     int l = strlen(str);
     char* data = malloc(l + 1);
     memset(data, 0, l + 1);
 
-#ifdef WIN32
-    int pos = lseek(parse_fd, 0, SEEK_CUR);
-    lseek(parse_fd, parse_pos, SEEK_SET);
-    read(parse_fd, data, l);
-    lseek(parse_fd, pos, SEEK_SET);
-#else
     pread(parse_fd, data, l, parse_pos);
-#endif
 
     if (STREQ(str, data)) {
         if (consume) parse_pos += l;
@@ -76,7 +56,7 @@ int test_str(char* str, int consume) {
     }
 }
 
-void consume_whitespace() {
+static void consume_whitespace() {
     while (1) {
         if (test_char('\t', 1)) {}
         else if (test_char(' ', 1)) {}
@@ -86,13 +66,13 @@ void consume_whitespace() {
     }
 }
 
-int is_done() {
+static int is_done() {
     char junk;
     if (pread(parse_fd, &junk, 1, parse_pos) != 1) return 1;
     else return 0;
 }
 
-char* read_string() {
+static char* read_string() {
     char* str = malloc(1);
     int   l   = 0;
 
@@ -112,7 +92,7 @@ char* read_string() {
     return -1;
 }
 
-int read_int() {
+static int read_int() {
     char* buf = malloc(1);
     int   l   = 0;
     int   res = 0;
@@ -122,7 +102,7 @@ int read_int() {
         if (c >= '0' && c <= '9') {
             l++;
             buf = realloc(buf, l + 1);
-            buf[c] = 0;
+            buf[l] = 0; // this used to be buf[c] = 0. i need more sleep
             buf[l-1] = get_char(1);
         } else break;
     }
@@ -133,7 +113,7 @@ int read_int() {
     return res;
 }
 
-client_config_t* parse_client_config(int fd) {
+client_config_t* cfgparser_parse_client_config(int fd) {
     client_config_t *config = malloc(sizeof(client_config_t));
     
     config->server_count = 0;
@@ -180,7 +160,7 @@ client_config_t* parse_client_config(int fd) {
     return config;
 }
 
-server_config_t* parse_server_config(int fd) {
+server_config_t* cfgparser_parse_server_config(int fd) {
     server_config_t* config = malloc(sizeof(server_config_t));
 
     config->listen_port = 10010;

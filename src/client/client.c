@@ -241,7 +241,6 @@ void client_run_tasks(window_t* window) {
         int data = 0;
         ioctl(sc, FIONREAD, &data);
 #endif
-
         if (data) {
             char* head = malloc(9);
             memset(head, 0, 9);

@@ -1,0 +1,4 @@
+#ifndef IRCREBORN_COMPAT_H
+#define IRCREBORN_COMPAT_H
+
+#endif

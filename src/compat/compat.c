@@ -22,7 +22,7 @@
 #ifdef WIN32
 int pread(int fd, void* buf, int count, int offset) {  
     memset(buf, 0, count); 
-    int ooffset = lseek(fd, 0l, SEEK_CUR);
+    int ooffset = lseek(fd, 0, SEEK_CUR);
     lseek(fd, offset, SEEK_SET);
     int len = read(fd, buf, count);
     lseek(fd, ooffset, SEEK_SET);

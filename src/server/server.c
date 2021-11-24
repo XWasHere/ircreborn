@@ -27,7 +27,6 @@
 #include <networking/networking.h>
 #include <networking/types.h>
 #include <config_parser/config.h>
-
 #ifdef WIN32
 #include <winsock2.h>
 #else
