@@ -8,7 +8,7 @@ well. ircreborn was created because i felt that all the good platforms had too m
 
 theres a few features planned at the moment
 
-- [ ] nicknames
+- [x] nicknames
 - [ ] server logins 
 - [ ] encryption
 - [ ] profile pictures
