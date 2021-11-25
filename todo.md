@@ -2,7 +2,13 @@
 
 ## ./src/client/set_nickname_dialog.h
 
+## ./src/client/license_dialog.h
+
 ## ./src/client/client.c
+
+## ./src/client/license_dialog.c
+
+[27] holy shit add newline support
 
 ## ./src/client/set_nickname_dialog.c
 
@@ -43,6 +49,8 @@
 ## ./src/common/util.h
 
 ## ./src/common/util.c
+
+## ./src/compat/compat.c
 
 ## ./src/ui/window.c
 
