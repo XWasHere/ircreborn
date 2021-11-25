@@ -2,11 +2,11 @@ TARGET   ?= linux
 
 ifeq ($(TARGET),win32)
 CC        = x86_64-w64-mingw32-gcc
-CC_ARGS  ?= -ggdb
+CC_ARGS  ?= -ggdb -Wall
 CC_FARGS  = -Isrc -lgdi32 -lws2_32
 else 
 CC       ?= gcc
-CC_ARGS  ?= -ggdb
+CC_ARGS  ?= -ggdb -Wall
 CC_FARGS  = -Isrc -lxcb -lrt -lm -lX11 -lX11-xcb
 endif
 

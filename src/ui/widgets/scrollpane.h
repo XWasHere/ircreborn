@@ -48,5 +48,6 @@ struct scroll_pane {
 
 widget_t* scroll_pane_init();
 scroll_pane_item_t* scroll_pane_add_item(widget_t* scroll_pane, widget_t* widget);
+void scroll_pane_free(widget_t* widget);
 
 #endif

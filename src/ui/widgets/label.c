@@ -22,6 +22,8 @@
 #ifndef WIN32 
 #include <ui/util/font_search.h>
 #endif
+#include <stdlib.h>
+#include <string.h>
 
 void label_draw(widget_t* widget ,window_t* window) {
     label_t* label = widget->extra_data;
@@ -99,7 +101,6 @@ widget_t* label_init() {
     widget_t* label = widget_init();
     label_t*  lab   = malloc(sizeof(label_t));
 
-    lab->len  = 0;
     lab->text = 0;
 
     lab->widget = label;
@@ -108,4 +109,21 @@ widget_t* label_init() {
     label->draw = &label_draw;
     
     return label;
+}
+
+void label_set_text(widget_t* widget, char* text) {
+    label_t* label = widget->extra_data;
+    char* buf = malloc(strlen(text) + 1);
+
+    memset(buf, 0, strlen(text) + 1);
+    strcpy(buf, text);
+    label->text = buf;
+}
+
+void label_free(widget_t* widget) {
+    label_t* label = widget->extra_data;
+
+    free(label->text);
+    free(label);
+    widget_free(widget);
 }

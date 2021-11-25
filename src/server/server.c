@@ -24,9 +24,12 @@
 
 #include <common/args.h>
 #include <common/util.h>
+#include <common/attrib.h>
 #include <networking/networking.h>
 #include <networking/types.h>
 #include <config_parser/config.h>
+#include <compat/compat.h>
+
 #ifdef WIN32
 #include <winsock2.h>
 #else
@@ -65,7 +68,7 @@ struct client* find_client(int fd) {
     if (i != -1) {
         return clients[i];
     }
-    return -1;
+    return (struct client*)-1;
 }
 
 void send_client_message(struct client* client, char* msg, char* name) {
@@ -189,8 +192,6 @@ void server_main() {
 
             int fd = accept(server, (struct sockaddr*)addr, addr_len);
 
-            PINFO("accepted\n");
-
             pollfd_count++;
             pollfds = realloc(pollfds, pollfd_count * sizeof(struct pollfd));
             pollfds[pollfd_count - 1].fd = fd;
@@ -204,9 +205,9 @@ void server_main() {
             } else if (pollfds[i].revents & POLLHUP) {
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "connection lost");
             } else if (pollfds[i].revents & POLLIN) {
-                char c;
+                unused char c;
                 char* msgbuf = 0;
-                int   bufpos = 0;
+                unused int   bufpos = 0;
 
                 void* header = malloc(8);
                 int   buflen = 0;
@@ -223,11 +224,11 @@ void server_main() {
                     msgbuf = malloc(buflen + 1);
                     memset(msgbuf, 0, buflen + 1);
 
-                    int res = recv(pollfds[i].fd, msgbuf, buflen, 0);
+                    unused int res = recv(pollfds[i].fd, msgbuf, buflen, 0);
 
                     if (op == OPCODE_HELLO) {
-                        int has_ident    = read_bool(msgbuf);
-                        nstring_t* ident = read_string(msgbuf + 1);
+                        unused int has_ident    = read_bool(msgbuf);
+                        unused nstring_t* ident = read_string(msgbuf + 1);
                         client_count++;
                         clients = realloc(clients, sizeof(void*) * client_count);
                         struct client* c = malloc(sizeof(struct client));

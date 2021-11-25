@@ -23,6 +23,7 @@
 #include <ui/widgets/button.h>
 #include <common/util.h>
 #include <networking/networking.h>
+#include <stdlib.h>
 
 window_t* dialog;
 
@@ -96,14 +97,13 @@ void open_set_nickname_dialog() {
         cancelw->height  = 20;
         cancelw->clicked = set_nickname_dialog_cancel_clicked;
 
-        texte->text = "set nickname";
-        texte->len  = strlen(texte->text);
+        label_set_text(textw, "set nickname");
         
-        oke->text = "ok";
-        oke->type = BUTTON_TEXT;
+        button_set_type(okw, BUTTON_TEXT);
+        button_set_text(okw, "ok");
 
-        cancele->text = "cancel";
-        cancele->type = BUTTON_TEXT; 
+        button_set_type(cancelw, BUTTON_TEXT);
+        button_set_text(cancelw, "cancel");
 
         window_add_widget(dialog, textw);
         window_add_widget(dialog, entryw);
@@ -111,6 +111,15 @@ void open_set_nickname_dialog() {
         window_add_widget(dialog, cancelw);
 
         window_set_size(dialog, 340, 100);
+        
+        window_display(dialog);
+
+        label_free(textw);
+        textbox_free(entryw);
+        button_free(okw);
+        button_free(cancelw);
+
+        window_free(dialog);
     } else {
         PWARN("connect to a server before setting your nickname you phycopath\n");
 
@@ -131,17 +140,21 @@ void open_set_nickname_dialog() {
         okw->height   = 20;
         okw->clicked  = set_nickname_dialog_ok_clicked;
 
-        texte->text = "you need to connect to a server first";
-        texte->len  = strlen(texte->text);
+        label_set_text(textw, "you need to connect to a server first");
         
-        oke->text   = "well shit";
-        oke->type   = BUTTON_TEXT;
+        button_set_type(okw, BUTTON_TEXT);
+        button_set_text(okw, "well shit");
         
         window_add_widget(dialog, textw);
         window_add_widget(dialog, okw);
 
         window_set_size(dialog, 320, 70);
+
+        window_display(dialog);
+
+        label_free(textw);
+        button_free(okw);
+
+        window_free(dialog);
     }
-    
-    window_display(dialog);
 }

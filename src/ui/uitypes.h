@@ -58,12 +58,12 @@ struct __widget {
     // draw function prototype (pretend window is window_t*)
     void (*draw)(widget_t* widget, window_t* window);
     int  (*clicked)(widget_t* widget, window_t* window, int x, int y);
-    void (*mousein)(widget_t* widget, window_t* window);
-    void (*mouseout)(widget_t* widget, window_t* window);
-    void (*mousedown)(widget_t* widget, window_t* window, int x, int y);
+    int  (*mousein)(widget_t* widget, window_t* window);
+    int  (*mouseout)(widget_t* widget, window_t* window);
+    int  (*mousedown)(widget_t* widget, window_t* window, int x, int y);
     int  (*mouseup)(widget_t* widget, window_t* window, int x, int y);
-    void (*mousemove)(widget_t* widget, window_t* window, int x, int y);
-    void (*keypress)(widget_t* widget, window_t* window, uint32_t key);
+    int  (*mousemove)(widget_t* widget, window_t* window, int x, int y);
+    int  (*keypress)(widget_t* widget, window_t* window, uint32_t key);
 };
 
 // this is a window.

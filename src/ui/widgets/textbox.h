@@ -36,5 +36,6 @@ struct __textbox {
 };
 
 widget_t* textbox_init();
+void      textbox_free(widget_t* widget);
 
 #endif

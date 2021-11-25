@@ -21,6 +21,7 @@
 #include <ui/window.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <common/attrib.h>
 #ifdef WIN32
 #include <windows.h> // ugh.
 #else
@@ -33,6 +34,7 @@
 
 window_t** windows      = 0;
 int        window_count = 0;
+int        window_count_2 = 0;
 
 void __DEFAULT_window_handle_bg_tasks(window_t* a) {};
 void __DEFAULT_window_handle_resize(window_t* a) {};
@@ -77,8 +79,11 @@ widget_t** window_sort_z(window_t* window) {
         ulen--;
         slen++;
 
+        free(unsorted);
         unsorted = nunsorted;
     }
+
+    free(unsorted);
 
     return sorted;
 }
@@ -125,6 +130,8 @@ void window_left_mouse_up(window_t* window, int x, int y) {
             }
         }
     }
+
+    free(widgets);
 }
 
 void window_mouse_move(window_t* window, int x, int y) {
@@ -376,6 +383,7 @@ window_t* window_init() {
 
     windows[window_count] = window;
     window_count++;
+    window_count_2++;
 
     return window;
 }
@@ -392,6 +400,9 @@ void window_set_type(window_t* window, int type) {
     if (type == WINDOW_WM_TYPE_DIALOG) {
         xcb_change_property(window->connection, XCB_PROP_MODE_REPLACE, window->window, wmtype->atom, 4, 32, 1, &wmtypedialog->atom);
     }
+
+    free(wmtype);
+    free(wmtypedialog);
 #endif
 }
 
@@ -459,13 +470,13 @@ void window_display(window_t* window) {
             switch (e->response_type & 0x7f) {
                 // repaint
                 case XCB_EXPOSE: {
-                    xcb_expose_event_t* event = e;
+                    unused xcb_expose_event_t* event = (xcb_expose_event_t*)e;
                     window_paint(window);
                     break;
                 }
                 case XCB_CLIENT_MESSAGE: {
                     // client messages are fun to deal with
-                    xcb_client_message_event_t* event = e;
+                    unused xcb_client_message_event_t* event = (xcb_client_message_event_t*)e;
                     
                     int type = event->data.data32[0];
                     
@@ -479,17 +490,17 @@ void window_display(window_t* window) {
                     break;
                 }
                 case XCB_CONFIGURE_NOTIFY: {
-                    xcb_configure_notify_event_t* event = e;
+                    unused xcb_configure_notify_event_t* event = (xcb_configure_notify_event_t*)e;
                     window_resized(window, event->width, event->height);                    
                     break;
                 }
                 case XCB_MOTION_NOTIFY: {
-                    xcb_motion_notify_event_t* event = e;
+                    unused xcb_motion_notify_event_t* event = (xcb_motion_notify_event_t*)e;
                     window_mouse_move(window, event->event_x, event->event_y);
                     break;
                 }
                 case XCB_BUTTON_PRESS: {
-                    xcb_button_press_event_t* event = e;
+                    unused xcb_button_press_event_t* event = (xcb_button_press_event_t*)e;
                     
                     if (event->detail == XCB_BUTTON_INDEX_1) {
                         window_left_mouse_down(window, event->event_x, event->event_y);
@@ -500,7 +511,7 @@ void window_display(window_t* window) {
                     break;
                 }
                 case XCB_BUTTON_RELEASE: {
-                    xcb_button_release_event_t* event = e;
+                    unused xcb_button_release_event_t* event = (xcb_button_release_event_t*)e;
                     
                     if (event->detail == XCB_BUTTON_INDEX_1) {
                         window_left_mouse_up(window, event->event_x, event->event_y);
@@ -511,7 +522,7 @@ void window_display(window_t* window) {
                     break;
                 }
                 case XCB_KEY_PRESS: {
-                    xcb_key_press_event_t* event = e;
+                    unused xcb_key_press_event_t* event = (xcb_key_press_event_t*)e;
 
                     int keysym_count;
                     KeySym *ks = XGetKeyboardMapping(
@@ -534,6 +545,7 @@ void window_display(window_t* window) {
                         window_keypress(window, ks[0]);
                     }
 
+                    
                     XFree(ks);
 
                     break;
@@ -550,13 +562,26 @@ void window_display(window_t* window) {
 
             free(e);
         }
-        
+
         window->handle_bg_tasks(window);
     }
 
-    // we are done
-    xcb_disconnect(window->connection);
+    free(proto);
+    free(delete);
 #endif
+}
+
+void window_free(window_t* window) {
+#ifndef WIN32
+    XCloseDisplay(window->display);
+#endif
+    free(window->widgets);
+    free(window);
+    window_count_2--;
+    if (window_count_2 == 0) {
+        window_count = 0;
+        free(windows);
+    }
 }
 
 void window_add_widget(window_t* window, widget_t* widget) {

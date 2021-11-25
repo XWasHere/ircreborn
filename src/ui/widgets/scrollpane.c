@@ -22,6 +22,8 @@
 #include <common/util.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #ifdef WIN32
 #include <windows.h>
@@ -30,12 +32,11 @@
 #endif
 
 void scroll_pane_draw(widget_t*, window_t*);
-void scroll_pane_mousein(widget_t*, window_t*);
-void scroll_pane_mouseout(widget_t*, window_t*);
 int  scroll_pane_clicked(widget_t*, window_t*, int, int);
-void scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y);
-void scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y);
-void scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y);
+int  scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y);
+int  scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y);
+int  scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y);
+int  scroll_pane_mouseout(widget_t*, window_t*);
 
 widget_t* scroll_pane_init() {
     widget_t* widget    = widget_init();
@@ -43,18 +44,19 @@ widget_t* scroll_pane_init() {
 
     pane->widget           = widget;
     pane->pos              = 0;
+    pane->prev_pos         = 0;
     pane->itemc            = 0;
     pane->items            = malloc(1);
     pane->thumb_dragging   = 0;
 
     widget->extra_data     = pane;
     widget->draw           = &scroll_pane_draw;
-    widget->mousein        = &scroll_pane_mousein;
-    widget->mouseout       = &scroll_pane_mouseout;
     widget->clicked        = &scroll_pane_clicked;
     widget->mousedown      = &scroll_pane_mousedown;
     widget->mouseup        = &scroll_pane_mouseup;
     widget->mousemove      = &scroll_pane_mousemove;
+    widget->mouseout       = &scroll_pane_mouseout;
+
 
     return pane->widget;
 }
@@ -185,9 +187,9 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
     rect[2].width  = 20;
     rect[2].height = 20;
     rect[3].x      = widget->x + widget->width - 20;
-    rect[3].y      = widget->y + 20;
+    rect[3].y      = widget->y + 20 + ceil(tpos);
     rect[3].width  = 20;
-    rect[3].height = ceil(tpos) + ceil(tsize);
+    rect[3].height = ceil(tsize);
 
     xcb_poly_rectangle(window->connection, window->window, window->gc, 4, rect);
 #endif
@@ -235,7 +237,7 @@ int scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
     return 1;
 }
 
-void scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y) {
+int scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y) {
     scroll_pane_t* scroll_pane = widget->extra_data;
     
     if (widget->x + widget->width - 20 < x) {
@@ -244,17 +246,29 @@ void scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y) {
             scroll_pane->thumb_drag_src = y - widget->y - 20 + scroll_pane->pos;
         }
     }
+
+    return 1;
 }
 
-void scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y) {
+int scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y) {
     scroll_pane_t* scroll_pane = widget->extra_data;
 
     scroll_pane->thumb_dragging = 0;
 
     widget->draw(widget, window);
+
+    return 1;
 }
 
-void scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y) {
+int scroll_pane_mouseout(widget_t* widget, window_t* window) {
+    scroll_pane_t* scroll_pane = widget->extra_data;
+
+    scroll_pane->thumb_dragging = 0;
+
+    return 1;
+}
+
+int scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y) {
     scroll_pane_t* scroll_pane = widget->extra_data;
 
     if (scroll_pane->thumb_dragging) {
@@ -263,17 +277,22 @@ void scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y) {
         a = a > -scroll_pane->csize + (scroll_pane->csize / (widget->height - 40)) * widget->height ? a : -scroll_pane->csize + (scroll_pane->csize / (widget->height - 40)) * widget->height;
         scroll_pane->pos = a;
         if (scroll_pane->pos != scroll_pane->prev_pos) {
-            printf("%i\n", scroll_pane->pos);
             scroll_pane->prev_pos = scroll_pane->pos;
             widget->draw(widget, window);
         }
     }
+
+    return 1;
 }
 
-void scroll_pane_mousein(widget_t* widget, window_t* window) {
-    
-}
+void scroll_pane_free(widget_t* widget) {
+    scroll_pane_t* scrollpane = widget->extra_data;
 
-void scroll_pane_mouseout(widget_t* widget, window_t* window) {
-    
+    for (int i = 0; i < scrollpane->itemc; i++) {
+        free(scrollpane->items[i]);
+    }
+
+    widget_free(widget);
+    free(scrollpane->items);
+    free(scrollpane);
 }

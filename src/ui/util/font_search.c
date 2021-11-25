@@ -54,7 +54,7 @@ xcb_font_t request_font(xcb_connection_t* connection, font_request_t* req) {
         sprintf(style, "*");
     } else {
         if (req->style == FSEARCH_STYLE_NONE) {
-            sprintf(style, "");
+            style[0] = 0;
         } else {
             abort();
         }

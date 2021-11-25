@@ -40,5 +40,6 @@ struct __frame_managed {
 
 widget_t*        frame_init();
 frame_managed_t* frame_add_item(frame_t* frame, widget_t* widget);
+void             frame_free(widget_t* widget);
 
 #endif

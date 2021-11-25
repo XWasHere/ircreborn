@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +30,7 @@
 #include <ui/widgets/frame.h>
 #include <common/util.h>
 #include <common/args.h>
+#include <common/attrib.h>
 #include <config_parser/config.h>
 #include <networking/networking.h>
 #include <networking/types.h>
@@ -93,14 +95,15 @@ int nextpos = 0;
 
 void exit_button_clicked() {
     PINFO("user requested exit. goodbye\n");
-    exit(0);
+    main_window->should_exit = 1;
 }
 
-void server_list_collapse_button_clicked(widget_t* widget, window_t* window, int x, int y) {
+int server_list_collapse_button_clicked(widget_t* widget, window_t* window, int x, int y) {
     PINFO("server list collapsed\n");
+    return 1;
 }
 
-void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
+int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
             PINFO("connecting to server %s\n", servers[i]->name);
@@ -113,7 +116,7 @@ void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
 #else
                 PFATL("%s\n", format_last_error());
 #endif
-                return;
+                return 1;
             }
 
             struct sockaddr_in* addr = malloc(sizeof(struct sockaddr_in));
@@ -125,14 +128,13 @@ void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
 
             if (connect(sc, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
                 sc = 0;
-
 #ifdef WIN32
                 PFATL("connect(): %s", format_error(WSAGetLastError()));
 #else
                 PFATL("%s\n", format_last_error());
 #endif
-
-                return;
+                free(addr);
+                return 1;
             }
 
             hello_t* hi = malloc(sizeof(hello_t));
@@ -145,9 +147,13 @@ void server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
 
             sc_connected = 1;
 
-            return;
+            free(addr);
+            free(hi);
+            return 1;
         }
     }
+
+    return 1;
 }
 
 struct server* server_list_add_server(widget_t* serverlist, char* name, char* host, int port) {
@@ -162,8 +168,8 @@ struct server* server_list_add_server(widget_t* serverlist, char* name, char* ho
     s->button->width  = serverlist->width - 20;
     s->button->clicked= &server_button_clicked;
 
-    btn->type = BUTTON_TEXT;
-    btn->text = name;
+    button_set_type(s->button, BUTTON_TEXT);
+    button_set_text(s->button, name);
 
     scroll_pane_item_t* item = scroll_pane_add_item(serverlist, s->button);
     item->x = 0;
@@ -208,11 +214,8 @@ void client_add_message(window_t* window, char* message, char* name) {
     namelw->width = config->nickname_width;
     namelw->height = 20;
 
-    msgle->text = message;
-    msgle->len = strlen(message);
-    
-    namele->text = name;
-    namele->len = strlen(name);
+    label_set_text(msglw, message);
+    label_set_text(namelw, name);
 
     scroll_pane_item_t* msgli  = scroll_pane_add_item(messages_thing, msglw);
     scroll_pane_item_t* nameli = scroll_pane_add_item(messages_thing, namelw);
@@ -261,6 +264,11 @@ void client_run_tasks(window_t* window) {
                 nstring_t* name = read_string(body + 4 + msg->len); 
 
                 client_add_message(window, msg->str, name->str);
+
+                free(msg->str);
+                free(msg);
+                free(name->str);
+                free(name);
             } else if (op == OPCODE_SET_NICKNAME) {
                 nstring_t* nick = read_string(body);
                 
@@ -268,7 +276,14 @@ void client_run_tasks(window_t* window) {
                 sprintf(notify_message, "you are now known as \"%s\"", nick->str);
 
                 client_add_message(window, notify_message, " == ");
+                
+                free(nick->str);
+                free(nick);
+                free(notify_message);
             }
+
+            free(body);
+            free(head);
         }
     }
 }
@@ -333,6 +348,7 @@ void client_main() {
     chmod(config_path, S_IWUSR | S_IRUSR);
     config = cfgparser_parse_client_config(configfd);
     close(configfd);
+    free(config_path);
 
     servers = malloc(1);
 
@@ -351,8 +367,6 @@ void client_main() {
 
     serverlistw = scroll_pane_init();
     serverliste = serverlistw->extra_data;
-    serverlistcollapsebtnw = button_init();
-    serverlistcollapsebtne = serverlistcollapsebtnw->extra_data;
     messagesw = scroll_pane_init();
     messagese = messagesw->extra_data;
     messagebox = textbox_init();
@@ -360,11 +374,7 @@ void client_main() {
     messages_thing = messagesw;
     
     messageboxe->submit = &message_submit;
-    
-    serverlistcollapsebtnw->clicked = &server_list_collapse_button_clicked;
-    serverlistcollapsebtne->type = BUTTON_TEXT;
-    serverlistcollapsebtne->text = "<";
-    
+        
     main_window->handle_bg_tasks = &client_run_tasks;
     main_window->resized         = &client_recalculate_sizes;
 
@@ -378,4 +388,22 @@ void client_main() {
     }
 
     window_display(main_window);
+    
+    // cleanup
+    menubar_free(stripw);
+    for (int i = 0; i < serverliste->itemc; i++) {
+        button_free(serverliste->items[i]->widget);
+    }
+    scroll_pane_free(serverlistw);
+    for (int i = 0; i < messagese->itemc; i++) {
+        label_free(messagese->items[i]->widget);
+    }
+    scroll_pane_free(messagesw);
+    textbox_free(messagebox);
+    window_free(main_window);
+    for (int i = 0; i < server_count; i++) {
+        free(servers[i]);
+    }
+    free(servers);
+    client_config_free(config);
 }

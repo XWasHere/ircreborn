@@ -49,5 +49,7 @@ struct __button {
 
 widget_t* button_init();
 void      button_set_type(widget_t* widget, int type);
+void      button_set_text(widget_t* widget, char* text);
+void      button_free(widget_t* widget);
 
 #endif

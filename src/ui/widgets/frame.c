@@ -18,6 +18,7 @@
 
 #include <ui/widgets/frame.h>
 #include <ui/widget.h>
+#include <stdlib.h>
 
 void frame_draw(widget_t* widget, window_t* window) {
     frame_t* frame = widget->extra_data;
@@ -70,4 +71,16 @@ frame_managed_t* frame_add_item(frame_t* frame, widget_t* widget) {
     frame->items[frame->item_count - 1] = managed;
     
     return managed;
+}
+
+void frame_free(widget_t* widget) {
+    frame_t* frame = widget->extra_data;
+
+    for (int i = 0; i < frame->item_count; i++) {
+        free(frame->items[i]);
+    }
+    
+    free(frame->items);
+    free(frame);
+    widget_free(widget);
 }
