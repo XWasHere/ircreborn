@@ -46,7 +46,7 @@ int run_tests() {
         write_string(out, in, strlen(in));
         nstring_t* res = read_string(out);
 
-        INT_ASSERT_EQUALS(res->len, strlen(in));
+        INT_ASSERT_EQUALS(res->len, (int)strlen(in));
         STRING_ASSERT_EQUALS(res->str, in);
 
         free(out);
@@ -76,4 +76,6 @@ int run_tests() {
 
         free(out);
     });
+
+    return 0;
 }

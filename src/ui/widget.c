@@ -21,13 +21,13 @@
 #include <stdlib.h>
 
 void __DEFAULT_draw(widget_t* a, window_t* b) {}
-void __DEFAULT_clicked(widget_t* a, window_t* b, int c, int d) {}
-void __DEFAULT_mousein(widget_t* a, window_t* b) {}
-void __DEFAULT_mouseout(widget_t* a, window_t* b) {}
-void __DEFAULT_mousedown(widget_t* a, window_t* b, int c, int d) {}
-void __DEFAULT_mouseup(widget_t* a, window_t* b, int c, int d) {}
-void __DEFAULT_mousemove(widget_t* a, window_t* b, int c, int d) {}
-void __DEFAULT_keypress(widget_t* a, window_t* b, uint32_t c) {}
+int  __DEFAULT_clicked(widget_t* a, window_t* b, int c, int d) { return 1; }
+int  __DEFAULT_mousein(widget_t* a, window_t* b) { return 1; }
+int  __DEFAULT_mouseout(widget_t* a, window_t* b) { return 1; }
+int  __DEFAULT_mousedown(widget_t* a, window_t* b, int c, int d) { return 1; }
+int  __DEFAULT_mouseup(widget_t* a, window_t* b, int c, int d) { return 1; }
+int  __DEFAULT_mousemove(widget_t* a, window_t* b, int c, int d) { return 1; }
+int  __DEFAULT_keypress(widget_t* a, window_t* b, uint32_t c) { return 1; }
 
 widget_t* widget_init() {
     widget_t* widget = malloc(sizeof(widget_t));
@@ -43,6 +43,10 @@ widget_t* widget_init() {
     widget->x = 0;
     widget->y = 0;
     widget->z = 0;
-    
+
     return widget;
+}
+
+void widget_free(widget_t* widget) {
+    free(widget);
 }

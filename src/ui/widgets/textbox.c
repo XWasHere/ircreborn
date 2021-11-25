@@ -17,6 +17,7 @@
 */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <ui/widgets/textbox.h>
 #include <ui/widget.h>
@@ -31,7 +32,7 @@
 
 void __DEFAULT_textbox_submit(widget_t* a, window_t* b, char* c, int d) {};
 
-void textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
+int textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
     textbox_t* tb = widget->extra_data;
 
 #ifdef WIN32
@@ -50,7 +51,7 @@ void textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
         if (key == 0xff0d && tb->multiline == 0) {
 #endif
             tb->submit(widget, window, tb->text, tb->textlen);
-            return;
+            return 1;
         }
 
 #ifndef WIN32
@@ -69,6 +70,7 @@ void textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
     }
 
     widget->draw(widget, window);
+    return 1;
 }
 
 int textbox_clicked(widget_t* widget, window_t* window, int x, int y) {
@@ -199,4 +201,15 @@ widget_t* textbox_init() {
     textbox->keypress = &textbox_keypress;
 
     return textbox;
+}
+
+void textbox_free(widget_t* widget) {
+    textbox_t* textbox = widget->extra_data;
+
+    if (textbox->text != 0) {
+        free(textbox->text);
+    }
+
+    free(textbox);
+    widget_free(widget);
 }

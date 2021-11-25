@@ -51,3 +51,4 @@ struct __menubutton {
 widget_t*     menubar_init();
 menu_t*       menubar_add_menu(widget_t*, char*);
 menubutton_t* menu_add_button(menu_t*, char*, void(*clicked)());
+void          menubar_free();

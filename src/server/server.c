@@ -24,9 +24,12 @@
 
 #include <common/args.h>
 #include <common/util.h>
+#include <common/attrib.h>
 #include <networking/networking.h>
 #include <networking/types.h>
 #include <config_parser/config.h>
+#include <compat/compat.h>
+
 #ifdef WIN32
 #include <winsock2.h>
 #else
@@ -65,7 +68,7 @@ struct client* find_client(int fd) {
     if (i != -1) {
         return clients[i];
     }
-    return -1;
+    return (struct client*)-1;
 }
 
 void send_client_message(struct client* client, char* msg, char* name) {
@@ -93,7 +96,7 @@ void disconnect_client(struct client* client, int send_message, int automatic, i
     }
 
     if (send_message) {
-        char* buf = malloc(strlen("\"")+strlen(client->nickname)+automatic?strlen("\" auto disconnected by server"):strlen("\" disconnected")+has_reason?strlen(" [ ")+strlen(reason)+strlen(" ] "):0+1);
+        char* buf = malloc(SSTRLEN("\"")+strlen(client->nickname)+automatic?SSTRLEN("\" auto disconnected by server"):SSTRLEN("\" disconnected")+has_reason?SSTRLEN(" [ ")+strlen(reason)+SSTRLEN(" ] "):0+1);
         sprintf(
             buf,
             "\"%s\" %s%s%s%s", 
@@ -124,8 +127,8 @@ void server_main() {
 #ifdef WIN32
     WSADATA* wsadata = malloc(sizeof(WSADATA));
     if (WSAStartup(MAKEWORD(2,2), wsadata)) {
-        printf(FMT_FATL("failed to start winsock, aborting\n"));
-        printf(FMT_FATL("%s"), format_error(WSAGetLastError()));
+        PFATL("failed to start winsock, aborting\n");
+        PFATL("%s", format_error(WSAGetLastError()));
         exit(1);
     }
 #endif
@@ -141,7 +144,7 @@ void server_main() {
         strcat(config_path, "/.ircreborn/server");
     }
 
-    printf(FMT_INFO("reading config from %s\n"), config_path);
+    PINFO("reading config from %s\n", config_path);
 
     int configfd = open(config_path, O_RDONLY | O_CREAT);
     chmod(config_path, S_IWUSR | S_IRUSR);
@@ -189,8 +192,6 @@ void server_main() {
 
             int fd = accept(server, (struct sockaddr*)addr, addr_len);
 
-            printf(FMT_INFO("accepted\n"));
-
             pollfd_count++;
             pollfds = realloc(pollfds, pollfd_count * sizeof(struct pollfd));
             pollfds[pollfd_count - 1].fd = fd;
@@ -199,21 +200,21 @@ void server_main() {
 
         for (int i = 1; i < pollfd_count; i++) {
             if (pollfds[i].revents & POLLERR) {
-                printf(FMT_INFO("error\n"));
+                PINFO("error\n");
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "fatal error");
             } else if (pollfds[i].revents & POLLHUP) {
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "connection lost");
             } else if (pollfds[i].revents & POLLIN) {
-                char c;
+                unused char c;
                 char* msgbuf = 0;
-                int   bufpos = 0;
+                unused int   bufpos = 0;
 
                 void* header = malloc(8);
                 int   buflen = 0;
                 int   op     = 0;
 
                 if (recv(pollfds[i].fd, header, 8, 0) == 0) {
-                    printf(FMT_WARN("got 0 bytes of data. assuming broken connection. kicking\n"));
+                    PWARN("got 0 bytes of data. assuming broken connection. kicking\n");
                     close(pollfds[i].fd);
                     disconnect_socket(pollfds[i].fd, 1, 1, 1, "read error");
                 } else {
@@ -223,11 +224,11 @@ void server_main() {
                     msgbuf = malloc(buflen + 1);
                     memset(msgbuf, 0, buflen + 1);
 
-                    int res = recv(pollfds[i].fd, msgbuf, buflen, 0);
+                    unused int res = recv(pollfds[i].fd, msgbuf, buflen, 0);
 
                     if (op == OPCODE_HELLO) {
-                        int has_ident    = read_bool(msgbuf);
-                        nstring_t* ident = read_string(msgbuf + 1);
+                        unused int has_ident    = read_bool(msgbuf);
+                        unused nstring_t* ident = read_string(msgbuf + 1);
                         client_count++;
                         clients = realloc(clients, sizeof(void*) * client_count);
                         struct client* c = malloc(sizeof(struct client));
@@ -249,7 +250,7 @@ void server_main() {
                         nstring_t* nick = read_string(msgbuf);
                         set_nickname_t* packet = malloc(sizeof(set_nickname_t));
 
-                        printf(FMT_INFO("client set nickname %s -> %s\n"), c->nickname, nick->str);
+                        PINFO("client set nickname %s -> %s\n", c->nickname, nick->str);
 
                         c->nickname = nick->str;
                         packet->nickname = c->nickname;

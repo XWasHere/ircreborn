@@ -45,5 +45,7 @@ struct server_config_file {
 
 client_config_t* cfgparser_parse_client_config(int fd);
 server_config_t* cfgparser_parse_server_config(int fd);
+void             client_config_free(client_config_t* config);
+void             server_config_free(server_config_t* server);
 
 #endif

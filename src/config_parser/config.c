@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 int parse_pos;
 int parse_fd;
@@ -89,7 +90,7 @@ static char* read_string() {
     }
 
     free(str);
-    return -1;
+    return (char*)-1;
 }
 
 static int read_int() {
@@ -143,10 +144,10 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                         config->server_count++;
                         config->servers = realloc(config->servers, config->server_count * sizeof(void*));
                         config->servers[config->server_count - 1] = server;
-                        printf(FMT_INFO("registered server \"%s:%i\" as \"%s\"\n"), server->host, server->port, server->name);
+                        PINFO("registered server \"%s:%i\" as \"%s\"\n", server->host, server->port, server->name);
                         break;
                     } else {
-                        printf(FMT_FATL("invalid config\n"));
+                        PFATL("invalid config\n");
                         exit(1);
                     }
                 }
@@ -181,4 +182,14 @@ server_config_t* cfgparser_parse_server_config(int fd) {
     }
 
     return config;
+}
+
+void client_config_free(client_config_t* config) {
+    for (int i = 0; i < config->server_count; i++) {
+        free(config->servers[i]->host);
+        free(config->servers[i]->name);
+        free(config->servers[i]);
+    }
+    free(config->servers);
+    free(config);
 }

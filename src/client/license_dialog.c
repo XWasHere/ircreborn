@@ -47,8 +47,9 @@ static label_t*  text7e;
 static label_t*  text8e;
 static label_t*  text9e;
 
-static void ok_clicked() {
+static int ok_clicked(widget_t* widget, window_t* window, int x, int y) {
     dialog->should_exit = 1;
+    return 1;
 }
 
 void open_license_dialog() {
@@ -78,26 +79,16 @@ void open_license_dialog() {
     text9w = label_init();
     text9e = text9w->extra_data;
 
-    text0e->text = "This program is free software: you can redistribute it and/or modify";
-    text0e->len = strlen(text0e->text);
-    text1e->text = "it under the terms of the GNU General Public License as published by";
-    text1e->len = strlen(text1e->text);
-    text2e->text = "the Free Software Foundation, either version 3 of the License, or";
-    text2e->len = strlen(text2e->text);
-    text3e->text = "(at your option) any later version.";
-    text3e->len = strlen(text3e->text);
-    text4e->text = "This program is distributed in the hope that it will be useful,";
-    text4e->len = strlen(text4e->text);
-    text5e->text = "but WITHOUT ANY WARRANTY; without even the implied warranty of";
-    text5e->len = strlen(text5e->text);
-    text6e->text = "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the";
-    text6e->len = strlen(text6e->text);
-    text7e->text = "GNU General Public License for more details.";
-    text7e->len = strlen(text7e->text);
-    text8e->text = "You should have received a copy of the GNU General Public License";
-    text8e->len = strlen(text8e->text);
-    text9e->text = "along with this program.  If not, see <https://www.gnu.org/licenses/>.";
-    text9e->len = strlen(text9e->text);
+    label_set_text(text0w, "This program is free software: you can redistribute it and/or modify");
+    label_set_text(text1w, "it under the terms of the GNU General Public License as published by");
+    label_set_text(text2w, "the Free Software Foundation, either version 3 of the License, or");
+    label_set_text(text3w, "(at your option) any later version.");
+    label_set_text(text4w, "This program is distributed in the hope that it will be useful,");
+    label_set_text(text5w, "but WITHOUT ANY WARRANTY; without even the implied warranty of");
+    label_set_text(text6w, "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the");
+    label_set_text(text7w, "GNU General Public License for more details.");
+    label_set_text(text8w, "You should have received a copy of the GNU General Public License");
+    label_set_text(text9w, "along with this program.  If not, see <https://www.gnu.org/licenses/>.");
 
     text0w->x = 10;
     text0w->y = 10;
@@ -144,8 +135,8 @@ void open_license_dialog() {
     okw->width  = 40;
     okw->height = 20;
 
-    oke->text = "cool";
-    oke->type = BUTTON_TEXT;
+    button_set_type(okw, BUTTON_TEXT);
+    button_set_text(okw, "cool");
     
     okw->clicked = ok_clicked;
 
@@ -164,4 +155,18 @@ void open_license_dialog() {
     window_set_type(dialog, WINDOW_WM_TYPE_DIALOG);
     window_set_size(dialog, 620, 270);
     window_display(dialog);
+
+    label_free(text0w);
+    label_free(text1w);
+    label_free(text2w);
+    label_free(text3w);
+    label_free(text4w);
+    label_free(text5w);
+    label_free(text6w);
+    label_free(text7w);
+    label_free(text8w);
+    label_free(text9w);
+    button_free(okw);
+
+    window_free(dialog);
 }

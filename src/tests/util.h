@@ -28,12 +28,12 @@
 };
 
 #define TEST_PASS(msg, ...) { \
-    printf(FMT_INFO("test \"%s\" completed normally: " #msg "\n"), __T_NAME__, ## __VA_ARGS__); \
+    PINFO("test \"%s\" completed normally: " #msg "\n", __T_NAME__, ## __VA_ARGS__); \
     TEST_STOP(); \
 };
 
 #define TEST_FAIL(msg, ...) { \
-    printf(FMT_FATL("test \"%s\" failed: " #msg "\n"), __T_NAME__, ## __VA_ARGS__); \
+    PFATL("test \"%s\" failed: " #msg "\n", __T_NAME__, ## __VA_ARGS__); \
     TEST_STOP(); \
 };
 
@@ -52,7 +52,7 @@
 #define TEST(name, ...) { \
     __label__ __T_STOP__; \
     const char* __T_NAME__ = #name; \
-    printf(FMT_INFO("running test \"" #name "\"\n")); \
+    PINFO("running test \"" #name "\"\n"); \
     __VA_ARGS__ \
     TEST_PASS("no description provided"); \
     __T_STOP__:; \

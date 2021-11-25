@@ -22,5 +22,6 @@
 #include <ui/uitypes.h>
 
 widget_t* widget_init();
+void widget_free(widget_t* widget);
 
 #endif

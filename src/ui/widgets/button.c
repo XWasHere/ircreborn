@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <stdlib.h>
 #ifdef WIN32
 #include <windows.h>
 #else
@@ -29,9 +30,6 @@
 #include <common/util.h>
 
 void button_draw(widget_t*, window_t*);
-void button_clicked(widget_t*, window_t*, int, int);
-void button_mousein(widget_t*, window_t*);
-void button_mouseout(widget_t*, window_t*);
 
 widget_t* button_init() {
     widget_t* widget = widget_init();
@@ -40,9 +38,6 @@ widget_t* button_init() {
     widget->extra_data = button;
 
     widget->draw    = &button_draw;
-    widget->clicked = &button_clicked;
-    widget->mousein = &button_mousein;
-    widget->mouseout= &button_mouseout;
 
 #ifdef WIN32
     button->bg_color     = GetSysColor(COLOR_BTNFACE);
@@ -52,7 +47,7 @@ widget_t* button_init() {
 
     button->widget = widget;
 
-    return button->widget;
+    return widget;
 }
 
 void button_set_type(widget_t* widget, int type) {
@@ -172,17 +167,21 @@ void button_draw(widget_t* widget, window_t* window) {
     // bye
     free(rect);
 #endif
-
 }
 
-void button_clicked(widget_t* widget, window_t* window, int x, int y) {
-    // just here in case a dev doesnt implement the clicked thing    
+void button_set_text(widget_t* widget, char* text) {
+    button_t* button = widget->extra_data;
+    
+    char* buf = malloc(strlen(text) + 1);
+    memset(buf, 0, strlen(text) + 1);
+    strcpy(buf, text);
+    button->text = buf;
 }
 
-void button_mousein(widget_t* widget, window_t* window) {
-    button_draw(widget, window);
-}
+void button_free(widget_t* widget) {
+    button_t* button = widget->extra_data;
 
-void button_mouseout(widget_t* widget, window_t* window) {
-
+    widget_free(widget);
+    free(button->text);
+    free(button);
 }

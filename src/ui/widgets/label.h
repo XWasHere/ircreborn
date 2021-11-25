@@ -27,9 +27,10 @@ struct __label {
     widget_t* widget;
 
     char* text;
-    int   len;
 };
 
 widget_t* label_init();
+void      label_set_text(widget_t* widget, char* text);
+void      label_free(widget_t* widget);
 
 #endif
