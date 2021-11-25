@@ -89,6 +89,8 @@ struct __window {
     int               rctrl_state;
 #endif
 
+    int               pending_free;
+
     // stuff
     int        width;
     int        height;

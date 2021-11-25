@@ -44,6 +44,7 @@ window_t* resolve_window(HWND a) {
     for (int i = 0; i < window_count; i++) {
         if (windows[i]->window == a) return windows[i];
     }
+    return (window_t*)-1;
 }
 #endif
 
@@ -229,7 +230,7 @@ LRESULT window_proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) 
             return 0;
         }
         case WM_TIMER: {
-            window_run_bg_tasks(me);
+            me->handle_bg_tasks(me);
             return 0;
         }
         default:
@@ -384,6 +385,8 @@ window_t* window_init() {
     windows[window_count] = window;
     window_count++;
     window_count_2++;
+
+    window->pending_free = 0;
 
     return window;
 }
@@ -574,6 +577,8 @@ void window_display(window_t* window) {
 void window_free(window_t* window) {
 #ifndef WIN32
     XCloseDisplay(window->display);
+#else
+    DestroyWindow(window->window);
 #endif
     free(window->widgets);
     free(window);
