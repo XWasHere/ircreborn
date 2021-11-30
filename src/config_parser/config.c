@@ -23,21 +23,55 @@
 #include <unistd.h>
 #include <string.h>
 
-int parse_pos;
-int parse_fd;
+static int parse_pos;
+static int parse_fd;
+static int line;
+static int col;
 
 static char get_char(int consume) {
     char data;
     if (pread(parse_fd, &data, 1, parse_pos) == 0) return -1;
-    if (consume) parse_pos++;
+    if (consume) {
+        parse_pos++;
+        col++;
+        if (data == '\n') {
+            col = 1;
+            line++;
+        }
+    }
     return data;
 }
 
 static int test_char(char c, int consume) {
     if (get_char(0) == c) {
-        if (consume) parse_pos++;
+        if (consume) get_char(1);
         return 1;
     } else return 0;
+}
+
+static char* get_token(int consume) {
+    int bt = parse_pos;
+    char* token = malloc(1);
+    token[0] = 0;
+
+    while (1) {
+        if      (test_char(' ', 0))  break;
+        else if (test_char('\t', 0)) break;
+        else if (test_char('\n', 0)) break;
+        char c = get_char(0);
+        parse_pos++;
+        token = realloc(token, strlen(token) + 2);
+        token[strlen(token) + 1] = 0;
+        token[strlen(token)] = c;
+    }
+
+    parse_pos = bt;
+
+    if (consume) {
+        for (int i = 0; i < strlen(token); i++) get_char(1);
+    }
+
+    return token;
 }
 
 static int test_str(char* str, int consume) {
@@ -48,7 +82,7 @@ static int test_str(char* str, int consume) {
     pread(parse_fd, data, l, parse_pos);
 
     if (STREQ(str, data)) {
-        if (consume) parse_pos += l;
+        for (int i = 0; i < l; i++) get_char(1);
         free(data);
         return 1;
     } else {
@@ -114,6 +148,15 @@ static int read_int() {
     return res;
 }
 
+static void config_error(int l, int c, char* msg) {
+    PFATL("error on line %i, col %i: %s\n", l, c, msg);
+    exit(1);
+}
+
+static void die(char* error) {
+    config_error(line, col, error);
+}
+
 client_config_t* cfgparser_parse_client_config(int fd) {
     client_config_t *config = malloc(sizeof(client_config_t));
     
@@ -123,7 +166,9 @@ client_config_t* cfgparser_parse_client_config(int fd) {
 
     parse_pos = 0;
     parse_fd  = fd;
-    
+    line      = 1;
+    col       = 1;
+
     while (!is_done()) {
         consume_whitespace();
         if (test_str("server", 1)) {
@@ -151,8 +196,9 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                         PINFO("registered server \"%s:%i\" as \"%s\"\n", server->host, server->port, server->name);
                         break;
                     } else {
-                        PFATL("invalid config\n");
-                        exit(1);
+                        char* error = malloc(255);
+                        sprintf(error, "unknown token \"%s\"", get_token(0));
+                        die(error);
                     }
                 }
             }
