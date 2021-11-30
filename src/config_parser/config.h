@@ -30,6 +30,7 @@ typedef struct server_config_file server_config_t;
 struct client_config_server {
     char* name;
     char* host;
+    char* nick;
     int   port;
 };
 

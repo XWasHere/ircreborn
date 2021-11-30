@@ -53,10 +53,7 @@ WSADATA* wsadata;
 #endif 
 
 struct server {
-    char* host;
-    int   port;
-    char* name;
-    
+    client_config_server_t* server;    
     widget_t* button;
 };
 
@@ -106,7 +103,7 @@ int server_list_collapse_button_clicked(widget_t* widget, window_t* window, int 
 int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
-            PINFO("connecting to server %s\n", servers[i]->name);
+            PINFO("connecting to server %s\n", servers[i]->server->name);
             
             if ((sc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
                 sc = 0;
@@ -122,9 +119,9 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
             struct sockaddr_in* addr = malloc(sizeof(struct sockaddr_in));
 
             addr->sin_family = AF_INET;
-            addr->sin_port   = htons(servers[i]->port);
+            addr->sin_port   = htons(servers[i]->server->port);
 
-            inet_pton(AF_INET, servers[i]->host, &addr->sin_addr);
+            inet_pton(AF_INET, servers[i]->server->host, &addr->sin_addr);
 
             if (connect(sc, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
                 sc = 0;
@@ -145,6 +142,15 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
 
             send_hello(sc, hi);
 
+            if (servers[i]->server->nick) {
+                set_nickname_t* setn = malloc(sizeof(set_nickname_t));
+                setn->nickname = servers[i]->server->nick;
+
+                send_set_nickname(sc, setn);
+
+                free(setn);
+            }
+
             sc_connected = 1;
 
             free(addr);
@@ -156,12 +162,10 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
     return 1;
 }
 
-struct server* server_list_add_server(widget_t* serverlist, char* name, char* host, int port) {
+struct server* server_list_add_server(widget_t* serverlist, client_config_server_t* server) {
     struct server* s = malloc(sizeof(struct server));
     s->button = button_init();
-    s->name = name;
-    s->host = host;
-    s->port = port;
+    s->server = server;
     button_t* btn = s->button->extra_data;
 
     s->button->height = 20;
@@ -169,7 +173,7 @@ struct server* server_list_add_server(widget_t* serverlist, char* name, char* ho
     s->button->clicked= &server_button_clicked;
 
     button_set_type(s->button, BUTTON_TEXT);
-    button_set_text(s->button, name);
+    button_set_text(s->button, server->name);
 
     scroll_pane_item_t* item = scroll_pane_add_item(serverlist, s->button);
     item->x = 0;
@@ -384,7 +388,7 @@ void client_main() {
     window_add_widget(main_window, messagesw);
 
     for (int i = 0; i < config->server_count; i++) {
-        server_list_add_server(serverlistw, config->servers[i]->name, config->servers[i]->host, config->servers[i]->port);
+        server_list_add_server(serverlistw, config->servers[i]);
     }
 
     window_display(main_window);

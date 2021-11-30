@@ -130,6 +130,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
             consume_whitespace();
             client_config_server_t* server = malloc(sizeof(client_config_server_t));
             server->name = read_string();
+            server->nick = 0;
             consume_whitespace();
             if (test_char('{', 1)) {
                 while (1) {
@@ -140,6 +141,9 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                     } else if (test_str("port", 1)) {
                         consume_whitespace();
                         server->port = read_int();
+                    } else if (test_str("nick", 1)) {
+                        consume_whitespace();
+                        server->nick = read_string();
                     } else if (test_char('}', 1)) {
                         config->server_count++;
                         config->servers = realloc(config->servers, config->server_count * sizeof(void*));
