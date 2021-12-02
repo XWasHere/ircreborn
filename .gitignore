@@ -1,4 +1,8 @@
 /build/*
 /ircreborn
 /ircreborn.exe
+
+# this is where i test things like the pkgbuild
+/private
+
 .vscode

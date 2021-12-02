@@ -73,6 +73,10 @@ binit:
 ircreborn: binit  $(OBJS)
 	$(CC) $(CC_ARGS) $(OBJS) -o ircreborn $(CC_FARGS) 
 
+install: ircreborn
+	install ircreborn                 /usr/bin
+	install build/docs/ircreborn.info /usr/share/info
+
 __clean:
 	rm -rf build
 
