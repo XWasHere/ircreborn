@@ -64,6 +64,8 @@ struct __widget {
     int  (*mouseup)(widget_t* widget, window_t* window, int x, int y);
     int  (*mousemove)(widget_t* widget, window_t* window, int x, int y);
     int  (*keypress)(widget_t* widget, window_t* window, uint32_t key);
+    int  (*scroll_up)(widget_t* widget, window_t* window);
+    int  (*scroll_down)(widget_t* widget, window_t* window);
 };
 
 // this is a window.

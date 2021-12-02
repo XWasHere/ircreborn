@@ -135,6 +135,42 @@ void window_left_mouse_up(window_t* window, int x, int y) {
     free(widgets);
 }
 
+void window_scroll_up(window_t* window, int x, int y) {
+    int done = 0;
+
+    widget_t** widgets = window_sort_z(window);
+    int        widget_count = window->widget_count;
+
+    for (int i = 0; i < widget_count; i++) {
+        widget_t* widget = widgets[i];
+        if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
+            if (!done) {
+                widget->scroll_up(widget, window);
+            }
+        }
+    }
+
+    free(widgets);
+}
+
+void window_scroll_down(window_t* window, int x, int y) {
+    int done = 0;
+
+    widget_t** widgets = window_sort_z(window);
+    int        widget_count = window->widget_count;
+
+    for (int i = 0; i < widget_count; i++) {
+        widget_t* widget = widgets[i];
+        if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
+            if (!done) {
+                widget->scroll_down(widget, window);
+            }
+        }
+    }
+
+    free(widgets);
+}
+
 void window_mouse_move(window_t* window, int x, int y) {
     for (int i = 0; i < window->widget_count; i++) {
         widget_t* widget = window->widgets[i];
@@ -507,6 +543,8 @@ void window_display(window_t* window) {
                     
                     if (event->detail == XCB_BUTTON_INDEX_1) {
                         window_left_mouse_down(window, event->event_x, event->event_y);
+                    } else if (event->detail == XCB_BUTTON_INDEX_4 || event->detail == XCB_BUTTON_INDEX_5) {
+
                     } else {
                         PWARN("got unknown button press type %i\n", event->detail);
                     }
@@ -518,6 +556,10 @@ void window_display(window_t* window) {
                     
                     if (event->detail == XCB_BUTTON_INDEX_1) {
                         window_left_mouse_up(window, event->event_x, event->event_y);
+                    } else if (event->detail == XCB_BUTTON_INDEX_4) {
+                        window_scroll_up(window, event->event_x, event->event_y);
+                    } else if (event->detail == XCB_BUTTON_INDEX_5) {
+                        window_scroll_down(window, event->event_x, event->event_y);
                     } else {
                         PWARN("got unknown button press type %i\n", event->detail);
                     }
