@@ -38,7 +38,7 @@ DOCS = \
 
 all: ircreborn docs
 
-.PHONY: binit clean __clean docs
+.PHONY: binit clean __clean docs install
 
 ifeq ($(MAKECMDGOALS),clean)
 else ifeq ($(MAKECMDGOALS),binit)
