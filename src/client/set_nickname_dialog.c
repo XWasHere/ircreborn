@@ -22,22 +22,25 @@
 #include <ui/widgets/textbox.h>
 #include <ui/widgets/button.h>
 #include <common/util.h>
+#include <common/logger.h>
 #include <networking/networking.h>
 #include <stdlib.h>
 
-window_t* dialog;
+static window_t* dialog;
 
-widget_t* textw;
-widget_t* entryw;
-widget_t* okw;
-widget_t* cancelw;
+static widget_t* textw;
+static widget_t* entryw;
+static widget_t* okw;
+static widget_t* cancelw;
 
-label_t* texte;
-textbox_t* entrye;
-button_t* oke;
-button_t* cancele;
+static label_t* texte;
+static textbox_t* entrye;
+static button_t* oke;
+static button_t* cancele;
 
-int set_nickname_dialog_cancel_clicked() {
+static int lock = 0;
+
+static int set_nickname_dialog_cancel_clicked() {
     dialog->should_exit = 1;
 
     return 1;
@@ -60,6 +63,8 @@ int set_nickname_dialog_ok_clicked() {
 }
 
 void open_set_nickname_dialog() {
+    if (lock) return;
+    lock = 1;
     dialog = window_init();
     
     window_set_type(dialog, WINDOW_WM_TYPE_DIALOG);
@@ -79,6 +84,7 @@ void open_set_nickname_dialog() {
         textw->y      = 10;
         textw->width  = 120;
         textw->height = 20;
+        textw->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
 
         entryw->x      = 10;
         entryw->y      = 40;
@@ -112,7 +118,7 @@ void open_set_nickname_dialog() {
 
         window_set_size(dialog, 340, 100);
         
-        window_display(dialog);
+        window_display(dialog, 1);
 
         label_free(textw);
         textbox_free(entryw);
@@ -121,7 +127,7 @@ void open_set_nickname_dialog() {
 
         window_free(dialog);
     } else {
-        PWARN("connect to a server before setting your nickname you phycopath\n");
+        logger_log(CHANNEL_WARN, "connect to a server before setting your nickname you phycopath\n");
 
         textw   = label_init();
         okw     = button_init();
@@ -133,7 +139,8 @@ void open_set_nickname_dialog() {
         textw->y      = 10;
         textw->width  = 300;
         textw->height = 20;
-        
+        textw->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
+
         okw->x        = 110;
         okw->y        = 40;
         okw->width    = 90;
@@ -150,11 +157,12 @@ void open_set_nickname_dialog() {
 
         window_set_size(dialog, 320, 70);
 
-        window_display(dialog);
+        window_display(dialog, 1);
 
         label_free(textw);
         button_free(okw);
 
         window_free(dialog);
     }
+    lock = 0;
 }

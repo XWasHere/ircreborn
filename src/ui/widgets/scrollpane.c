@@ -195,6 +195,8 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
     rect[3].height = ceil(tsize);
 
     xcb_poly_rectangle(window->connection, window->window, window->gc, 4, rect);
+
+    xcb_flush(window->connection);
 #endif
 
     for (int i = 0; i < sp->itemc; i++) {

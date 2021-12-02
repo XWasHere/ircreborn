@@ -18,6 +18,7 @@
 
 #include <config_parser/config.h>
 #include <common/util.h>
+#include <common/logger.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -149,7 +150,7 @@ static int read_int() {
 }
 
 static void config_error(int l, int c, char* msg) {
-    PFATL("error on line %i, col %i: %s\n", l, c, msg);
+    logger_log(CHANNEL_FATL, "error on line %i, col %i: %s\n", l, c, msg);
     exit(1);
 }
 
@@ -193,7 +194,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                         config->server_count++;
                         config->servers = realloc(config->servers, config->server_count * sizeof(void*));
                         config->servers[config->server_count - 1] = server;
-                        PINFO("registered server \"%s:%i\" as \"%s\"\n", server->host, server->port, server->name);
+                        logger_log(CHANNEL_DBUG, "registered server \"%s:%i\" as \"%s\"\n", server->host, server->port, server->name);
                         break;
                     } else {
                         char* error = malloc(255);

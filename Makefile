@@ -18,6 +18,7 @@ OBJS = \
 	build/client/license_dialog.o \
 	build/common/args.o \
 	build/common/util.o \
+	build/common/logger.o \
 	build/ui/window.o \
 	build/ui/widget.o \
 	build/ui/widgets/button.o \
@@ -71,7 +72,7 @@ binit:
 	mkdir -p build/compat
 
 ircreborn: binit  $(OBJS)
-	$(CC) $(CC_ARGS) $(OBJS) -o ircreborn $(CC_FARGS) 
+	$(CC) $(CC_ARGS) $(OBJS) -o ircreborn $(CC_FARGS)
 
 install: ircreborn
 	install ircreborn                 $(PREFIX)/usr/bin

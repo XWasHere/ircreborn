@@ -25,6 +25,7 @@
 #include <common/args.h>
 #include <common/util.h>
 #include <common/attrib.h>
+#include <common/logger.h>
 #include <networking/networking.h>
 #include <networking/types.h>
 #include <config_parser/config.h>
@@ -127,8 +128,8 @@ void server_main() {
 #ifdef WIN32
     WSADATA* wsadata = malloc(sizeof(WSADATA));
     if (WSAStartup(MAKEWORD(2,2), wsadata)) {
-        PFATL("failed to start winsock, aborting\n");
-        PFATL("%s", format_error(WSAGetLastError()));
+        logger_log(CHANNEL_FATL, "failed to start winsock, aborting\n");
+        logger_log(CHANNEL_FATL, "%s", format_error(WSAGetLastError()));
         exit(1);
     }
 #endif
@@ -144,7 +145,7 @@ void server_main() {
         strcat(config_path, "/.ircreborn/server");
     }
 
-    PINFO("reading config from %s\n", config_path);
+    logger_log(CHANNEL_INFO, "reading config from %s\n", config_path);
 
     int configfd = open(config_path, O_RDONLY | O_CREAT);
     chmod(config_path, S_IWUSR | S_IRUSR);
@@ -200,7 +201,7 @@ void server_main() {
 
         for (int i = 1; i < pollfd_count; i++) {
             if (pollfds[i].revents & POLLERR) {
-                PINFO("error\n");
+                logger_log(CHANNEL_FATL, "error\n");
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "fatal error");
             } else if (pollfds[i].revents & POLLHUP) {
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "connection lost");
@@ -214,7 +215,7 @@ void server_main() {
                 int   op     = 0;
 
                 if (recv(pollfds[i].fd, header, 8, 0) == 0) {
-                    PWARN("got 0 bytes of data. assuming broken connection. kicking\n");
+                    logger_log(CHANNEL_DBUG, "got 0 bytes of data. assuming broken connection. kicking\n");
                     close(pollfds[i].fd);
                     disconnect_socket(pollfds[i].fd, 1, 1, 1, "read error");
                 } else {
@@ -250,7 +251,7 @@ void server_main() {
                         nstring_t* nick = read_string(msgbuf);
                         set_nickname_t* packet = malloc(sizeof(set_nickname_t));
 
-                        PINFO("client set nickname %s -> %s\n", c->nickname, nick->str);
+                        logger_log(CHANNEL_DBUG, "client set nickname %s -> %s\n", c->nickname, nick->str);
 
                         c->nickname = nick->str;
                         packet->nickname = c->nickname;

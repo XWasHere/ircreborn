@@ -136,7 +136,7 @@ menu_t* menubar_add_menu(widget_t* widget, char* name) {
     menubar->next_menu_x += obtn->widget->width;
 
     menu->container->y = 20;
-
+    menu->container->x = item->x;
     return menu;
 }
 

@@ -32,14 +32,15 @@
 
 void __DEFAULT_textbox_submit(widget_t* a, window_t* b, char* c, int d) {};
 
-int textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
+int textbox_keypress(widget_t* widget, window_t* window, uint32_t key, uint16_t mod) {
     textbox_t* tb = widget->extra_data;
 
 #ifdef WIN32
     if (key == 8) {
 #else
-    if (key == 0xff08) {
+    if (key == 0xff08 || key == 0x8) {
 #endif
+        if (tb->cursorpos == 0) return 1;
         tb->textlen--;
         tb->cursorpos--;
         
@@ -48,16 +49,16 @@ int textbox_keypress(widget_t* widget, window_t* window, uint32_t key) {
 #ifdef WIN32
         if ((key == 10 || key == 13) && tb->multiline == 0) {
 #else
-        if (key == 0xff0d && tb->multiline == 0) {
+        if (key == 0xd && (tb->multiline ==2  || (tb->multiline == 0 && !(mod&XCB_MOD_MASK_SHIFT)))) {
 #endif
             tb->submit(widget, window, tb->text, tb->textlen);
             return 1;
         }
 
 #ifndef WIN32
-        if (key == 0xff0d) key = '\n';
+        if (key == 0xff0d || key==0xd) key = '\n';
+        if (key == 0xe1 || key == 0xe2 || key == 0xe3 || key == 0xe4 || key == 0xe5 || key == 0xe6 || key == 0xe7 || key == 0xe8 || key == 0xe9 ) { return 1; }
 #endif
-
         tb->textlen++;
 
         if (tb->text == 0) tb->text = malloc(1);
@@ -151,16 +152,41 @@ void textbox_draw(widget_t* widget, window_t* window) {
         maskv
     );
 
+    int linecount = 0;
+
+    int len = strlen(tb->text);
+    int c = 0;
+    int d = 0;
+
+    for (int i = 0; i < len; i++) {
+        if (tb->text[i] == '\n') {
+            xcb_image_text_8(
+                window->connection, 
+                c,
+                window->window,
+                window->gc,
+                widget->x + 3,
+                widget->y + 17 + 20 * linecount,
+                tb->text + d - c
+            );
+            linecount++;
+            c = 0;
+        } else {
+            c++;
+        }
+        d++;
+    }
+
     xcb_image_text_8(
-        window->connection,
-        strlen(tb->text ? tb->text : ""),
+        window->connection, 
+        c,
         window->window,
         window->gc,
         widget->x + 3,
-        widget->y + widget->height - 3,
-        tb->text ? tb->text : ""
+        widget->y + 17 + 20 * linecount,
+        tb->text + d - c
     );
-
+    
     maskv[0] = window->screen->black_pixel;
     xcb_change_gc(
         window->connection,
@@ -191,7 +217,8 @@ widget_t* textbox_init() {
     tb->widget = textbox;
     tb->textlen = 0;
     tb->cursorpos = 0;
-    tb->text = 0;
+    tb->text = malloc(1);
+    tb->text[0] = 0;
     tb->multiline = 0;
     tb->submit = &__DEFAULT_textbox_submit;
 

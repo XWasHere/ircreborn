@@ -64,16 +64,40 @@ void label_draw(widget_t* widget ,window_t* window) {
         maskv
     );
 
+    int linecount = 0;
+
+    int len = strlen(label->text);
+    int c = 0;
+    int d = 0;
+
+    for (int i = 0; i < len; i++) {
+        if (label->text[i] == '\n') {
+            xcb_image_text_8(
+                window->connection, 
+                c,
+                window->window,
+                gc,
+                widget->x + 3,
+                widget->y + 17 + 20 * linecount,
+                label->text + d - c
+            );
+            linecount++;
+            c = 0;
+        } else {
+            c++;
+        }
+        d++;
+    }
+
     xcb_image_text_8(
-        window->connection,
-        strlen(label->text),
+        window->connection, 
+        c,
         window->window,
         gc,
         widget->x + 3,
-        widget->y + widget->height - 3,
-        label->text
+        widget->y + 17 + 20 * linecount,
+        label->text + d - c
     );
-
     xcb_free_gc(window->connection, gc);
     
     xcb_rectangle_t *rect = malloc(sizeof(xcb_rectangle_t));
@@ -83,13 +107,72 @@ void label_draw(widget_t* widget ,window_t* window) {
     rect->width = widget->width;
     rect->height = widget->height;
     
-    xcb_poly_rectangle(
-        window->connection,
-        window->window,
-        window->gc,
-        1,
-        rect
-    );
+    xcb_point_t points[2];
+    
+    // top
+    if (!(widget->style & STYLE_NBT)) {
+        points[0].x = widget->x;
+        points[0].y = widget->y;
+        points[1].x = widget->x + widget->width;
+        points[1].y = widget->y;
+        
+        xcb_poly_line(
+            window->connection,
+            CoordModeOrigin,
+            window->window,
+            window->gc,
+            2, &points
+        );
+    }
+
+    
+    // right
+    if (!(widget->style & STYLE_NBR)) {
+        points[0].x = widget->x + widget->width;
+        points[0].y = widget->y;
+        points[1].x = widget->x + widget->width;
+        points[1].y = widget->y + widget->height;
+
+        xcb_poly_line(
+            window->connection,
+            CoordModeOrigin,
+            window->window,
+            window->gc,
+            2, &points
+        );
+    }
+
+    // bottom
+    if (!(widget->style & STYLE_NBB)) {
+        points[0].x = widget->x + widget->width;
+        points[0].y = widget->y + widget->height;
+        points[1].x = widget->x;
+        points[1].y = widget->y + widget->height;
+        
+        xcb_poly_line(
+            window->connection,
+            CoordModeOrigin,
+            window->window,
+            window->gc,
+            2, &points
+        );
+    }
+
+    // left
+    if (!(widget->style & STYLE_NBL)) {
+        points[0].x = widget->x;
+        points[0].y = widget->y + widget->height;
+        points[1].x = widget->x;
+        points[1].y = widget->y;
+        
+        xcb_poly_line(
+            window->connection,
+            CoordModeOrigin,
+            window->window,
+            window->gc,
+            2, &points
+        );
+    }
 
     xcb_flush(window->connection);
     

@@ -22,21 +22,21 @@
 #include <client/client.h>
 #include <server/server.h>
 #include <tests/tests.h>
-
+#include <common/logger.h>
 
 int main(int argc, char** argv) {
     parse_args(argc, argv);
 
-    PINFO("%s v1.0.0\n", args_exec_name);
+    logger_log(CHANNEL_INFO, "%s v1.0.0\n", args_exec_name);
     
     if (args_is_server) {
-        PINFO("starting server\n");
+        logger_log(CHANNEL_INFO, "starting server\n");
         server_main();
     } else if (args_test) {
-        PINFO("running ircreborn tests\n");
+        logger_log(CHANNEL_INFO, "running ircreborn tests\n");
         run_tests();
     } else {
-        PINFO("starting client\n");
+        logger_log(CHANNEL_INFO, "starting client\n");
         client_main();
     }
 }

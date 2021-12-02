@@ -31,6 +31,7 @@
 #include <common/util.h>
 #include <common/args.h>
 #include <common/attrib.h>
+#include <common/logger.h>
 #include <config_parser/config.h>
 #include <networking/networking.h>
 #include <networking/types.h>
@@ -91,27 +92,27 @@ int sc_connected;
 int nextpos = 0;
 
 void exit_button_clicked() {
-    PINFO("user requested exit. goodbye\n");
+    logger_log(CHANNEL_DBUG, "user requested exit. goodbye\n");
     main_window->should_exit = 1;
 }
 
 int server_list_collapse_button_clicked(widget_t* widget, window_t* window, int x, int y) {
-    PINFO("server list collapsed\n");
+    logger_log(CHANNEL_DBUG, "server list collapsed\n");
     return 1;
 }
 
 int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
-            PINFO("connecting to server %s\n", servers[i]->server->name);
+            logger_log(CHANNEL_DBUG, "connecting to server %s\n", servers[i]->server->name);
             
             if ((sc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
                 sc = 0;
 
 #ifdef WIN32
-                PFATL("socket(): %i\n", WSAGetLastError());
+                logger_log(CHANNEL_FATL, "socket(): %i\n", WSAGetLastError());
 #else
-                PFATL("%s\n", format_last_error());
+                logger_log(CHANNEL_FATL, "%s\n", format_last_error());
 #endif
                 return 1;
             }
@@ -126,9 +127,9 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
             if (connect(sc, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
                 sc = 0;
 #ifdef WIN32
-                PFATL("connect(): %s", format_error(WSAGetLastError()));
+                logger_log(CHANNEL_FATL, "connect(): %s", format_error(WSAGetLastError()));
 #else
-                PFATL("%s\n", format_last_error());
+                logger_log(CHANNEL_FATL, "%s\n", format_last_error());
 #endif
                 free(addr);
                 return 1;
@@ -201,6 +202,11 @@ void message_submit(widget_t* tb, window_t* window, char* text, int len) {
 
         free(msg->message);
         free(msg);
+
+        textbox_t* t = tb->extra_data;
+        t->cursorpos = 0;
+        t->textlen = 0;
+        t->text[0] = 0; 
     }
 }
 
@@ -208,12 +214,20 @@ void client_add_message(window_t* window, char* message, char* name) {
     widget_t* msglw  = label_init();
     widget_t* namelw = label_init();
 
+    msglw->style = STYLE_NBB | STYLE_NBR;
+    namelw->style = STYLE_NBB;
+
     label_t*  msgle  = msglw->extra_data;
     label_t*  namele = namelw->extra_data;
 
+    int lines = 1;
+    int len = strlen(message);
+    for (int i = 0; i < len; i++) {
+        if (message[i] == '\n') lines++;
+    }
 
     msglw->width = strlen(message) * 10;
-    msglw->height = 20;
+    msglw->height = 20 * lines;
     
     namelw->width = config->nickname_width;
     namelw->height = 20;
@@ -230,7 +244,7 @@ void client_add_message(window_t* window, char* message, char* name) {
     nameli->x = 0;
     nameli->y = label_count * 20;
 
-    label_count++;
+    label_count += lines;
 
     if (label_count * 20 > messages_thing->height) {
         ((scroll_pane_t*)messages_thing->extra_data)->pos = -(label_count * 20 - messages_thing->height);
@@ -308,10 +322,19 @@ void client_recalculate_sizes(window_t* window) {
     messagesw->width = window->width - messagesw->x;
     messagesw->height = window->height - messagesw->y - 20;
 
+    char* t = messageboxe->text;
+    int tl =  messageboxe->textlen;
+
+    int mh = 20;
+
+    for (int i = 0; i < tl; i++) {
+        if (t[i] == '\n') mh += 20;
+    }
+
     messagebox->x = serverlistw->x + serverlistw->width;
-    messagebox->y = window->height - 20;
+    messagebox->y = window->height - mh;
     messagebox->width = window->width - messagebox->x;
-    messagebox->height = 20;
+    messagebox->height = mh;
 
     for (int i = 0; i < server_count; i++) {
         servers[i]->button->width = serverlistw->width - 20;
@@ -325,12 +348,18 @@ void client_recalculate_sizes(window_t* window) {
 */
 }
 
+int handle_mb_kp(widget_t* widget, window_t* window, uint8_t key, uint16_t mod) {
+    int v = textbox_keypress(widget, window, key, mod);
+    client_recalculate_sizes(window);
+    return v;
+}
+
 void client_main() {
 #ifdef WIN32
     wsadata = malloc(sizeof(WSADATA));
     if (WSAStartup(MAKEWORD(2,2), wsadata)) {
-        PFATL("failed to start winsock, aborting\n");
-        PFATL("%s", format_error(WSAGetLastError()));
+        logger_log(CHANNEL_FATL, "failed to start winsock, aborting\n");
+        logger_log(CHANNEL_FATL, "%s", format_error(WSAGetLastError()));
         exit(1);
     }
 #endif
@@ -346,7 +375,7 @@ void client_main() {
         strcat(config_path, "/.ircreborn/client");
     }
 
-    PINFO("reading config from %s\n", config_path);
+    logger_log(CHANNEL_DBUG, "reading config from %s\n", config_path);
 
     int configfd = open(config_path, O_RDONLY | O_CREAT);
     chmod(config_path, S_IWUSR | S_IRUSR);
@@ -378,7 +407,8 @@ void client_main() {
     messages_thing = messagesw;
     
     messageboxe->submit = &message_submit;
-        
+    messagebox->keypress = &handle_mb_kp;
+
     main_window->handle_bg_tasks = &client_run_tasks;
     main_window->resized         = &client_recalculate_sizes;
 
@@ -391,7 +421,7 @@ void client_main() {
         server_list_add_server(serverlistw, config->servers[i]);
     }
 
-    window_display(main_window);
+    window_display(main_window, 1);
     
     // cleanup
     menubar_free(stripw);

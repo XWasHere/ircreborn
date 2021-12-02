@@ -33,6 +33,11 @@
 #include <X11/Xlib.h>
 #endif
 
+#define STYLE_NBT 0x1
+#define STYLE_NBB 0x2
+#define STYLE_NBR 0x4
+#define STYLE_NBL 0x8
+
 typedef struct __widget   widget_t;
 typedef struct __window   window_t;
 
@@ -55,6 +60,9 @@ struct __widget {
     // for measuring the state in the window code
     int hovered;
 
+    // most widgets have borders, so im putting them here
+    uint32_t style;
+
     // draw function prototype (pretend window is window_t*)
     void (*draw)(widget_t* widget, window_t* window);
     int  (*clicked)(widget_t* widget, window_t* window, int x, int y);
@@ -63,13 +71,11 @@ struct __widget {
     int  (*mousedown)(widget_t* widget, window_t* window, int x, int y);
     int  (*mouseup)(widget_t* widget, window_t* window, int x, int y);
     int  (*mousemove)(widget_t* widget, window_t* window, int x, int y);
-    int  (*keypress)(widget_t* widget, window_t* window, uint32_t key);
+    int  (*keypress)(widget_t* widget, window_t* window, uint32_t key, uint16_t mod);
     int  (*scroll_up)(widget_t* widget, window_t* window);
     int  (*scroll_down)(widget_t* widget, window_t* window);
 };
 
-// this is a window.
-// TODO: xorg support
 struct __window {
 #ifdef WIN32
     // windows api bullshit

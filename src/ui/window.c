@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <common/attrib.h>
+#include <common/logger.h>
 #ifdef WIN32
 #include <windows.h> // ugh.
 #else
@@ -196,12 +197,12 @@ void window_resized(window_t* window, int w, int h) {
     window->resized(window);
 }
 
-void window_keypress(window_t* window, uint32_t key) {
+void window_keypress(window_t* window, uint32_t key, uint16_t mod) {
     widget_t* focused = window->focused;
             
     if (focused == 0) return;
 
-    focused->keypress(focused, window, key);
+    focused->keypress(focused, window, key, mod);
 }
 
 void window_run_bg_tasks(window_t* window) {
@@ -262,7 +263,7 @@ LRESULT window_proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) 
             return 0;
         }
         case WM_CHAR: {
-            window_keypress(me, thing);
+            window_keypress(me, thing, 0);
             return 0;
         }
         case WM_TIMER: {
@@ -463,7 +464,7 @@ void window_set_size(window_t* window, int width, int height) {
 #endif
 }
 
-void window_display(window_t* window) {
+void window_display(window_t* window, int all) {
 #ifdef WIN32
     ShowWindow(window->window, SW_SHOWDEFAULT);
     UpdateWindow(window->window);
@@ -475,7 +476,7 @@ void window_display(window_t* window) {
 
     while (ret = GetMessage(msg, 0, 0, 0)) {
         if (ret == -1) {
-            PFATL("something broke\n");
+            logger_log(CHANNEL_FATL, "something broke\n");
         } else {
             TranslateMessage(msg);
             DispatchMessage(msg);
@@ -503,112 +504,115 @@ void window_display(window_t* window) {
 
     // main loop
     while (!window->should_exit) {
-        xcb_generic_event_t* e;
+        for (int i = 0; i < window_count; i++) {
+            window_t* window = windows[i];
+            xcb_generic_event_t* e;
 
-        while ((e = xcb_poll_for_event(window->connection))) {
-            switch (e->response_type & 0x7f) {
-                // repaint
-                case XCB_EXPOSE: {
-                    unused xcb_expose_event_t* event = (xcb_expose_event_t*)e;
-                    window_paint(window);
-                    break;
-                }
-                case XCB_CLIENT_MESSAGE: {
-                    // client messages are fun to deal with
-                    unused xcb_client_message_event_t* event = (xcb_client_message_event_t*)e;
-                    
-                    int type = event->data.data32[0];
-                    
-                    // cant use a switch because we get the value at runtime
-                    if (type == delete->atom) {
-                        window_close(window);
-                    } else {
-                        PWARN("got unknown message from the window manager, ignoring (%i)\n", type);
+            while ((e = xcb_poll_for_event(window->connection))) {
+                switch (e->response_type & 0x7f) {
+                    // repaint
+                    case XCB_EXPOSE: {
+                        unused xcb_expose_event_t* event = (xcb_expose_event_t*)e;
+                        window_paint(window);
+                        break;
                     }
-
-                    break;
-                }
-                case XCB_CONFIGURE_NOTIFY: {
-                    unused xcb_configure_notify_event_t* event = (xcb_configure_notify_event_t*)e;
-                    window_resized(window, event->width, event->height);                    
-                    break;
-                }
-                case XCB_MOTION_NOTIFY: {
-                    unused xcb_motion_notify_event_t* event = (xcb_motion_notify_event_t*)e;
-                    window_mouse_move(window, event->event_x, event->event_y);
-                    break;
-                }
-                case XCB_BUTTON_PRESS: {
-                    unused xcb_button_press_event_t* event = (xcb_button_press_event_t*)e;
-                    
-                    if (event->detail == XCB_BUTTON_INDEX_1) {
-                        window_left_mouse_down(window, event->event_x, event->event_y);
-                    } else if (event->detail == XCB_BUTTON_INDEX_4 || event->detail == XCB_BUTTON_INDEX_5) {
-
-                    } else {
-                        PWARN("got unknown button press type %i\n", event->detail);
-                    }
-                    
-                    break;
-                }
-                case XCB_BUTTON_RELEASE: {
-                    unused xcb_button_release_event_t* event = (xcb_button_release_event_t*)e;
-                    
-                    if (event->detail == XCB_BUTTON_INDEX_1) {
-                        window_left_mouse_up(window, event->event_x, event->event_y);
-                    } else if (event->detail == XCB_BUTTON_INDEX_4) {
-                        window_scroll_up(window, event->event_x, event->event_y);
-                    } else if (event->detail == XCB_BUTTON_INDEX_5) {
-                        window_scroll_down(window, event->event_x, event->event_y);
-                    } else {
-                        PWARN("got unknown button press type %i\n", event->detail);
-                    }
-
-                    break;
-                }
-                case XCB_KEY_PRESS: {
-                    unused xcb_key_press_event_t* event = (xcb_key_press_event_t*)e;
-
-                    int keysym_count;
-                    KeySym *ks = XGetKeyboardMapping(
-                        window->display,
-                        event->detail,
-                        1,
-                        &keysym_count
-                    );
-
-                    // https://tronche.com/gui/x/xlib/input/keyboard-encoding.html
-                    if (event->state & XCB_MOD_MASK_LOCK) {
-                        if (event->state & XCB_MOD_MASK_SHIFT) {
-                            window_keypress(window, ks[0]);
+                    case XCB_CLIENT_MESSAGE: {
+                        // client messages are fun to deal with
+                        unused xcb_client_message_event_t* event = (xcb_client_message_event_t*)e;
+                        
+                        int type = event->data.data32[0];
+                        
+                        // cant use a switch because we get the value at runtime
+                        if (type == delete->atom) {
+                            window_close(window);
                         } else {
-                            window_keypress(window, ks[1]);
+                            logger_log(CHANNEL_DBUG, "got unknown message from the window manager, ignoring (%i)\n", type);
                         }
-                    } else if (event->state & XCB_MOD_MASK_SHIFT) {
-                        window_keypress(window, ks[1]);
-                    } else {
-                        window_keypress(window, ks[0]);
+
+                        break;
                     }
+                    case XCB_CONFIGURE_NOTIFY: {
+                        unused xcb_configure_notify_event_t* event = (xcb_configure_notify_event_t*)e;
+                        window_resized(window, event->width, event->height);                    
+                        break;
+                    }
+                    case XCB_MOTION_NOTIFY: {
+                        unused xcb_motion_notify_event_t* event = (xcb_motion_notify_event_t*)e;
+                        window_mouse_move(window, event->event_x, event->event_y);
+                        break;
+                    }
+                    case XCB_BUTTON_PRESS: {
+                        unused xcb_button_press_event_t* event = (xcb_button_press_event_t*)e;
+                        
+                        if (event->detail == XCB_BUTTON_INDEX_1) {
+                            window_left_mouse_down(window, event->event_x, event->event_y);
+                        } else if (event->detail == XCB_BUTTON_INDEX_4 || event->detail == XCB_BUTTON_INDEX_5) {
 
-                    
-                    XFree(ks);
+                        } else {
+                            logger_log(CHANNEL_DBUG, "got unknown button press type %i\n", event->detail);
+                        }
+                        
+                        break;
+                    }
+                    case XCB_BUTTON_RELEASE: {
+                        unused xcb_button_release_event_t* event = (xcb_button_release_event_t*)e;
+                        
+                        if (event->detail == XCB_BUTTON_INDEX_1) {
+                            window_left_mouse_up(window, event->event_x, event->event_y);
+                        } else if (event->detail == XCB_BUTTON_INDEX_4) {
+                            window_scroll_up(window, event->event_x, event->event_y);
+                        } else if (event->detail == XCB_BUTTON_INDEX_5) {
+                            window_scroll_down(window, event->event_x, event->event_y);
+                        } else {
+                            logger_log(CHANNEL_DBUG, "got unknown button press type %i\n", event->detail);
+                        }
 
-                    break;
+                        break;
+                    }
+                    case XCB_KEY_PRESS: {
+                        unused xcb_key_press_event_t* event = (xcb_key_press_event_t*)e;
+
+                        int keysym_count;
+                        KeySym *ks = XGetKeyboardMapping(
+                            window->display,
+                            event->detail,
+                            1,
+                            &keysym_count
+                        );
+
+                        // https://tronche.com/gui/x/xlib/input/keyboard-encoding.html
+                        if (event->state & XCB_MOD_MASK_LOCK) {
+                            if (event->state & XCB_MOD_MASK_SHIFT) {
+                                window_keypress(window, ks[0], event->state);
+                            } else {
+                                window_keypress(window, ks[1], event->state);
+                            }
+                        } else if (event->state & XCB_MOD_MASK_SHIFT) {
+                            window_keypress(window, ks[1] ? ks[1] : ks[0], event->state);
+                        } else {
+                            window_keypress(window, ks[0] ? ks[0] : ks[1], event->state);
+                        }
+
+                        
+                        XFree(ks);
+
+                        break;
+                    }
+                    case XCB_KEY_RELEASE: {
+                        break;
+                    }
+                    default: {
+                        logger_log(CHANNEL_DBUG, "got unknown message from xcb %i\n", e->response_type & ~0x80);
+                        break;
+                    }
                 }
-                case XCB_KEY_RELEASE: {
-                    break;
-                }
-                default: {
-                    PWARN("got unknown message from xcb %i\n", e->response_type & ~0x80);
-                    break;
-                }
+
+
+                free(e);
             }
 
-
-            free(e);
+            window->handle_bg_tasks(window);
         }
-
-        window->handle_bg_tasks(window);
     }
 
     free(proto);

@@ -27,7 +27,7 @@ int  __DEFAULT_mouseout(widget_t* a, window_t* b) { return 1; }
 int  __DEFAULT_mousedown(widget_t* a, window_t* b, int c, int d) { return 1; }
 int  __DEFAULT_mouseup(widget_t* a, window_t* b, int c, int d) { return 1; }
 int  __DEFAULT_mousemove(widget_t* a, window_t* b, int c, int d) { return 1; }
-int  __DEFAULT_keypress(widget_t* a, window_t* b, uint32_t c) { return 1; }
+int  __DEFAULT_keypress(widget_t* a, window_t* b, uint32_t c, uint16_t s) { return 1; }
 int  __DEFAULT_scroll_up(widget_t* a, window_t* b) { return 1; }
 int  __DEFAULT_scroll_down(widget_t* a, window_t* b) { return 1; }
 
@@ -47,6 +47,7 @@ widget_t* widget_init() {
     widget->x = 0;
     widget->y = 0;
     widget->z = 0;
+    widget->style = 0;
 
     return widget;
 }

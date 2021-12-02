@@ -16,9 +16,24 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef IRCREBORN_UTIL_ATTRIB_H
-#define IRCREBORN_UTIL_ATTRIB_H
+#ifndef IRCREBORN_LOGGER_H
+#define IRCREBORN_LOGGER_H
 
-#define unused            __attribute__(( unused ))
+// uncomment this if you like your errors on stderr
+// #define LOGGER_USE_STDERR_FOR_ERRORS
+
+extern int CHANNEL_INFO;
+extern int CHANNEL_WARN;
+extern int CHANNEL_FATL;
+extern int CHANNEL_DBUG;
+
+typedef struct logger_channel logger_channel_t ;
+struct logger_channel {
+    char* name;
+    int   fd;
+};
+
+int  logger_add_channel(int fd, char* name);
+void logger_log(int channel, char* data, ...);
 
 #endif

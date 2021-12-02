@@ -24,7 +24,7 @@
 #define   WINDOW_WM_TYPE_DIALOG 1
 
 window_t* window_init      ();
-void      window_display   (window_t* window);
+void      window_display   (window_t* window, int all);
 void      window_add_widget(window_t* window, widget_t* widget);
 void      window_set_focus (window_t* window, widget_t* widget);
 void      window_paint     (window_t* window);
