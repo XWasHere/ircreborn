@@ -164,7 +164,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
     config->server_count = 0;
     config->servers = malloc(1);
     config->nickname_width = 320;
-
+        
     parse_pos = 0;
     parse_fd  = fd;
     line      = 1;
