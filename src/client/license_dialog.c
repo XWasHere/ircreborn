@@ -20,6 +20,7 @@
 #include <ui/widgets/button.h>
 #include <ui/window.h>
 #include <ui/widget.h>
+#include <client/client.h>
 
 static window_t* dialog;
 

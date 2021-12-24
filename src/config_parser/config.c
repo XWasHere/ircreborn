@@ -161,10 +161,14 @@ static void die(char* error) {
 client_config_t* cfgparser_parse_client_config(int fd) {
     client_config_t *config = malloc(sizeof(client_config_t));
     
+    config->theme = duplicate_node(base_tree);
+    logger_log(CHANNEL_DBUG, "parsing config using default theme:\n");
+    print_theme(config->theme);
+
     config->server_count = 0;
     config->servers = malloc(1);
     config->nickname_width = 320;
-        
+    
     parse_pos = 0;
     parse_fd  = fd;
     line      = 1;
@@ -208,6 +212,9 @@ client_config_t* cfgparser_parse_client_config(int fd) {
             config->nickname_width = read_int();
         }
     }
+
+    logger_log(CHANNEL_DBUG, "USING THEME\n");
+    print_theme(config->theme);
 
     return config;
 }

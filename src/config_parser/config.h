@@ -19,46 +19,16 @@
 #ifndef IRCREBORN_CONFIG_PARSER_H
 #define IRCREBORN_CONFIG_PARSER_H
 
+#include <common/color.h>
+#include <config_parser/theme.h>
+
 #define CONFIG_TYPE_INT    0x00
 #define CONFIG_TYPE_STRING 0x01
 #define CONFIG_TYPE_GROUP  0x02
 
 typedef struct client_config_server client_config_server_t;
 typedef struct client_config_file client_config_t;
-typedef struct client_config_theme client_config_theme_t;
 typedef struct server_config_file server_config_t;
-typedef struct config_rgba config_rgba_t;
-
-struct config_rgba {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    unsigned char a;
-};
-
-struct client_config_theme {
-    config_rgba_t server_list_scrollbar_track_color;
-    config_rgba_t server_list_scrollbar_thumb_color;
-    config_rgba_t server_list_scrollbar_button_color;
-    config_rgba_t server_list_bg_color;
-    config_rgba_t server_list_item_bg_color;
-    config_rgba_t server_list_item_text_color;
-    config_rgba_t messages_scrollbar_track_color;
-    config_rgba_t messages_scrollbar_thumb_color;
-    config_rgba_t messages_scrollbar_button_color;
-    config_rgba_t messages_bg_color;
-    config_rgba_t message_bg_color;
-    config_rgba_t message_author_bg_color;
-    config_rgba_t message_author_text_color;
-    config_rgba_t message_content_bg_color;
-    config_rgba_t message_content_text_color;
-    config_rgba_t toolbar_bg_color;
-    config_rgba_t toolbar_item_bg_color;
-    config_rgba_t toolbar_item_text_color;
-    config_rgba_t toolbar_menu_bg_color;
-    config_rgba_t toolbar_menu_item_bg_color;
-    config_rgba_t toolbar_menu_item_text_color;
-};
 
 struct client_config_server {
     char* name;
@@ -68,10 +38,10 @@ struct client_config_server {
 };
 
 struct client_config_file {
-    int                      nickname_width;
-    client_config_theme_t    theme;
-    int                      server_count;
-    client_config_server_t** servers;
+    int                              nickname_width;
+    client_config_theme_tree_node_t* theme;
+    int                              server_count;
+    client_config_server_t**         servers;
 };
 
 struct server_config_file {

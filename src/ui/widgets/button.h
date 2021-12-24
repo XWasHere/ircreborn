@@ -32,6 +32,10 @@
 #define BUTTON_TEXT  0x01
 #define BUTTON_INVIS 0x02
 
+#define BUTTON_COLOR_BG 0x00
+#define BUTTON_COLOR_TX 0x01
+#define BUTTON_COLOR_BR 0x02
+
 typedef struct __button button_t;
 struct __button {
     widget_t* widget;
@@ -44,12 +48,17 @@ struct __button {
     COLORREF bg_color;
     COLORREF text_color;
     COLORREF border_color;
+#else
+    rgba_t bg_color;
+    rgba_t text_color;
+    rgba_t border_color;
 #endif
 };
 
 widget_t* button_init();
 void      button_set_type(widget_t* widget, int type);
 void      button_set_text(widget_t* widget, char* text);
+void      button_set_color(widget_t* widget, int c, rgba_t color);
 void      button_free(widget_t* widget);
 
 #endif

@@ -33,6 +33,8 @@
 #include <X11/Xlib.h>
 #endif
 
+#include <common/color.h>
+
 #define STYLE_NBT 0x1
 #define STYLE_NBB 0x2
 #define STYLE_NBR 0x4
@@ -91,6 +93,7 @@ struct __window {
     xcb_gcontext_t    gc;
     xcb_screen_t*     screen;
     xcb_font_t        main_font;
+    xcb_colormap_t    cmap;
     int               lshift_state;
     int               rshift_state;
     int               lctrl_state;

@@ -27,6 +27,7 @@
 #include <ui/widget.h>
 #include <ui/util/font_search.h>
 
+#include <common/color.h>
 #include <common/util.h>
 
 void button_draw(widget_t*, window_t*);
@@ -43,6 +44,8 @@ widget_t* button_init() {
     button->bg_color     = GetSysColor(COLOR_BTNFACE);
     button->text_color   = GetSysColor(COLOR_BTNTEXT);
     button->border_color = GetSysColor(COLOR_BTNFACE);
+#else
+    
 #endif
 
     button->widget = widget;
@@ -89,17 +92,59 @@ void button_draw(widget_t* widget, window_t* window) {
     free(rect);
 #else
     // get a rectangle
-    xcb_rectangle_t *rect = malloc(sizeof(xcb_rectangle_t));
+    xcb_rectangle_t* rect = malloc(sizeof(xcb_rectangle_t));
     
     // ???
     rect->x = widget->x;
     rect->y = widget->y;
     rect->width = widget->width;
     rect->height = widget->height;
+
+    xcb_alloc_color_cookie_t c = xcb_alloc_color(
+        window->connection,
+        window->cmap,
+        button->bg_color.r << 8,
+        button->bg_color.g << 8,
+        button->bg_color.b << 8
+    );
+
+    xcb_alloc_color_reply_t* bg = xcb_alloc_color_reply(
+        window->connection,
+        c,
+        NULL
+    );
     
+    c = xcb_alloc_color(
+        window->connection,
+        window->cmap,
+        button->text_color.r << 8,
+        button->text_color.g << 8,
+        button->text_color.b << 8
+    );
+
+    xcb_alloc_color_reply_t* tx = xcb_alloc_color_reply(
+        window->connection,
+        c,
+        NULL
+    );
+
+    c =  xcb_alloc_color(
+        window->connection,
+        window->cmap,
+        button->border_color.r << 8,
+        button->border_color.g << 8,
+        button->border_color.b << 8
+    );
+
+    xcb_alloc_color_reply_t* bd = xcb_alloc_color_reply(
+        window->connection,
+        c,
+        NULL
+    );
+
     uint32_t maskd = XCB_GC_FOREGROUND;
     uint32_t maskv[3] = {
-        window->screen->white_pixel
+        bg->pixel
     };
 
     xcb_change_gc(
@@ -121,8 +166,8 @@ void button_draw(widget_t* widget, window_t* window) {
 
     if (button->type == BUTTON_TEXT) {
         maskd = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
-        maskv[0] = window->screen->black_pixel;
-        maskv[1] = window->screen->white_pixel;
+        maskv[0] = tx->pixel;
+        maskv[1] = bg->pixel;
         maskv[2] = window->main_font;
 
         xcb_change_gc(
@@ -144,7 +189,7 @@ void button_draw(widget_t* widget, window_t* window) {
     }
 
     maskd = XCB_GC_FOREGROUND;
-    maskv[0] = window->screen->black_pixel;
+    maskv[0] = bd->pixel;
     xcb_change_gc(
         window->connection,
         window->gc,
@@ -167,6 +212,19 @@ void button_draw(widget_t* widget, window_t* window) {
     // bye
     free(rect);
 #endif
+}
+
+// this exists because it gets really chaotic setting these values in client.c
+void button_set_color(widget_t* widget, int t, rgba_t color) {
+    button_t* button = widget->extra_data;
+
+    if (t == BUTTON_COLOR_BG) {
+        button->bg_color = color;
+    } else if (t == BUTTON_COLOR_BR) {
+        button->border_color = color;
+    } else if (t == BUTTON_COLOR_TX) {
+        button->text_color = color;
+    }
 }
 
 void button_set_text(widget_t* widget, char* text) {

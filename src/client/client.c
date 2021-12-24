@@ -33,6 +33,7 @@
 #include <common/attrib.h>
 #include <common/logger.h>
 #include <config_parser/config.h>
+#include <config_parser/theme.h>
 #include <networking/networking.h>
 #include <networking/types.h>
 #include <client/set_nickname_dialog.h>
@@ -70,8 +71,11 @@ widget_t* messagebox;
 widget_t* stripw;
 menubar_t* stripe;
 menu_t* filemenu;
+menubutton_t* exitbutton;
 menu_t* servermenu; 
+menubutton_t* setnicknamebutton;
 menu_t* helpmenu;
+menubutton_t* licensebutton;
 window_t* main_window;
 widget_t* serverlistw;
 scroll_pane_t* serverliste;
@@ -172,6 +176,34 @@ struct server* server_list_add_server(widget_t* serverlist, client_config_server
     s->button->height = 20;
     s->button->width  = serverlist->width - 20;
     s->button->clicked= &server_button_clicked;
+
+/*    
+    btn->bg_color.r = config->theme.server_list_item_bg_color.r;
+    btn->bg_color.g = config->theme.server_list_item_bg_color.g;
+    btn->bg_color.b = config->theme.server_list_item_bg_color.b;
+    btn->text_color.r = config->theme.server_list_item_text_color.r;
+    btn->text_color.g = config->theme.server_list_item_text_color.g;
+    btn->text_color.b = config->theme.server_list_item_text_color.b;
+    btn->border_color.r = config->theme.server_list_item_border_color.r;
+    btn->border_color.g = config->theme.server_list_item_border_color.g;
+    btn->border_color.b = config->theme.server_list_item_border_color.b;
+*/
+
+    // button_set_color(
+        // btn,
+        // BUTTON_COLOR_BG,
+        // 0
+    // );
+    button_set_color(
+        s->button,
+        BUTTON_COLOR_TX,
+        get_node_rgb(config->theme, "common.text_color")
+    );
+    // button_set_color(
+        // btn,
+        // BUTTON_COLOR_BR,
+        // 0
+    // );
 
     button_set_type(s->button, BUTTON_TEXT);
     button_set_text(s->button, server->name);
@@ -355,6 +387,23 @@ int handle_mb_kp(widget_t* widget, window_t* window, uint8_t key, uint16_t mod) 
 }
 
 void client_main() {
+    theme_tree_init();
+    register_theme_node("common", NODE_TYPE_BRANCH);
+    register_theme_node("common.primary_color", NODE_TYPE_RGBA);
+    set_node_default_rgb("common.primary_color", RGBA(0x000000ff));
+    register_theme_node("common.secondary_color", NODE_TYPE_RGBA);
+    set_node_default_rgb("common.secondary_color", RGBA(0x000000ff));
+    register_theme_node("common.tertiary_color", NODE_TYPE_RGBA);
+    set_node_default_rgb("common.tertiary_color", RGBA(0x000000ff));
+    register_theme_node("common.scrollbar_track_color", NODE_TYPE_RGBA);
+    set_node_default_rgb("common.scrollbar_track_color", RGBA(0x000000ff));
+    register_theme_node("common.scrollbar_button_color", NODE_TYPE_RGBA);
+    set_node_default_rgb("common.scrollbar_button_color", RGBA(0x000000ff));
+    register_theme_node("common.scrollbar_thumb_color", NODE_TYPE_RGBA);
+    set_node_default_rgb("common.scrollbar_thumb_color", RGBA(0x000000ff));
+    register_theme_node("common.text_color", NODE_TYPE_RGBA);
+    set_node_default_rgb("common.text_color", RGBA(0xffffffff));
+
 #ifdef WIN32
     wsadata = malloc(sizeof(WSADATA));
     if (WSAStartup(MAKEWORD(2,2), wsadata)) {
@@ -389,14 +438,81 @@ void client_main() {
     
     stripw    = menubar_init();
     stripe    = stripw->extra_data;
-    stripw->z = 1000;    
+    stripw->z = 1000;
     
-    filemenu   = menubar_add_menu(stripw, "file");
-    menu_add_button(filemenu, "exit", exit_button_clicked);
+    filemenu = menubar_add_menu(stripw, "file");
+    exitbutton = menu_add_button(filemenu, "exit", exit_button_clicked);
     servermenu = menubar_add_menu(stripw, "server");
-    menu_add_button(servermenu, "set nickname", open_set_nickname_dialog);
-    helpmenu  = menubar_add_menu(stripw, "help");
-    menu_add_button(helpmenu, "license", open_license_dialog);    
+    setnicknamebutton = menu_add_button(servermenu, "set nickname", open_set_nickname_dialog);
+    helpmenu = menubar_add_menu(stripw, "help");
+    licensebutton = menu_add_button(helpmenu, "license", open_license_dialog);    
+    
+    button_set_color(
+        filemenu->open_button,
+        BUTTON_COLOR_BG,
+        get_node_rgb(config->theme, "common.secondary_color")
+    );
+    button_set_color(
+       filemenu->open_button, 
+       BUTTON_COLOR_TX, 
+       get_node_rgb(config->theme, "common.text_color")
+    );
+//    button_set_color(filemenu->open_button, BUTTON_COLOR_BR, config->theme.toolbar_item_border_color);
+    button_set_color(
+        exitbutton->button,
+        BUTTON_COLOR_BG,
+        get_node_rgb(config->theme, "common.secondary_color")
+    );
+    button_set_color(
+        exitbutton->button,
+        BUTTON_COLOR_TX,
+        get_node_rgb(config->theme, "common.text_color")
+    );
+    // button_set_color(exitbutton->button, BUTTON_COLOR_BR, config->theme.toolbar_menu_item_border_color);
+    button_set_color(
+        servermenu->open_button,
+        BUTTON_COLOR_BG,
+        get_node_rgb(config->theme, "common.secondary_color")
+    );
+    button_set_color(
+        servermenu->open_button, 
+        BUTTON_COLOR_TX, 
+        get_node_rgb(config->theme, "common.text_color")
+    );
+    // button_set_color(servermenu->open_button, BUTTON_COLOR_BR, config->theme.toolbar_item_border_color);
+    button_set_color(
+        setnicknamebutton->button,
+        BUTTON_COLOR_BG,
+        get_node_rgb(config->theme, "common.secondary_color")
+    );
+    button_set_color(
+        setnicknamebutton->button,
+        BUTTON_COLOR_TX,
+        get_node_rgb(config->theme, "common.text_color")    
+    );
+    // button_set_color(setnicknamebutton->button, BUTTON_COLOR_BR, config->theme.toolbar_menu_item_border_color);
+    button_set_color(
+        helpmenu->open_button,
+        BUTTON_COLOR_BG,
+        get_node_rgb(config->theme, "common.secondary_color")
+    );
+    button_set_color(
+        helpmenu->open_button,
+        BUTTON_COLOR_TX,
+        get_node_rgb(config->theme, "common.text_color")
+    );
+    // button_set_color(helpmenu->open_button, BUTTON_COLOR_BR, config->theme.toolbar_item_border_color);
+    button_set_color(
+        licensebutton->button,
+        BUTTON_COLOR_BG,
+        get_node_rgb(config->theme, "common.secondary_color")
+    );
+    button_set_color(
+        licensebutton->button, 
+        BUTTON_COLOR_TX, 
+        get_node_rgb(config->theme, "common.text_color")
+    );
+    // button_set_color(licensebutton->button, BUTTON_COLOR_BR, config->theme.toolbar_menu_item_border_color);
 
     serverlistw = scroll_pane_init();
     serverliste = serverlistw->extra_data;

@@ -320,6 +320,9 @@ window_t* window_init() {
     // get a window id
     window->window = xcb_generate_id(window->connection);
 
+    // get a cmap id
+    window->cmap = xcb_generate_id(window->connection);
+
     // get the screen
     window->screen = xcb_setup_roots_iterator(xcb_get_setup(window->connection)).data;
 
@@ -364,6 +367,15 @@ window_t* window_init() {
         window->screen->root_visual,
         XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK,
         wmaskv
+    );
+    
+    // make the cmap
+    xcb_create_colormap(
+        window->connection,
+        XCB_COLORMAP_ALLOC_NONE,
+        window->cmap,
+        window->window,
+        window->screen->root_visual
     );
 
     xcb_change_property(
