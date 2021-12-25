@@ -44,15 +44,9 @@ struct __button {
 
     char* text;
 
-#ifdef WIN32
-    COLORREF bg_color;
-    COLORREF text_color;
-    COLORREF border_color;
-#else
     rgba_t bg_color;
     rgba_t text_color;
     rgba_t border_color;
-#endif
 };
 
 widget_t* button_init();

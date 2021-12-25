@@ -95,7 +95,23 @@ void window_close(window_t* window) {
 }
 
 void window_paint(window_t* window) {
-#ifndef WIN32
+#ifdef WIN32
+    PAINTSTRUCT* ps = malloc(sizeof(PAINTSTRUCT));
+    RECT* rect = malloc(sizeof(RECT));
+    SetRect(
+        rect,
+        0, 0,
+        window->width, window->height
+    );
+    InvalidateRect(window->window, rect, 1);
+    BeginPaint(window->window, ps);
+    SelectObject(ps->hdc, GetStockObject(DC_BRUSH));
+    SetDCBrushColor(ps->hdc, W32RGBAC(window->bg_color));
+    Rectangle(ps->hdc, rect->left, rect->top, rect->right, rect->bottom);
+    EndPaint(window->window, ps);
+    free(rect);
+    free(ps);
+#else
     xcb_alloc_color_reply_t* bg = xcb_alloc_color_reply(
         window->connection,
         xcb_alloc_color(

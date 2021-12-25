@@ -24,7 +24,22 @@ void frame_draw(widget_t* widget, window_t* window) {
     frame_t* frame = widget->extra_data;
 
     if (frame->bg_color.a != 0) {
-#ifndef WIN32
+#ifdef WIN32
+        PAINTSTRUCT* ps = malloc(sizeof(PAINTSTRUCT));
+        RECT* rect = malloc(sizeof(RECT));
+
+        SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
+        InvalidateRect(window->window, rect, 1);
+        BeginPaint(window->window, ps);
+
+        SetBkColor(ps->hdc, W32RGBAC(frame->bg_color));
+        Rectangle(ps->hdc, rect->left, rect->top, rect->right, rect->bottom);
+
+        EndPaint(window->window, ps);
+
+        free(rect);
+        free(ps);
+#else
         xcb_rectangle_t rect;
 
         rect.height = frame->widget->height;

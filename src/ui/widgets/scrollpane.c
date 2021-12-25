@@ -122,6 +122,20 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
 
     BeginPaint(window->window, hi);
     
+    SelectObject(hi->hdc, GetStockObject(DC_BRUSH));
+    SetDCBrushColor(hi->hdc, W32RGBAC(sp->bg_color));
+    Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
+
+    SetRect(
+        rect,
+        widget->x + widget->width - 20,
+        widget->y,
+        widget->x + widget->width,
+        widget->y + widget->height
+    );
+    SetDCBrushColor(hi->hdc, W32RGBAC(sp->track_color));
+    Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
+
     SetRect(
         rect,
         widget->x + widget->width - 20,
@@ -129,6 +143,7 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         widget->x + widget->width,
         widget->y + 20
     );
+    SetDCBrushColor(hi->hdc, W32RGBAC(sp->button_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     SetRect(
@@ -138,6 +153,7 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         widget->x + widget->width,
         widget->y + widget->height
     );
+    SetDCBrushColor(hi->hdc, W32RGBAC(sp->button_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     SetRect(
@@ -147,6 +163,7 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         widget->x + widget->width,
         widget->y + 20 + ceil(tpos) + ceil(tsize)
     );
+    SetDCBrushColor(hi->hdc, W32RGBAC(sp->thumb_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     EndPaint(window->window, hi);

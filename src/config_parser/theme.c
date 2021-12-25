@@ -7,6 +7,10 @@ client_config_theme_tree_node_t* base_tree;
 
 void theme_tree_init() {
     base_tree = malloc(sizeof(client_config_theme_tree_node_t));
+    base_tree->name = 0;
+    base_tree->type = NODE_TYPE_BRANCH;
+    base_tree->value.branch.child_count = 0;
+    base_tree->value.branch.children = malloc(sizeof(void*));
 }
 
 char** split_theme_path(char* path) {

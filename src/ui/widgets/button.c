@@ -40,14 +40,6 @@ widget_t* button_init() {
 
     widget->draw    = &button_draw;
 
-#ifdef WIN32
-    button->bg_color     = GetSysColor(COLOR_BTNFACE);
-    button->text_color   = GetSysColor(COLOR_BTNTEXT);
-    button->border_color = GetSysColor(COLOR_BTNFACE);
-#else
-    
-#endif
-
     button->widget = widget;
 
     return widget;
@@ -75,10 +67,10 @@ void button_draw(widget_t* widget, window_t* window) {
     SelectObject   (hi->hdc, GetStockObject(DC_PEN));
     
     // i couldnt figure out a good way to style buttons so ill just do this (sorry)
-    SetDCBrushColor(hi->hdc, button->bg_color);
-    SetDCPenColor  (hi->hdc, button->border_color);
-    SetBkColor     (hi->hdc, button->bg_color);
-    SetTextColor   (hi->hdc, button->text_color);
+    SetDCBrushColor(hi->hdc, W32RGBAC(button->bg_color));
+    SetDCPenColor  (hi->hdc, W32RGBAC(button->border_color));
+    SetBkColor     (hi->hdc, W32RGBAC(button->bg_color));
+    SetTextColor   (hi->hdc, W32RGBAC(button->text_color));
 
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 

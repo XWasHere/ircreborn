@@ -86,32 +86,26 @@ void textbox_draw(widget_t* widget, window_t* window) {
     PAINTSTRUCT* ps   = malloc(sizeof(PAINTSTRUCT));
     RECT*        rect = malloc(sizeof(RECT));
 
+    SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
+    InvalidateRect(window->window, rect, 1);
+    BeginPaint(window->window, ps);
+
+    SelectObject(ps->hdc, GetStockObject(DC_BRUSH));
+    SetDCBrushColor(ps->hdc, W32RGBAC(tb->bg_color));
+    SetBkColor(ps->hdc, W32RGBAC(tb->bg_color));
+    SetTextColor(ps->hdc, W32RGBAC(tb->text_color));
+
     int h = 0;
 
+    Rectangle(ps->hdc, rect->left, rect->top, rect->right, rect->bottom);        
+
     if (tb->text != 0) {
-        SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
-        InvalidateRect(window->window, rect, 1);
-
-        BeginPaint(window->window, ps);
-
-        Rectangle(ps->hdc, rect->left, rect->top, rect->right, rect->bottom);
-        
         SetRect(rect, widget->x + 1, widget->y + 1, widget->x + widget->width - 1, widget->y + widget->height - 1);
         DrawText(ps->hdc, tb->text, strlen(tb->text), rect, 0);
-
-        EndPaint(window->window, ps);
-    } else {
-        SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
-
-        InvalidateRect(window->window, rect, 1);
-
-        BeginPaint(window->window, ps);
-
-        Rectangle(ps->hdc, rect->left, rect->top, rect->right, rect->bottom);
-
-        EndPaint(window->window, ps);
     }
-    
+
+    EndPaint(window->window, ps);
+
     free(ps);
     free(rect);
 #else

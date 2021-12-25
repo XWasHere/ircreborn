@@ -36,6 +36,10 @@ void label_draw(widget_t* widget ,window_t* window) {
     InvalidateRect(window->window, rect, 1);
     BeginPaint(window->window, hi);
 
+    SelectObject(hi->hdc, GetStockObject(DC_BRUSH));
+    SetDCBrushColor(hi->hdc, W32RGBAC(label->bg_color));
+    SetBkColor(hi->hdc, W32RGBAC(label->bg_color));
+    SetTextColor(hi->hdc, W32RGBAC(label->text_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
     
     SetRect(rect, widget->x + 1, widget->y + 1, widget->x + widget->width - 1, widget->y + widget->height - 1);
