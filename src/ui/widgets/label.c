@@ -49,10 +49,33 @@ void label_draw(widget_t* widget ,window_t* window) {
     // literally copied from button.c
     xcb_gcontext_t gc = xcb_generate_id(window->connection);
 
+    xcb_alloc_color_reply_t* bg = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            label->bg_color.r << 8,
+            label->bg_color.g << 8,
+            label->bg_color.b << 8
+        ),
+        NULL
+    );
+    xcb_alloc_color_reply_t* tx = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            label->text_color.r << 8,
+            label->text_color.g << 8,
+            label->text_color.b << 8
+        ),
+        NULL
+    );
+
     uint32_t maskd = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
     uint32_t maskv[3] = {
-        window->screen->black_pixel,
-        window->screen->white_pixel,
+        tx->pixel,
+        bg->pixel,
         window->main_font
     };
 
@@ -203,6 +226,15 @@ void label_set_text(widget_t* widget, char* text) {
     label->text = buf;
 }
 
+void label_set_color(widget_t* widget, int type, rgba_t value) {
+    label_t* label = widget->extra_data;
+    
+    if (type == LABEL_BG_COLOR) {
+        label->bg_color = value;
+    } else if (type == LABEL_TEXT_COLOR) {
+        label->text_color = value;
+    }
+}
 void label_free(widget_t* widget) {
     label_t* label = widget->extra_data;
 

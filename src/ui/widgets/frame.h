@@ -21,12 +21,15 @@
 
 #include <ui/widget.h>
 
+#define FRAME_COLOR_BG 0x00
+
 typedef struct __frame         frame_t;
 typedef struct __frame_managed frame_managed_t;
 
 struct __frame {
     widget_t* widget;
 
+    rgba_t            bg_color;
     int               item_count;
     frame_managed_t** items;
 };
@@ -40,6 +43,7 @@ struct __frame_managed {
 
 widget_t*        frame_init();
 frame_managed_t* frame_add_item(frame_t* frame, widget_t* widget);
+void             frame_set_color(widget_t* widget, int type, rgba_t value);
 void             frame_free(widget_t* widget);
 
 #endif

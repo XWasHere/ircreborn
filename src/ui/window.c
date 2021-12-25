@@ -95,6 +95,42 @@ void window_close(window_t* window) {
 }
 
 void window_paint(window_t* window) {
+#ifndef WIN32
+    xcb_alloc_color_reply_t* bg = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            window->bg_color.r << 8,
+            window->bg_color.g << 8,
+            window->bg_color.b << 8
+        ),
+        NULL
+    );
+    uint32_t maskd = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND;
+    uint32_t maskv[] = {
+        bg->pixel,
+        bg->pixel
+    };
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+    xcb_rectangle_t* rect = malloc(sizeof(xcb_rectangle_t));
+    rect->x = 0;
+    rect->y = 0;
+    rect->height = window->height;
+    rect->width = window->width;
+    xcb_poly_fill_rectangle(
+        window->connection,
+        window->window,
+        window->gc,
+        1, rect
+    );
+    free(rect);
+#endif
     for (int i = 0; i < window->widget_count; i++) {
         widget_t* widget = window->widgets[i];
         widget->draw(widget, window);
@@ -656,6 +692,11 @@ void window_add_widget(window_t* window, widget_t* widget) {
 
 void window_remove_widget(window_t* window, widget_t* widget) {
 
+}
+
+// this is useless and only exists for consistency
+void window_set_bg(window_t* window, rgba_t value) {
+    window->bg_color = value;
 }
 
 void window_set_focus(window_t* window, widget_t* widget) {

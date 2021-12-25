@@ -119,6 +119,8 @@ struct __window {
 
     void (*handle_bg_tasks)(window_t* window);
     void (*resized)(window_t* window);
+
+    rgba_t bg_color;
 };
 
 #endif

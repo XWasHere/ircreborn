@@ -19,6 +19,9 @@
 #ifndef IRCREBORN_UI_LABEL_H
 #define IRCREBORN_UI_LABEL_H
 
+#define LABEL_BG_COLOR 0x00
+#define LABEL_TEXT_COLOR 0x01
+
 #include <ui/window.h>
 #include <ui/widget.h>
 
@@ -27,10 +30,14 @@ struct __label {
     widget_t* widget;
 
     char* text;
+
+    rgba_t bg_color;
+    rgba_t text_color;
 };
 
 widget_t* label_init();
 void      label_set_text(widget_t* widget, char* text);
+void      label_set_color(widget_t* widget, int type, rgba_t value);
 void      label_free(widget_t* widget);
 
 #endif

@@ -23,6 +23,48 @@
 void frame_draw(widget_t* widget, window_t* window) {
     frame_t* frame = widget->extra_data;
 
+    if (frame->bg_color.a != 0) {
+#ifndef WIN32
+        xcb_rectangle_t rect;
+
+        rect.height = frame->widget->height;
+        rect.width  = frame->widget->width;
+        rect.x      = frame->widget->x;
+        rect.y      = frame->widget->y;
+
+        xcb_alloc_color_reply_t* r = xcb_alloc_color_reply(
+            window->connection,
+            xcb_alloc_color(
+                window->connection,
+                window->cmap,
+                frame->bg_color.r << 8,
+                frame->bg_color.g << 8,
+                frame->bg_color.b << 8
+            ),
+            NULL
+        );
+
+        uint32_t hi[] = {
+            r->pixel
+        };
+
+        xcb_change_gc(
+            window->connection,
+            window->gc,
+            XCB_GC_FOREGROUND,
+            hi
+        );
+
+        xcb_poly_fill_rectangle(
+            window->connection,
+            window->window,
+            window->gc,
+            1,
+            &rect
+        );
+#endif
+    }
+
     for (int i = 0; i < frame->item_count; i++) {
         frame_managed_t* item = frame->items[i];
         
@@ -71,6 +113,14 @@ frame_managed_t* frame_add_item(frame_t* frame, widget_t* widget) {
     frame->items[frame->item_count - 1] = managed;
     
     return managed;
+}
+
+void frame_set_color(widget_t* widget, int type, rgba_t value) {
+    frame_t* frame = widget->extra_data;
+
+    if (type == FRAME_COLOR_BG) {
+        frame->bg_color = value;
+    }
 }
 
 void frame_free(widget_t* widget) {

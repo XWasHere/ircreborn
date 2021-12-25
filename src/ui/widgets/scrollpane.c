@@ -158,9 +158,21 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
     rect[0].height = widget->height;
     rect[0].width  = widget->width;
     
+    xcb_alloc_color_reply_t* r = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            sp->bg_color.r << 8,
+            sp->bg_color.g << 8,
+            sp->bg_color.b << 8
+        ),
+        NULL
+    );
+
     uint32_t maskd    = XCB_GC_FOREGROUND;
     uint32_t maskv[1] = { 
-        window->screen->white_pixel
+        r->pixel
     };
 
     xcb_change_gc(
@@ -169,32 +181,102 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         maskd,
         maskv
     );
-
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
 
-    maskv[0] = window->screen->black_pixel;
     
+    r = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            sp->track_color.r << 8,
+            sp->track_color.g << 8, 
+            sp->track_color.b << 8
+        ),
+        NULL
+    );
+    maskv[0] = r->pixel;
     xcb_change_gc(
         window->connection,
         window->gc,
         maskd,
         maskv
     );
-
-    rect[1].x      = widget->x + widget->width - 20;
-    rect[1].y      = widget->y;
-    rect[1].width  = 20;
-    rect[1].height = 20;
-    rect[2].x      = widget->x + widget->width  - 20;
-    rect[2].y      = widget->y + widget->height - 20;
-    rect[2].width  = 20;
-    rect[2].height = 20;
-    rect[3].x      = widget->x + widget->width - 20;
-    rect[3].y      = widget->y + 20 + ceil(tpos);
-    rect[3].width  = 20;
-    rect[3].height = ceil(tsize);
-
-    xcb_poly_rectangle(window->connection, window->window, window->gc, 4, rect);
+    rect[0].x      = widget->x + widget->width - 20;
+    rect[0].y      = widget->y;
+    rect[0].width  = 20;
+    rect[0].height = widget->height;
+    xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
+    r = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            sp->button_color.r << 8,
+            sp->button_color.g << 8,
+            sp->button_color.b << 8
+        ),
+        NULL
+    );
+    maskv[0] = r->pixel;
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+    rect[0].x      = widget->x + widget->width - 20;
+    rect[0].y      = widget->y;
+    rect[0].width  = 20;
+    rect[0].height = 20;
+    xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
+    r = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            sp->button_color.r << 8,
+            sp->button_color.g << 8,
+            sp->button_color.b << 8
+        ),
+        NULL
+    );
+    maskv[0] = r->pixel;
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+    rect[0].x      = widget->x + widget->width  - 20;
+    rect[0].y      = widget->y + widget->height - 20;
+    rect[0].width  = 20;
+    rect[0].height = 20;
+    xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
+    r = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            sp->thumb_color.r << 8,
+            sp->thumb_color.g << 8,
+            sp->thumb_color.b << 8
+        ),
+        NULL
+    );
+    maskv[0] = r->pixel;
+    xcb_change_gc(
+        window->connection,
+        window->gc,
+        maskd,
+        maskv
+    );
+    rect[0].x      = widget->x + widget->width - 20;
+    rect[0].y      = widget->y + 20 + ceil(tpos);
+    rect[0].width  = 20;
+    rect[0].height = csize <= widget->height ? 0 : ceil(tsize);
+//    printf("%i %i\n", csize, widget->height);
+    xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
 
     xcb_flush(window->connection);
 #endif
@@ -216,6 +298,20 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
 #ifdef WIN32
     free(hi);
 #endif
+}
+
+void scroll_pane_set_color(widget_t* widget, int type, rgba_t value) {
+    scroll_pane_t* pane = widget->extra_data;
+
+    if (type == SCROLLPANE_COLOR_BG) {
+        pane->bg_color = value;
+    } else if (type == SCROLLPANE_COLOR_TRACK) {
+        pane->track_color = value;
+    } else if (type == SCROLLPANE_COLOR_THUMB) {
+        pane->thumb_color = value;
+    } else if (type == SCROLLPANE_COLOR_BUTTON) {
+        pane->button_color = value;
+    }
 }
 
 int scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {

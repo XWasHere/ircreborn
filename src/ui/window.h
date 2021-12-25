@@ -30,6 +30,7 @@ void      window_set_focus (window_t* window, widget_t* widget);
 void      window_paint     (window_t* window);
 void      window_set_size  (window_t* window, int width, int height);
 void      window_set_type  (window_t* window, int type);
+void      window_set_bg    (window_t* window, rgba_t value);
 void      window_free      (window_t* window);
 
 #endif

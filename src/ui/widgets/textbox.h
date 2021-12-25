@@ -21,6 +21,10 @@
 
 #include <ui/widget.h>
 
+#define TEXTBOX_COLOR_BG     0x00
+#define TEXTBOX_COLOR_TEXT   0x01
+#define TEXTBOX_COLOR_BORDER 0x02
+
 typedef struct __textbox textbox_t;
 struct __textbox {
     widget_t* widget;
@@ -33,9 +37,14 @@ struct __textbox {
     int cursorpos;
 
     void (*submit)(widget_t* widget, window_t* window, char* text, int textlen);
+
+    rgba_t bg_color;
+    rgba_t text_color;
+    rgba_t border_color;
 };
 
 widget_t* textbox_init();
 void      textbox_free(widget_t* widget);
+void      textbox_set_color(widget_t* widget, int type, rgba_t value);
 
 #endif

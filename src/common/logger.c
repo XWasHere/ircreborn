@@ -16,6 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// Finally! A logging library that doesnt execute random code
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>

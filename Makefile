@@ -52,7 +52,7 @@ build/docs/%.info: docs/%.tex
 	makeinfo -o $@ $<
 
 build/%.c.d: src/%.c
-	$(CC) $(CC_ARGS) $(CC_FARGS) -M $< -o $@
+	$(CC) $(CC_ARGS) $(CC_FARGS) -M $< -MT $< -o $@
 
 build/%.o: src/%.c build/%.c.d
 	$(CC) $(CC_ARGS) $(CC_FARGS) -c $< -o $@

@@ -149,6 +149,16 @@ static int read_int() {
     return res;
 }
 
+static rgba_t read_rgba() {
+    rgba_t* hi = malloc(sizeof(rgba_t));
+    char* buf = malloc(10);
+    memset(buf, 0, 10);
+    pread(parse_fd, buf, 9, parse_pos);
+    parse_pos += sizeof("#RRGGBBAA") - 1;
+    sscanf(buf, "#%02x%02x%02x%02x", &hi->r, &hi->g, &hi->b, &hi->a);
+    return *hi;
+}
+
 static void config_error(int l, int c, char* msg) {
     logger_log(CHANNEL_FATL, "error on line %i, col %i: %s\n", l, c, msg);
     exit(1);
@@ -158,12 +168,16 @@ static void die(char* error) {
     config_error(line, col, error);
 }
 
+#ifdef PARSER_LOG_SPAM
+#define PARSER_LOG(a, b, ...) logger_log(a, b, ##__VA_ARGS__)
+#else
+#define PARSER_LOG(a, b, ...)
+#endif
+
 client_config_t* cfgparser_parse_client_config(int fd) {
     client_config_t *config = malloc(sizeof(client_config_t));
     
     config->theme = duplicate_node(base_tree);
-    logger_log(CHANNEL_DBUG, "parsing config using default theme:\n");
-    print_theme(config->theme);
 
     config->server_count = 0;
     config->servers = malloc(1);
@@ -174,26 +188,33 @@ client_config_t* cfgparser_parse_client_config(int fd) {
     line      = 1;
     col       = 1;
 
+    PARSER_LOG(CHANNEL_DBUG, "begin parsing config\n");
     while (!is_done()) {
+        PARSER_LOG(CHANNEL_DBUG, "  parser cycle begin\n");
         consume_whitespace();
         if (test_str("server", 1)) {
+            PARSER_LOG(CHANNEL_DBUG, "    begin parsing server section\n");
             consume_whitespace();
             client_config_server_t* server = malloc(sizeof(client_config_server_t));
             server->name = read_string();
             server->nick = 0;
             consume_whitespace();
             if (test_char('{', 1)) {
+                PARSER_LOG(CHANNEL_DBUG, "      begin parsing server \"%s\"\n", server->name);
                 while (1) {
                     consume_whitespace();
                     if (test_str("host", 1)) {
                         consume_whitespace();
                         server->host = read_string();
+                        PARSER_LOG(CHANNEL_DBUG, "        with hostname \"%s\"\n", server->host);
                     } else if (test_str("port", 1)) {
                         consume_whitespace();
                         server->port = read_int();
+                        PARSER_LOG(CHANNEL_DBUG, "        with port %i\n", server->port);
                     } else if (test_str("nick", 1)) {
                         consume_whitespace();
                         server->nick = read_string();
+                        PARSER_LOG(CHANNEL_DBUG, "        with nickname \"%s\"\n", server->nick);
                     } else if (test_char('}', 1)) {
                         config->server_count++;
                         config->servers = realloc(config->servers, config->server_count * sizeof(void*));
@@ -206,15 +227,86 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                         die(error);
                     }
                 }
+            } else {
+                die("expected {");
             }
         } else if (test_str("nick_width", 1)) {
             consume_whitespace();
             config->nickname_width = read_int();
+            PARSER_LOG(CHANNEL_DBUG, "    nickname width is %i\n", config->nickname_width);
+        } else if (test_str("theme", 1)) {
+            PARSER_LOG(CHANNEL_DBUG, "    begin parsing theme\n");
+            consume_whitespace();
+            if (test_char('{', 1)) {
+                PARSER_LOG(CHANNEL_DBUG, "      enter theme block\n");
+                consume_whitespace();
+                char** tree = malloc(sizeof(char*) * 64);
+                int    tree_pos = 0;
+                int    depth = 1;
+                memset(tree, 0, sizeof(void*) * 64);
+                PARSER_LOG(CHANNEL_DBUG, "        depth is %i\n", depth);
+
+                while (depth > 0) {
+                    PARSER_LOG(CHANNEL_DBUG, "        begin theme parse cycle\n");
+                    consume_whitespace();
+                    if (test_char('}', 1)) {
+                        depth--;
+                        tree_pos--;
+                        PARSER_LOG(CHANNEL_DBUG, "          depth is %i\n", depth);
+                    } else if (test_char('{', 1)) {
+                        depth++;
+                        PARSER_LOG(CHANNEL_DBUG, "          depth is %i\n", depth);
+                    } else {
+                        client_config_theme_tree_node_t *node = config->theme;
+                        char* name = get_token(1);
+                        PARSER_LOG(CHANNEL_DBUG, "          begin parsing for node \"%s\"\n", name);
+                        tree[tree_pos] = name;
+                        tree_pos++;
+                        PARSER_LOG(CHANNEL_DBUG, "            tree pos is %i\n", tree_pos);
+                        PARSER_LOG(CHANNEL_DBUG, "            finding node \"%s\"\n", name);
+                        for (int i = 0; i < tree_pos; i++) {
+                            if (node->type == NODE_TYPE_BRANCH) {
+                                for (int ii = 0; ii < node->value.branch.child_count; ii++) {
+                                    PARSER_LOG(CHANNEL_DBUG, "              considering node \"%s\"\n", node->value.branch.children[ii]->name);
+                                    if (strcmp(node->value.branch.children[ii]->name, tree[i]) == 0) {
+                                        node = node->value.branch.children[ii];
+                                        PARSER_LOG(CHANNEL_DBUG, "                selected node \"%s\"\n", node->name);
+                                        break;
+                                    } else {
+                                        PARSER_LOG(CHANNEL_DBUG, "                rejected node \"%s\"\n", node->value.branch.children[ii]->name);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (node->type == NODE_TYPE_BRANCH) {
+                            PARSER_LOG(CHANNEL_DBUG, "            type is branch\n");
+                        } else if (node->type == NODE_TYPE_RGBA) {
+                            consume_whitespace();
+                            PARSER_LOG(CHANNEL_DBUG, "            type is rgba\n");
+                            PARSER_LOG(CHANNEL_DBUG, "            set value of node \"%s\"\n", node->name);
+                            rgba_t val = node->value.rgba.value = read_rgba();
+                            PARSER_LOG(CHANNEL_DBUG, "              new value is #%02x%02x%02x%02x\n", val.r, val.g, val.b, val.a);
+                            tree_pos--;
+                        }
+                    }
+                }
+            } else {
+                die("expected {");
+            }
+        } else {
+            char* error = malloc(255);
+            sprintf(error, "unknown token \"%s\"", get_token(0));
+            die(error);
         }
+
+        consume_whitespace();
     }
 
+#ifdef PARSER_LOG_SPAM
     logger_log(CHANNEL_DBUG, "USING THEME\n");
     print_theme(config->theme);
+#endif
 
     return config;
 }

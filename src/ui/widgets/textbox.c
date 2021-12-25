@@ -122,10 +122,23 @@ void textbox_draw(widget_t* widget, window_t* window) {
     rect->width = widget->width;
     rect->height = widget->height;
     
+    xcb_alloc_color_reply_t* r = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            tb->bg_color.r << 8,
+            tb->bg_color.g << 8,
+            tb->bg_color.b << 8
+        ),
+        NULL
+    );
+
     uint32_t maskd = XCB_GC_FOREGROUND;
     uint32_t maskv[3] = {
-        window->screen->white_pixel
+        r->pixel
     };
+
     xcb_change_gc(
         window->connection,
         window->gc,
@@ -141,9 +154,20 @@ void textbox_draw(widget_t* widget, window_t* window) {
         rect
     );
 
+    xcb_alloc_color_reply_t* tx = xcb_alloc_color_reply(
+        window->connection,
+        xcb_alloc_color(
+            window->connection,
+            window->cmap,
+            tb->text_color.r << 8,
+            tb->text_color.g << 8,
+            tb->text_color.b << 8
+        ),
+        NULL
+    );
     maskd = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
-    maskv[0] = window->screen->black_pixel;
-    maskv[1] = window->screen->white_pixel;
+    maskv[0] = tx->pixel;
+    maskv[1] = r->pixel;
     maskv[2] = window->main_font;
     xcb_change_gc(
         window->connection,
@@ -228,6 +252,18 @@ widget_t* textbox_init() {
     textbox->keypress = &textbox_keypress;
 
     return textbox;
+}
+
+void textbox_set_color(widget_t* widget, int type, rgba_t value) {
+    textbox_t *textbox = widget->extra_data;
+
+    if (type == TEXTBOX_COLOR_BG) {
+        textbox->bg_color = value;
+    } else if (type == TEXTBOX_COLOR_BORDER) {
+        textbox->border_color = value;
+    } else if (type == TEXTBOX_COLOR_TEXT) {
+        textbox->text_color = value;
+    }
 }
 
 void textbox_free(widget_t* widget) {

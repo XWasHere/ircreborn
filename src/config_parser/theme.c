@@ -101,7 +101,6 @@ void register_theme_node(char* path, int type) {
 
 void set_node_rgb(client_config_theme_tree_node_t* root, char* path, uint32_t value) {
     client_config_theme_tree_node_t* node = get_theme_node(root, split_theme_path(path));
-    printf("%s\n", node->name);
     memcpy(&node->value.rgba.value, &value, sizeof(uint32_t));
 }
 

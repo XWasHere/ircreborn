@@ -68,6 +68,10 @@ void open_set_nickname_dialog() {
     dialog = window_init();
     
     window_set_type(dialog, WINDOW_WM_TYPE_DIALOG);
+    window_set_bg(
+        dialog, 
+        get_node_rgb(config->theme, "common.primary_color") 
+    );
 
     if (sc_connected) {
         textw   = label_init();
@@ -103,13 +107,59 @@ void open_set_nickname_dialog() {
         cancelw->height  = 20;
         cancelw->clicked = set_nickname_dialog_cancel_clicked;
 
+        textbox_set_color(
+            entryw, 
+            TEXTBOX_COLOR_BG,
+            get_node_rgb(config->theme, "common.secondary_color")
+        );
+        textbox_set_color(
+            entryw, 
+            TEXTBOX_COLOR_BORDER,
+            get_node_rgb(config->theme, "common.secondary_color")
+        );
+        textbox_set_color(
+            entryw, 
+            TEXTBOX_COLOR_TEXT,
+            get_node_rgb(config->theme, "common.text_color")
+        );
+
         label_set_text(textw, "set nickname");
-        
+        label_set_color(
+            textw,
+            LABEL_BG_COLOR,
+            get_node_rgb(config->theme, "common.primary_color")
+        );
+        label_set_color(
+            textw,
+            LABEL_TEXT_COLOR,
+            get_node_rgb(config->theme, "common.text_color")
+        );
+
         button_set_type(okw, BUTTON_TEXT);
         button_set_text(okw, "ok");
+        button_set_color(
+            okw,
+            BUTTON_COLOR_BG,
+            get_node_rgb(config->theme, "common.secondary_color")
+        );
+        button_set_color(
+            okw, 
+            BUTTON_COLOR_TX, 
+            get_node_rgb(config->theme, "common.text_color")
+        );
 
         button_set_type(cancelw, BUTTON_TEXT);
         button_set_text(cancelw, "cancel");
+        button_set_color(
+            cancelw,
+            BUTTON_COLOR_BG,
+            get_node_rgb(config->theme, "common.secondary_color")
+        );
+        button_set_color(
+            cancelw, 
+            BUTTON_COLOR_TX, 
+            get_node_rgb(config->theme, "common.text_color")
+        );
 
         window_add_widget(dialog, textw);
         window_add_widget(dialog, entryw);
@@ -148,15 +198,35 @@ void open_set_nickname_dialog() {
         okw->clicked  = set_nickname_dialog_ok_clicked;
 
         label_set_text(textw, "you need to connect to a server first");
-        
+        label_set_color(
+            textw,
+            LABEL_BG_COLOR,
+            get_node_rgb(config->theme, "common.primary_color")
+        );
+        label_set_color(
+            textw,
+            LABEL_TEXT_COLOR,
+            get_node_rgb(config->theme, "common.text_color")
+        );
+
         button_set_type(okw, BUTTON_TEXT);
         button_set_text(okw, "well shit");
-        
+        button_set_color(
+            okw,
+            BUTTON_COLOR_BG,
+            get_node_rgb(config->theme, "common.secondary_color")
+        );
+        button_set_color(
+            okw, 
+            BUTTON_COLOR_TX, 
+            get_node_rgb(config->theme, "common.text_color")
+        );
+
         window_add_widget(dialog, textw);
         window_add_widget(dialog, okw);
 
         window_set_size(dialog, 320, 70);
-
+        
         window_display(dialog, 1);
 
         label_free(textw);

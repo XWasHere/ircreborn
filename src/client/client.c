@@ -189,11 +189,11 @@ struct server* server_list_add_server(widget_t* serverlist, client_config_server
     btn->border_color.b = config->theme.server_list_item_border_color.b;
 */
 
-    // button_set_color(
-        // btn,
-        // BUTTON_COLOR_BG,
-        // 0
-    // );
+    button_set_color(
+        s->button,
+        BUTTON_COLOR_BG,
+        get_node_rgb(config->theme, "common.tertiary_color")
+    );
     button_set_color(
         s->button,
         BUTTON_COLOR_TX,
@@ -265,7 +265,27 @@ void client_add_message(window_t* window, char* message, char* name) {
     namelw->height = 20;
 
     label_set_text(msglw, message);
+    label_set_color(
+        msglw,
+        LABEL_BG_COLOR,
+        get_node_rgb(config->theme, "common.primary_color")
+    );
+    label_set_color(
+        msglw,
+        LABEL_TEXT_COLOR,
+        get_node_rgb(config->theme, "common.text_color")
+    );
     label_set_text(namelw, name);
+    label_set_color(
+        namelw,
+        LABEL_BG_COLOR,
+        get_node_rgb(config->theme, "common.primary_color")
+    );
+    label_set_color(
+        namelw,
+        LABEL_TEXT_COLOR,
+        get_node_rgb(config->theme, "common.text_color")
+    );
 
     scroll_pane_item_t* msgli  = scroll_pane_add_item(messages_thing, msglw);
     scroll_pane_item_t* nameli = scroll_pane_add_item(messages_thing, namelw);
@@ -392,15 +412,15 @@ void client_main() {
     register_theme_node("common.primary_color", NODE_TYPE_RGBA);
     set_node_default_rgb("common.primary_color", RGBA(0x000000ff));
     register_theme_node("common.secondary_color", NODE_TYPE_RGBA);
-    set_node_default_rgb("common.secondary_color", RGBA(0x000000ff));
+    set_node_default_rgb("common.secondary_color", RGBA(0x080808ff));
     register_theme_node("common.tertiary_color", NODE_TYPE_RGBA);
-    set_node_default_rgb("common.tertiary_color", RGBA(0x000000ff));
+    set_node_default_rgb("common.tertiary_color", RGBA(0x1f1f1fff));
     register_theme_node("common.scrollbar_track_color", NODE_TYPE_RGBA);
     set_node_default_rgb("common.scrollbar_track_color", RGBA(0x000000ff));
     register_theme_node("common.scrollbar_button_color", NODE_TYPE_RGBA);
-    set_node_default_rgb("common.scrollbar_button_color", RGBA(0x000000ff));
+    set_node_default_rgb("common.scrollbar_button_color", RGBA(0x1f1f1fff));
     register_theme_node("common.scrollbar_thumb_color", NODE_TYPE_RGBA);
-    set_node_default_rgb("common.scrollbar_thumb_color", RGBA(0x000000ff));
+    set_node_default_rgb("common.scrollbar_thumb_color", RGBA(0x2f2f2fff));
     register_theme_node("common.text_color", NODE_TYPE_RGBA);
     set_node_default_rgb("common.text_color", RGBA(0xffffffff));
 
@@ -447,6 +467,12 @@ void client_main() {
     helpmenu = menubar_add_menu(stripw, "help");
     licensebutton = menu_add_button(helpmenu, "license", open_license_dialog);    
     
+    frame_set_color(
+        stripe->container,
+        FRAME_COLOR_BG,
+        get_node_rgb(config->theme, "common.primary_color")
+    );
+
     button_set_color(
         filemenu->open_button,
         BUTTON_COLOR_BG,
@@ -521,9 +547,67 @@ void client_main() {
     messagebox = textbox_init();
     messageboxe = messagebox->extra_data;
     messages_thing = messagesw;
-    
+
+    scroll_pane_set_color(
+        serverlistw,
+        SCROLLPANE_COLOR_BG,
+        get_node_rgb(config->theme, "common.secondary_color")
+    );
+    scroll_pane_set_color(
+        serverlistw,
+        SCROLLPANE_COLOR_BUTTON,
+        get_node_rgb(config->theme, "common.scrollbar_button_color")
+    );
+    scroll_pane_set_color(
+        serverlistw,
+        SCROLLPANE_COLOR_TRACK,
+        get_node_rgb(config->theme, "common.scrollbar_track_color")
+    );
+    scroll_pane_set_color(
+        serverlistw,
+        SCROLLPANE_COLOR_THUMB,
+        get_node_rgb(config->theme, "common.scrollbar_thumb_color")
+    );
+
+    scroll_pane_set_color(
+        messagesw,
+        SCROLLPANE_COLOR_BG,
+        get_node_rgb(config->theme, "common.primary_color")
+    );
+    scroll_pane_set_color(
+        messagesw,
+        SCROLLPANE_COLOR_BUTTON,
+        get_node_rgb(config->theme, "common.scrollbar_button_color")
+    );
+    scroll_pane_set_color(
+        messagesw,
+        SCROLLPANE_COLOR_TRACK,
+        get_node_rgb(config->theme, "common.scrollbar_track_color")
+    );
+    scroll_pane_set_color(
+        messagesw,
+        SCROLLPANE_COLOR_THUMB,
+        get_node_rgb(config->theme, "common.scrollbar_thumb_color")
+    );
+
     messageboxe->submit = &message_submit;
     messagebox->keypress = &handle_mb_kp;
+
+    textbox_set_color(
+        messagebox, 
+        TEXTBOX_COLOR_BG,
+        get_node_rgb(config->theme, "common.tertiary_color")
+    );
+    textbox_set_color(
+        messagebox, 
+        TEXTBOX_COLOR_BORDER,
+        get_node_rgb(config->theme, "common.tertiary_color")
+    );
+    textbox_set_color(
+        messagebox, 
+        TEXTBOX_COLOR_TEXT,
+        get_node_rgb(config->theme, "common.text_color")
+    );
 
     main_window->handle_bg_tasks = &client_run_tasks;
     main_window->resized         = &client_recalculate_sizes;

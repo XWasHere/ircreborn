@@ -34,6 +34,8 @@ struct logger_channel {
 };
 
 int  logger_add_channel(int fd, char* name);
+
+__attribute__((format(printf, 2, 3)))
 void logger_log(int channel, char* data, ...);
 
 #endif
