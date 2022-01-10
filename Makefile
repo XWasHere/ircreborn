@@ -1,11 +1,11 @@
 TARGET   ?= linux
 
 ifeq ($(TARGET),win32)
-CC        = x86_64-w64-mingw32-gcc
+CC        = x86_64-w64-mingw32-g++
 CC_ARGS  ?= -ggdb -Wall
 CC_FARGS  = -Isrc -lgdi32 -lws2_32
 else 
-CC       ?= gcc
+CC       ?= g++
 CC_ARGS  ?= -ggdb -Wall
 CC_FARGS  = -Isrc -lxcb -lrt -lm -lX11 -lX11-xcb
 endif
@@ -45,16 +45,16 @@ all: ircreborn docs
 ifeq ($(MAKECMDGOALS),clean)
 else ifeq ($(MAKECMDGOALS),binit)
 else
-include $(OBJS:.o=.c.d)
+include $(OBJS:.o=.cc.d)
 endif
 
 build/docs/%.info: docs/%.tex
 	makeinfo -o $@ $<
 
-build/%.c.d: src/%.c
+build/%.cc.d: src/%.cc
 	$(CC) $(CC_ARGS) $(CC_FARGS) -M $< -MT $< -o $@
 
-build/%.o: src/%.c build/%.c.d
+build/%.o: src/%.cc build/%.cc.d
 	$(CC) $(CC_ARGS) $(CC_FARGS) -c $< -o $@
 
 binit:
