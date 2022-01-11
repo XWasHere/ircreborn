@@ -54,7 +54,7 @@ char* format_error(int errorcode) {
         0,
         errorcode,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        errordesc,
+        (char*)&errordesc,
         0,
         0
     );
