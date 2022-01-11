@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <main.h>
 #include <config_parser/config.h>
 #include <common/util.h>
 #include <compat/compat.h>
@@ -161,7 +162,7 @@ static rgba_t read_rgba() {
 }
 
 static void config_error(int l, int c, char* msg) {
-    logger_log(CHANNEL_FATL, "error on line %i, col %i: %s\n", l, c, msg);
+    logger.log(CHANNEL_FATL, "error on line %i, col %i: %s\n", l, c, msg);
     exit(1);
 }
 
@@ -170,7 +171,7 @@ static void die(char* error) {
 }
 
 #ifdef PARSER_LOG_SPAM
-#define PARSER_LOG(a, b, ...) logger_log(a, b, ##__VA_ARGS__)
+#define PARSER_LOG(a, b, ...) logger.log(a, b, ##__VA_ARGS__)
 #else
 #define PARSER_LOG(a, b, ...)
 #endif
@@ -220,7 +221,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                         config->server_count++;
                         config->servers = (client_config_server_t**)realloc(config->servers, config->server_count * sizeof(void*));
                         config->servers[config->server_count - 1] = server;
-                        logger_log(CHANNEL_DBUG, "registered server \"%s:%i\" as \"%s\"\n", server->host, server->port, server->name);
+                        logger.log(CHANNEL_DBUG, "registered server \"%s:%i\" as \"%s\"\n", server->host, server->port, server->name);
                         break;
                     } else {
                         char* error = (char*)malloc(255);
@@ -305,7 +306,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
     }
 
 #ifdef PARSER_LOG_SPAM
-    logger_log(CHANNEL_DBUG, "USING THEME\n");
+    logger.log(CHANNEL_DBUG, "USING THEME\n");
     print_theme(config->theme);
 #endif
 

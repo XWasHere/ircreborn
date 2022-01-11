@@ -26,6 +26,11 @@
 #include <string.h>
 #include <stdio.h>
 
+// access specifiers should only be a suggestion.
+// in the end it is the user's choice to use unstable parts of the library, not mine.
+#define private public
+#define protected public
+
 #define SSTRLEN(a) (sizeof(a) - 1)
 #define STREQ(a, b) (strcmp(a, b) == 0)
 #define STRNE(a, b) (!(STREQ(a, b)))

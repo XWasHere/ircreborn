@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <main.h>
 #include <common/logger.h>
 #include <config_parser/theme.h>
 
@@ -143,12 +144,12 @@ rgba_t get_node_rgb(client_config_theme_tree_node_t* root, char* path) {
 
 void _print_theme(client_config_theme_tree_node_t* node, int depth) {
     if (node->type == NODE_TYPE_BRANCH) {
-        logger_log(CHANNEL_DBUG, "% *sBRANCH \"%s\" LENGTH %i\n", depth, "", node->name == 0 ? "<ROOT>" : node->name, node->value.branch.child_count);
+        logger.log(CHANNEL_DBUG, "% *sBRANCH \"%s\" LENGTH %i\n", depth, "", node->name == 0 ? "<ROOT>" : node->name, node->value.branch.child_count);
         for (int i = 0; i < node->value.branch.child_count; i++) {
             _print_theme(node->value.branch.children[i], depth+1);
         }
     } else if (node->type == NODE_TYPE_RGBA) {
-        logger_log(CHANNEL_DBUG, "% *sRGBA \"%s\" #%02x%02x%02x%02x\n", depth, "", node->name, node->value.rgba.value.r, node->value.rgba.value.g, node->value.rgba.value.b, node->value.rgba.value.a);
+        logger.log(CHANNEL_DBUG, "% *sRGBA \"%s\" #%02x%02x%02x%02x\n", depth, "", node->name, node->value.rgba.value.r, node->value.rgba.value.g, node->value.rgba.value.b, node->value.rgba.value.a);
     }
 }
 

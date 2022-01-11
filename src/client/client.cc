@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <main.h>
 #include <ui/window.h>
 #include <ui/widgets/button.h>
 #include <ui/widgets/menubar.h>
@@ -96,27 +97,27 @@ int sc_connected;
 int nextpos = 0;
 
 void exit_button_clicked() {
-    logger_log(CHANNEL_DBUG, "user requested exit. goodbye\n");
+    logger.log(CHANNEL_DBUG, "user requested exit. goodbye\n");
     main_window->should_exit = 1;
 }
 
 int server_list_collapse_button_clicked(widget_t* widget, window_t* window, int x, int y) {
-    logger_log(CHANNEL_DBUG, "server list collapsed\n");
+    logger.log(CHANNEL_DBUG, "server list collapsed\n");
     return 1;
 }
 
 int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
-            logger_log(CHANNEL_DBUG, "connecting to server %s\n", servers[i]->server->name);
+            logger.log(CHANNEL_DBUG, "connecting to server %s\n", servers[i]->server->name);
             
             if ((sc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
                 sc = 0;
 
 #ifdef WIN32
-                logger_log(CHANNEL_FATL, "socket(): %i\n", WSAGetLastError());
+                logger.log(CHANNEL_FATL, "socket(): %i\n", WSAGetLastError());
 #else
-                logger_log(CHANNEL_FATL, "%s\n", format_last_error());
+                logger.log(CHANNEL_FATL, "%s\n", format_last_error());
 #endif
                 return 1;
             }
@@ -131,9 +132,9 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
             if (connect(sc, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
                 sc = 0;
 #ifdef WIN32
-                logger_log(CHANNEL_FATL, "connect(): %s", format_error(WSAGetLastError()));
+                logger.log(CHANNEL_FATL, "connect(): %s", format_error(WSAGetLastError()));
 #else
-                logger_log(CHANNEL_FATL, "%s\n", format_last_error());
+                logger.log(CHANNEL_FATL, "%s\n", format_last_error());
 #endif
                 free(addr);
                 return 1;
@@ -427,8 +428,8 @@ void client_main() {
 #ifdef WIN32
     wsadata = (WSADATA*)malloc(sizeof(WSADATA));
     if (WSAStartup(MAKEWORD(2,2), wsadata)) {
-        logger_log(CHANNEL_FATL, "failed to start winsock, aborting\n");
-        logger_log(CHANNEL_FATL, "%s", format_error(WSAGetLastError()));
+        logger.log(CHANNEL_FATL, "failed to start winsock, aborting\n");
+        logger.log(CHANNEL_FATL, "%s", format_error(WSAGetLastError()));
         exit(1);
     }
 #endif
@@ -444,7 +445,7 @@ void client_main() {
         strcat(config_path, "/.ircreborn/client");
     }
 
-    logger_log(CHANNEL_DBUG, "reading config from %s\n", config_path);
+    logger.log(CHANNEL_DBUG, "reading config from %s\n", config_path);
 
     int configfd = open(config_path, O_RDONLY | O_CREAT);
     chmod(config_path, S_IWUSR | S_IRUSR);

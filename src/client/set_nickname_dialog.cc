@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <main.h>
 #include <client/client.h>
 #include <ui/window.h>
 #include <ui/widgets/label.h>
@@ -177,7 +178,7 @@ void open_set_nickname_dialog() {
 
         window_free(dialog);
     } else {
-        logger_log(CHANNEL_WARN, "connect to a server before setting your nickname you phycopath\n");
+        logger.log(CHANNEL_WARN, "connect to a server before setting your nickname you phycopath\n");
 
         textw   = label_init();
         okw     = button_init();

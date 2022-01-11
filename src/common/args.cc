@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <common/util.h>
+
 #define INIT_STRING(name) name = malloc(1); name[0] = 0;
 
 char* args_exec_name;

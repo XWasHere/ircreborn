@@ -27,74 +27,90 @@
 #include <common/logger.h>
 #include <common/attrib.h>
 
-int CHANNEL_INFO;
-int CHANNEL_WARN;
-int CHANNEL_FATL;
-int CHANNEL_DBUG;
-
-static logger_channel_t** channels;
-static int                channel_count;
-static int                channel_width;
-
-// this should be called automatically, but if it isnt then
-// this should be called before any other logger functions
-// not doing so will result in undefined behavior
-__attribute__((constructor))
-void logger_init() {
-    // fill some values
-    channels      = (logger_channel_t**)malloc(1);
-    channel_count = 0;
-    channel_width = 0;
-
-    // add some default channels
-    CHANNEL_INFO = logger_add_channel(0, "==");
-    CHANNEL_WARN = logger_add_channel(0, "! ");
-#ifdef LOGGER_USE_STDERR_FOR_ERRORS
-    CHANNEL_FATL = logger_add_channel(2, "!!");
-#else
-    CHANNEL_FATL = logger_add_channel(0, "!!");
-#endif
-    CHANNEL_DBUG = logger_add_channel(0, "**");
+logger_t::logger_t() {
+    this->channel_count = 0;
+    this->width         = 0;
+    this->channels      = (logger_channel_t**)malloc(sizeof(void*) * 16);
 }
 
-// add a logger channel. usually the four default ones will be enough but idk
-int logger_add_channel(int fd, char* name) {
-    channel_count++;
-    channels = (logger_channel_t**)realloc(channels, sizeof(void*) * channel_count);
+logger_t::~logger_t() {
+    for (int i = 0; i < this->channel_count; i++) {
+        if (this->channels[i]->kill_on_clean) free(this->channels[i]);
+    }
+    free(this->channels);
+}
+
+int logger_t::add_channel(int fd, char* name) {
+    this->channel_count++;
+    logger_channel_t** r = (logger_channel_t**)realloc(this->channels, sizeof(void*) * this->channel_count);
+    if (r) this->channels = r;
 
     logger_channel_t* channel = (logger_channel_t*)malloc(sizeof(logger_channel_t));
 
-    channel->fd   = fd;
-    channel->name = name;
+    channel->kill_on_clean = 1;
+    channel->fd = fd;
+    channel->name = (char*)malloc(strlen(name) + 1);
     
-    channels[channel_count - 1] = channel;
+    strcpy(channel->name, name);
 
     int width = strlen(name);
-    
-    channel_width = width > channel_width ? width : channel_width;
+    this->width = width > this->width ? width : this->width;
 
-    return channel_count - 1;
+    this->channels[this->channel_count - 1] = channel;
+    
+    return this->channel_count - 1;
 }
 
-void logger_log(int channel, char* format, ...) {
-    va_list hi;
-    va_start(hi, format);
+void logger_t::log(int id, char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    this->vlog(this->channels[id], format, args);
+}
 
-    char* data  = (char*)malloc(64);
-    char* data2 = (char*)malloc(64);
+void logger_t::log(logger_channel_t* channel, char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    this->vlog(channel, format, args);
+}
 
-    sprintf(data, " % -*s | %s", channel_width, channels[channel]->name, format);
-    vsprintf(data2, data, hi);
+void logger_t::vlog(logger_channel_t* channel, char* format, va_list args) {
+    char* data;
+    char* data2;
+    
+    va_list fargs;
+    va_copy(fargs, args);
 
-    write(channels[channel]->fd, data2, strlen(data2));
+    int flen = strlen(format);
+    int dlen = 0;
+    for (int i = 0; i < flen; i++) {
+        if (format[i] == '%') {
+            i++;
+            if (format[i] == '%') {
+                dlen++;
+            } else if (format[i] == 's') {
+                dlen += strlen(va_arg(fargs, char*));
+            } else if (format[i] == 'i') {
+                dlen += 32;
+                va_arg(fargs, int);
+            } else if (format[i] == 'x') {
+                dlen += 16;
+                va_arg(fargs, int);
+            } else {
+                dlen++;
+            }
+        } else {
+            dlen++;
+        }
+    }
+    
+    data2 = (char*)malloc(dlen + 1);
+    vsprintf(data2, format, args);
+    
+    data = (char*)malloc(dlen + 5 + this->width);
+    sprintf(data, " %-*s | %s", this->width, channel->name, data2);
+
+    write(channel->fd, data, strlen(data));
 
     free(data);
     free(data2);
-}
-
-// this is called when the program terminates
-__attribute__((destructor))
-void logger_fini() {
-    for (int i = 0; i < channel_count; i++) free(channels[i]);
-    free(channels);
 }
