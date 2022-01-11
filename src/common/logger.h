@@ -33,6 +33,24 @@ struct logger_channel {
     int   fd;
 };
 
+class logger_channel_t {
+    public:
+        // the name displayed to the right of the channel
+        char* name;
+
+        // the channel file descriptor
+        int fd;
+};
+
+// logger
+class logger_t {
+    public:
+        // the logger channels. 
+        // you can refer to them by index to save a few bytes.
+        logger_channel_t** channels;
+
+};
+
 int  logger_add_channel(int fd, char* name);
 
 __attribute__((format(printf, 2, 3)))
