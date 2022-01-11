@@ -33,7 +33,7 @@
 void __DEFAULT_textbox_submit(widget_t* a, window_t* b, char* c, int d) {};
 
 int textbox_keypress(widget_t* widget, window_t* window, uint32_t key, uint16_t mod) {
-    textbox_t* tb = widget->extra_data;
+    textbox_t* tb = (textbox_t*)widget->extra_data;
 
 #ifdef WIN32
     if (key == 8) {
@@ -61,9 +61,9 @@ int textbox_keypress(widget_t* widget, window_t* window, uint32_t key, uint16_t 
 #endif
         tb->textlen++;
 
-        if (tb->text == 0) tb->text = malloc(1);
+        if (tb->text == 0) tb->text = (char*)malloc(1);
         
-        tb->text = realloc(tb->text, tb->textlen + 1);
+        tb->text = (char*)realloc(tb->text, tb->textlen + 1);
         
         tb->text[tb->cursorpos] = key;
         tb->cursorpos++;
@@ -80,11 +80,11 @@ int textbox_clicked(widget_t* widget, window_t* window, int x, int y) {
 }
 
 void textbox_draw(widget_t* widget, window_t* window) {
-    textbox_t* tb = widget->extra_data;
+    textbox_t* tb = (textbox_t*)widget->extra_data;
 
 #ifdef WIN32    
-    PAINTSTRUCT* ps   = malloc(sizeof(PAINTSTRUCT));
-    RECT*        rect = malloc(sizeof(RECT));
+    PAINTSTRUCT* ps   = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
+    RECT*        rect = (RECT*)malloc(sizeof(RECT));
 
     SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
     InvalidateRect(window->window, rect, 1);
@@ -109,7 +109,7 @@ void textbox_draw(widget_t* widget, window_t* window) {
     free(ps);
     free(rect);
 #else
-    xcb_rectangle_t *rect = malloc(sizeof(xcb_rectangle_t));
+    xcb_rectangle_t *rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t));
     
     rect->x = widget->x;
     rect->y = widget->y;
@@ -230,12 +230,12 @@ void textbox_draw(widget_t* widget, window_t* window) {
 
 widget_t* textbox_init() {
     widget_t* textbox = widget_init();
-    textbox_t* tb = malloc(sizeof(textbox_t));
+    textbox_t* tb = (textbox_t*)malloc(sizeof(textbox_t));
 
     tb->widget = textbox;
     tb->textlen = 0;
     tb->cursorpos = 0;
-    tb->text = malloc(1);
+    tb->text = (char*)malloc(1);
     tb->text[0] = 0;
     tb->multiline = 0;
     tb->submit = &__DEFAULT_textbox_submit;
@@ -249,7 +249,7 @@ widget_t* textbox_init() {
 }
 
 void textbox_set_color(widget_t* widget, int type, rgba_t value) {
-    textbox_t *textbox = widget->extra_data;
+    textbox_t *textbox = (textbox_t*)widget->extra_data;
 
     if (type == TEXTBOX_COLOR_BG) {
         textbox->bg_color = value;
@@ -261,7 +261,7 @@ void textbox_set_color(widget_t* widget, int type, rgba_t value) {
 }
 
 void textbox_free(widget_t* widget) {
-    textbox_t* textbox = widget->extra_data;
+    textbox_t* textbox = (textbox_t*)widget->extra_data;
 
     if (textbox->text != 0) {
         free(textbox->text);

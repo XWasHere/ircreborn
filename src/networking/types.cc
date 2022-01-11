@@ -22,7 +22,7 @@
 #include <string.h>
 
 void write_int(void* buf, int i) {
-    uint8_t* u8buf = buf;
+    uint8_t* u8buf = (uint8_t*)buf;
 
     u8buf[0] = (i & 0x000000FF);
     u8buf[1] = (i & 0x0000FF00) >> 8;
@@ -31,7 +31,7 @@ void write_int(void* buf, int i) {
 }
 
 int read_int(void* buf) {
-    uint8_t* u8buf = buf;
+    uint8_t* u8buf = (uint8_t*)buf;
 
     return u8buf[0] | u8buf[1] << 8 | u8buf[2] << 16 | u8buf[3] << 24;
 }
@@ -42,10 +42,10 @@ void write_string(void* buf, char* str, int len) {
 }
 
 nstring_t* read_string(void* buf) {
-    nstring_t* s = malloc(sizeof(nstring_t));
+    nstring_t* s = (nstring_t*)malloc(sizeof(nstring_t));
     
     s->len = read_int(buf);
-    s->str = malloc(s->len + 1);
+    s->str = (char*)malloc(s->len + 1);
 
     memset(s->str, 0, s->len + 1);
     memcpy(s->str, buf + 4, s->len);
@@ -54,14 +54,14 @@ nstring_t* read_string(void* buf) {
 }
 
 void write_bool(void* buf, int v) {
-    uint8_t* u8buf = buf;
+    uint8_t* u8buf = (uint8_t*)buf;
     
     if (v) u8buf[0] = 1;
     else   u8buf[0] = 0;
 }
 
 int read_bool(void* buf) {
-    uint8_t* u8buf = buf;
+    uint8_t* u8buf = (uint8_t*)buf;
 
     if (u8buf[0]) return 1;
     else          return 0;

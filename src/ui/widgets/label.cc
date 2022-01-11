@@ -26,11 +26,11 @@
 #include <string.h>
 
 void label_draw(widget_t* widget ,window_t* window) {
-    label_t* label = widget->extra_data;
+    label_t* label = (label_t*)widget->extra_data;
 
 #ifdef WIN32
-    PAINTSTRUCT* hi = malloc(sizeof(PAINTSTRUCT));
-    RECT *rect = malloc(sizeof(RECT));
+    PAINTSTRUCT* hi = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
+    RECT *rect = (RECT*)malloc(sizeof(RECT));
     
     SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
     InvalidateRect(window->window, rect, 1);
@@ -127,7 +127,7 @@ void label_draw(widget_t* widget ,window_t* window) {
     );
     xcb_free_gc(window->connection, gc);
     
-    xcb_rectangle_t *rect = malloc(sizeof(xcb_rectangle_t));
+    xcb_rectangle_t *rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t));
     
     rect->x = widget->x;
     rect->y = widget->y;
@@ -148,7 +148,7 @@ void label_draw(widget_t* widget ,window_t* window) {
             CoordModeOrigin,
             window->window,
             window->gc,
-            2, &points
+            2, (xcb_point_t*)&points
         );
     }
 
@@ -165,7 +165,7 @@ void label_draw(widget_t* widget ,window_t* window) {
             CoordModeOrigin,
             window->window,
             window->gc,
-            2, &points
+            2, (xcb_point_t*)&points
         );
     }
 
@@ -181,7 +181,7 @@ void label_draw(widget_t* widget ,window_t* window) {
             CoordModeOrigin,
             window->window,
             window->gc,
-            2, &points
+            2, (xcb_point_t*)&points
         );
     }
 
@@ -197,7 +197,7 @@ void label_draw(widget_t* widget ,window_t* window) {
             CoordModeOrigin,
             window->window,
             window->gc,
-            2, &points
+            2, (xcb_point_t*)&points
         );
     }
 
@@ -209,7 +209,7 @@ void label_draw(widget_t* widget ,window_t* window) {
 
 widget_t* label_init() {
     widget_t* label = widget_init();
-    label_t*  lab   = malloc(sizeof(label_t));
+    label_t*  lab   = (label_t*)malloc(sizeof(label_t));
 
     lab->text = 0;
 
@@ -222,8 +222,8 @@ widget_t* label_init() {
 }
 
 void label_set_text(widget_t* widget, char* text) {
-    label_t* label = widget->extra_data;
-    char* buf = malloc(strlen(text) + 1);
+    label_t* label = (label_t*)widget->extra_data;
+    char* buf = (char*)malloc(strlen(text) + 1);
 
     memset(buf, 0, strlen(text) + 1);
     strcpy(buf, text);
@@ -231,7 +231,7 @@ void label_set_text(widget_t* widget, char* text) {
 }
 
 void label_set_color(widget_t* widget, int type, rgba_t value) {
-    label_t* label = widget->extra_data;
+    label_t* label = (label_t*)widget->extra_data;
     
     if (type == LABEL_BG_COLOR) {
         label->bg_color = value;
@@ -240,7 +240,7 @@ void label_set_color(widget_t* widget, int type, rgba_t value) {
     }
 }
 void label_free(widget_t* widget) {
-    label_t* label = widget->extra_data;
+    label_t* label = (label_t*)widget->extra_data;
 
     free(label->text);
     free(label);

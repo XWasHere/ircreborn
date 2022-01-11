@@ -34,28 +34,26 @@ void button_draw(widget_t*, window_t*);
 
 widget_t* button_init() {
     widget_t* widget = widget_init();
-    button_t* button = malloc(sizeof(button_t));
+    button_t* button = (button_t*)malloc(sizeof(button_t));
 
     widget->extra_data = button;
-
     widget->draw    = &button_draw;
-
     button->widget = widget;
 
     return widget;
 }
 
 void button_set_type(widget_t* widget, int type) {
-    button_t* btn = widget->extra_data;
+    button_t* btn = (button_t*)widget->extra_data;
     btn->type = type;
 }
 
 void button_draw(widget_t* widget, window_t* window) {
-    button_t* button = widget->extra_data;
+    button_t* button = (button_t*)widget->extra_data;
 #ifdef WIN32
     // ALL THIS TO DRAW A FUCKING RECTANGLE
-    PAINTSTRUCT* hi = malloc(sizeof(PAINTSTRUCT));
-    RECT *rect = malloc(sizeof(RECT));
+    PAINTSTRUCT* hi = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
+    RECT *rect = (RECT*)malloc(sizeof(RECT));
 
     SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
     
@@ -84,7 +82,7 @@ void button_draw(widget_t* widget, window_t* window) {
     free(rect);
 #else
     // get a rectangle
-    xcb_rectangle_t* rect = malloc(sizeof(xcb_rectangle_t));
+    xcb_rectangle_t* rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t));
     
     // ???
     rect->x = widget->x;
@@ -208,7 +206,7 @@ void button_draw(widget_t* widget, window_t* window) {
 
 // this exists because it gets really chaotic setting these values in client.c
 void button_set_color(widget_t* widget, int t, rgba_t color) {
-    button_t* button = widget->extra_data;
+    button_t* button = (button_t*)widget->extra_data;
 
     if (t == BUTTON_COLOR_BG) {
         button->bg_color = color;
@@ -220,16 +218,16 @@ void button_set_color(widget_t* widget, int t, rgba_t color) {
 }
 
 void button_set_text(widget_t* widget, char* text) {
-    button_t* button = widget->extra_data;
+    button_t* button = (button_t*)widget->extra_data;
     
-    char* buf = malloc(strlen(text) + 1);
+    char* buf = (char*)malloc(strlen(text) + 1);
     memset(buf, 0, strlen(text) + 1);
     strcpy(buf, text);
     button->text = buf;
 }
 
 void button_free(widget_t* widget) {
-    button_t* button = widget->extra_data;
+    button_t* button = (button_t*)widget->extra_data;
 
     widget_free(widget);
     free(button->text);

@@ -18,6 +18,7 @@
 
 #include <config_parser/config.h>
 #include <common/util.h>
+#include <compat/compat.h>
 #include <common/logger.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +53,7 @@ static int test_char(char c, int consume) {
 
 static char* get_token(int consume) {
     int bt = parse_pos;
-    char* token = malloc(1);
+    char* token = (char*)malloc(1);
     token[0] = 0;
 
     while (1) {
@@ -61,7 +62,7 @@ static char* get_token(int consume) {
         else if (test_char('\n', 0)) break;
         char c = get_char(0);
         parse_pos++;
-        token = realloc(token, strlen(token) + 2);
+        token = (char*)realloc(token, strlen(token) + 2);
         token[strlen(token) + 1] = 0;
         token[strlen(token)] = c;
     }
@@ -77,7 +78,7 @@ static char* get_token(int consume) {
 
 static int test_str(char* str, int consume) {
     int l = strlen(str);
-    char* data = malloc(l + 1);
+    char* data = (char*)malloc(l + 1);
     memset(data, 0, l + 1);
 
     pread(parse_fd, data, l, parse_pos);
@@ -109,13 +110,13 @@ static int is_done() {
 }
 
 static char* read_string() {
-    char* str = malloc(1);
+    char* str = (char*)malloc(1);
     int   l   = 0;
 
     if (test_char('"', 1)) {
         while (!test_char('"', 0)) {
             l++;
-            str = realloc(str, l + 1);
+            str = (char*)realloc(str, l + 1);
             str[l] = 0;
             str[l-1] = get_char(1);
         }
@@ -129,7 +130,7 @@ static char* read_string() {
 }
 
 static int read_int() {
-    char* buf = malloc(1);
+    char* buf = (char*)malloc(1);
     int   l   = 0;
     int   res = 0;
 
@@ -137,7 +138,7 @@ static int read_int() {
         char c = get_char(0);
         if (c >= '0' && c <= '9') {
             l++;
-            buf = realloc(buf, l + 1);
+            buf = (char*)realloc(buf, l + 1);
             buf[l] = 0; // this used to be buf[c] = 0. i need more sleep
             buf[l-1] = get_char(1);
         } else break;
@@ -150,8 +151,8 @@ static int read_int() {
 }
 
 static rgba_t read_rgba() {
-    rgba_t* hi = malloc(sizeof(rgba_t));
-    char* buf = malloc(10);
+    rgba_t* hi = (rgba_t*)malloc(sizeof(rgba_t));
+    char* buf = (char*)malloc(10);
     memset(buf, 0, 10);
     pread(parse_fd, buf, 9, parse_pos);
     parse_pos += sizeof("#RRGGBBAA") - 1;
@@ -175,12 +176,12 @@ static void die(char* error) {
 #endif
 
 client_config_t* cfgparser_parse_client_config(int fd) {
-    client_config_t *config = malloc(sizeof(client_config_t));
+    client_config_t *config = (client_config_t*)malloc(sizeof(client_config_t));
     
     config->theme = duplicate_node(base_tree);
 
     config->server_count = 0;
-    config->servers = malloc(1);
+    config->servers = (client_config_server_t**) malloc(1);
     config->nickname_width = 320;
     
     parse_pos = 0;
@@ -195,7 +196,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
         if (test_str("server", 1)) {
             PARSER_LOG(CHANNEL_DBUG, "    begin parsing server section\n");
             consume_whitespace();
-            client_config_server_t* server = malloc(sizeof(client_config_server_t));
+            client_config_server_t* server = (client_config_server_t*)malloc(sizeof(client_config_server_t));
             server->name = read_string();
             server->nick = 0;
             consume_whitespace();
@@ -217,12 +218,12 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                         PARSER_LOG(CHANNEL_DBUG, "        with nickname \"%s\"\n", server->nick);
                     } else if (test_char('}', 1)) {
                         config->server_count++;
-                        config->servers = realloc(config->servers, config->server_count * sizeof(void*));
+                        config->servers = (client_config_server_t**)realloc(config->servers, config->server_count * sizeof(void*));
                         config->servers[config->server_count - 1] = server;
                         logger_log(CHANNEL_DBUG, "registered server \"%s:%i\" as \"%s\"\n", server->host, server->port, server->name);
                         break;
                     } else {
-                        char* error = malloc(255);
+                        char* error = (char*)malloc(255);
                         sprintf(error, "unknown token \"%s\"", get_token(0));
                         die(error);
                     }
@@ -240,7 +241,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
             if (test_char('{', 1)) {
                 PARSER_LOG(CHANNEL_DBUG, "      enter theme block\n");
                 consume_whitespace();
-                char** tree = malloc(sizeof(char*) * 64);
+                char** tree = (char**)malloc(sizeof(char*) * 64);
                 int    tree_pos = 0;
                 int    depth = 1;
                 memset(tree, 0, sizeof(void*) * 64);
@@ -295,7 +296,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                 die("expected {");
             }
         } else {
-            char* error = malloc(255);
+            char* error = (char*)malloc(255);
             sprintf(error, "unknown token \"%s\"", get_token(0));
             die(error);
         }
@@ -312,7 +313,7 @@ client_config_t* cfgparser_parse_client_config(int fd) {
 }
 
 server_config_t* cfgparser_parse_server_config(int fd) {
-    server_config_t* config = malloc(sizeof(server_config_t));
+    server_config_t* config = (server_config_t*)malloc(sizeof(server_config_t));
 
     config->listen_port = 10010;
 

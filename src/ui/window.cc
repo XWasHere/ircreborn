@@ -51,8 +51,8 @@ window_t* resolve_window(HWND a) {
 
 // this is bad. really bad.
 widget_t** window_sort_z(window_t* window) {
-    widget_t** sorted   = malloc(window->widget_count * sizeof(void*));
-    widget_t** unsorted = malloc(window->widget_count * sizeof(void*));
+    widget_t** sorted   = (widget_t**)malloc(window->widget_count * sizeof(void*));
+    widget_t** unsorted = (widget_t**)malloc(window->widget_count * sizeof(void*));
     int        ulen     = window->widget_count;
     int        slen     = 0;
 
@@ -60,7 +60,7 @@ widget_t** window_sort_z(window_t* window) {
 
     while (ulen > 0) {
         widget_t*  hi = unsorted[0];
-        widget_t** nunsorted = malloc(window->widget_count * sizeof(void*));
+        widget_t** nunsorted = (widget_t**)malloc(window->widget_count * sizeof(void*));
         int        nlen = 0;
 
         for (int i = 0; i < ulen; i++) {        
@@ -96,8 +96,8 @@ void window_close(window_t* window) {
 
 void window_paint(window_t* window) {
 #ifdef WIN32
-    PAINTSTRUCT* ps = malloc(sizeof(PAINTSTRUCT));
-    RECT* rect = malloc(sizeof(RECT));
+    PAINTSTRUCT* ps = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
+    RECT* rect = (RECT*)malloc(sizeof(RECT));
     SetRect(
         rect,
         0, 0,
@@ -134,7 +134,7 @@ void window_paint(window_t* window) {
         maskd,
         maskv
     );
-    xcb_rectangle_t* rect = malloc(sizeof(xcb_rectangle_t));
+    xcb_rectangle_t* rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t));
     rect->x = 0;
     rect->y = 0;
     rect->height = window->height;
@@ -330,7 +330,7 @@ LRESULT window_proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) 
 #endif
 
 window_t* window_init() {
-    window_t* window = malloc(sizeof(window_t));
+    window_t* window = (window_t*)malloc(sizeof(window_t));
 
 #ifdef WIN32
     window->instance                   = GetModuleHandle(0);
@@ -452,7 +452,7 @@ window_t* window_init() {
         "IRCReborn"
     );
 
-    font_request_t* fr = malloc(sizeof(font_request_t));
+    font_request_t* fr = (font_request_t*)malloc(sizeof(font_request_t));
     fr->want_slant   = 1;
     fr->slant        = FSEARCH_SLANT_UPRIGHT;
     fr->want_style   = 1;
@@ -469,19 +469,19 @@ window_t* window_init() {
 #endif
 
     if (windows == 0) {
-        windows = malloc(sizeof(void*));
+        windows = (window_t**)malloc(sizeof(void*));
     }
 
     window->height = 0;
     window->width = 0;
     
     window->widget_count = 0;
-    window->widgets = malloc(1);
+    window->widgets = (widget_t**)malloc(1);
     window->should_exit = 0;
     window->handle_bg_tasks = &__DEFAULT_window_handle_bg_tasks;
     window->resized = __DEFAULT_window_handle_resize;
 
-    windows = realloc(windows, sizeof(void*) * (window_count + 1));
+    windows = (window_t**)realloc(windows, sizeof(void*) * (window_count + 1));
 
     windows[window_count] = window;
     window_count++;
@@ -533,7 +533,7 @@ void window_display(window_t* window, int all) {
     ShowWindow(window->window, SW_SHOWDEFAULT);
     UpdateWindow(window->window);
 
-    MSG* msg = malloc(sizeof(MSG));
+    MSG* msg = (MSG*)malloc(sizeof(MSG));
     int  ret;
 
     SetTimer(window->window, 0, 10, 0);
@@ -557,8 +557,8 @@ void window_display(window_t* window, int all) {
     xcb_intern_atom_cookie_t protocookie = xcb_intern_atom(window->connection, 1, 12, "WM_PROTOCOLS");
     xcb_intern_atom_reply_t* proto = xcb_intern_atom_reply(window->connection, protocookie, 0);
     xcb_intern_atom_cookie_t deletecookie = xcb_intern_atom(window->connection, 0, 16, "WM_DELETE_WINDOW");
-    xcb_intern_atom_reply_t* delete = xcb_intern_atom_reply(window->connection, deletecookie, 0);
-    xcb_change_property(window->connection, XCB_PROP_MODE_REPLACE, window->window, proto->atom, 4, 32, 1, &delete->atom);
+    xcb_intern_atom_reply_t* wm_delete = xcb_intern_atom_reply(window->connection, deletecookie, 0);
+    xcb_change_property(window->connection, XCB_PROP_MODE_REPLACE, window->window, proto->atom, 4, 32, 1, &wm_delete->atom);
     
     // show the window
     xcb_map_window(window->connection, window->window);
@@ -587,7 +587,7 @@ void window_display(window_t* window, int all) {
                         int type = event->data.data32[0];
                         
                         // cant use a switch because we get the value at runtime
-                        if (type == delete->atom) {
+                        if (type == wm_delete->atom) {
                             window_close(window);
                         } else {
                             logger_log(CHANNEL_DBUG, "got unknown message from the window manager, ignoring (%i)\n", type);
@@ -680,7 +680,7 @@ void window_display(window_t* window, int all) {
     }
 
     free(proto);
-    free(delete);
+    free(wm_delete);
 #endif
 }
 
@@ -700,7 +700,7 @@ void window_free(window_t* window) {
 }
 
 void window_add_widget(window_t* window, widget_t* widget) {
-    window->widgets = realloc(window->widgets, (window->widget_count+1) * sizeof(void*));
+    window->widgets = (widget_t**)realloc(window->widgets, (window->widget_count+1) * sizeof(void*));
     window->widgets[window->widget_count] = widget;
     widget->hovered = 0;
     window->widget_count++;    

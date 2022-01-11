@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <common/logger.h>
 #include <config_parser/theme.h>
@@ -6,11 +7,11 @@
 client_config_theme_tree_node_t* base_tree;
 
 void theme_tree_init() {
-    base_tree = malloc(sizeof(client_config_theme_tree_node_t));
+    base_tree = (client_config_theme_tree_node_t*)malloc(sizeof(client_config_theme_tree_node_t));
     base_tree->name = 0;
     base_tree->type = NODE_TYPE_BRANCH;
     base_tree->value.branch.child_count = 0;
-    base_tree->value.branch.children = malloc(sizeof(void*));
+    base_tree->value.branch.children = (client_config_theme_tree_node_t**)malloc(sizeof(void*));
 }
 
 char** split_theme_path(char* path) {
@@ -22,7 +23,7 @@ char** split_theme_path(char* path) {
         pos++;
     }
 
-    char** opath = malloc(sizeof(char*) * (nodes + 1));
+    char** opath = (char**)malloc(sizeof(char*) * (nodes + 1));
     opath[nodes] = 0;
 
     int node = 0;
@@ -30,7 +31,7 @@ char** split_theme_path(char* path) {
     pos = 0;
 
     for (int i = 0; i < nodes; i++) {
-        opath[i] = malloc(1);
+        opath[i] = (char*)malloc(1);
     }
 
     while (path[pos] != 0) {
@@ -40,7 +41,7 @@ char** split_theme_path(char* path) {
             pos++;
         }
         len++;
-        opath[node] = realloc(opath[node], len + 1);
+        opath[node] = (char*)realloc(opath[node], len + 1);
         opath[node][len - 1] = path[pos];
         opath[node][len] = 0;
         pos++;
@@ -78,12 +79,12 @@ void register_theme_node(char* path, int type) {
 
     p[path_len] = 0;
 
-    client_config_theme_tree_node_t* node = malloc(sizeof(client_config_theme_tree_node_t));
+    client_config_theme_tree_node_t* node = (client_config_theme_tree_node_t*)malloc(sizeof(client_config_theme_tree_node_t));
     node->name = temp;
     node->type = type;
     if (node->type == NODE_TYPE_BRANCH) {
         node->value.branch.child_count = 0;
-        node->value.branch.children = malloc(1);
+        node->value.branch.children = (client_config_theme_tree_node_t**)malloc(1);
     } else if (node->type == NODE_TYPE_RGBA) {
         node->value.rgba.value.r = 0;
         node->value.rgba.value.g = 0;
@@ -93,12 +94,12 @@ void register_theme_node(char* path, int type) {
 
     if (temp == 0) {
         base_tree->value.branch.child_count++;
-        base_tree->value.branch.children = realloc(base_tree->value.branch.children, sizeof(void*) * base_tree->value.branch.child_count);
+        base_tree->value.branch.children = (client_config_theme_tree_node_t**)realloc(base_tree->value.branch.children, sizeof(void*) * base_tree->value.branch.child_count);
         base_tree->value.branch.children[base_tree->value.branch.child_count - 1] = node;
     } else {
         client_config_theme_tree_node_t* parent = get_theme_node(base_tree, p);
         parent->value.branch.child_count++;
-        parent->value.branch.children = realloc(parent->value.branch.children, sizeof(void*) * parent->value.branch.child_count);
+        parent->value.branch.children = (client_config_theme_tree_node_t**)realloc(parent->value.branch.children, sizeof(void*) * parent->value.branch.child_count);
         parent->value.branch.children[parent->value.branch.child_count - 1] = node;
     }
 }
@@ -113,10 +114,10 @@ void set_node_default_rgb(char* path, uint32_t value) {
 }
 
 client_config_theme_tree_node_t* duplicate_node(client_config_theme_tree_node_t* node) {
-    client_config_theme_tree_node_t* out = malloc(sizeof(client_config_theme_tree_node_t));
+    client_config_theme_tree_node_t* out = (client_config_theme_tree_node_t*)malloc(sizeof(client_config_theme_tree_node_t));
 
     if (node->name) {
-        out->name = malloc(strlen(node->name) + 1);
+        out->name = (char*)malloc(strlen(node->name) + 1);
         memset(out->name, 0, strlen(node->name) + 1);
         strcpy(out->name, node->name);
     }
@@ -124,7 +125,7 @@ client_config_theme_tree_node_t* duplicate_node(client_config_theme_tree_node_t*
     
     if (out->type == NODE_TYPE_BRANCH) {
         out->value.branch.child_count = node->value.branch.child_count;
-        out->value.branch.children = malloc(sizeof(void*) * out->value.branch.child_count);
+        out->value.branch.children = (client_config_theme_tree_node_t**)malloc(sizeof(void*) * out->value.branch.child_count);
         for (int i = 0; i < out->value.branch.child_count; i++) {
             out->value.branch.children[i] = duplicate_node(node->value.branch.children[i]);
         }

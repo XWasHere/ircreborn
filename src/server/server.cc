@@ -22,6 +22,14 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#ifdef WIN32
+#include <winsock2.h>
+#else
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <poll.h>
+#endif
+
 #include <common/args.h>
 #include <common/util.h>
 #include <common/attrib.h>
@@ -30,14 +38,6 @@
 #include <networking/types.h>
 #include <config_parser/config.h>
 #include <compat/compat.h>
-
-#ifdef WIN32
-#include <winsock2.h>
-#else
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <poll.h>
-#endif
 
 struct client {
     int fd;
@@ -73,7 +73,7 @@ struct client* find_client(int fd) {
 }
 
 void send_client_message(struct client* client, char* msg, char* name) {
-    message_t* message = malloc(sizeof(message_t));
+    message_t* message = (message_t*)malloc(sizeof(message_t));
 
     message->message = msg;
     message->name    = name;
@@ -97,7 +97,7 @@ void disconnect_client(struct client* client, int send_message, int automatic, i
     }
 
     if (send_message) {
-        char* buf = malloc(SSTRLEN("\"")+strlen(client->nickname)+automatic?SSTRLEN("\" auto disconnected by server"):SSTRLEN("\" disconnected")+has_reason?SSTRLEN(" [ ")+strlen(reason)+SSTRLEN(" ] "):0+1);
+        char* buf = (char*)malloc(SSTRLEN("\"")+strlen(client->nickname)+automatic?SSTRLEN("\" auto disconnected by server"):SSTRLEN("\" disconnected")+has_reason?SSTRLEN(" [ ")+strlen(reason)+SSTRLEN(" ] "):0+1);
         sprintf(
             buf,
             "\"%s\" %s%s%s%s", 
@@ -126,7 +126,7 @@ void disconnect_socket(int fd, int send_message, int automatic, int has_reason, 
 
 void server_main() {
 #ifdef WIN32
-    WSADATA* wsadata = malloc(sizeof(WSADATA));
+    WSADATA* wsadata = (WSADATA*)malloc(sizeof(WSADATA));
     if (WSAStartup(MAKEWORD(2,2), wsadata)) {
         logger_log(CHANNEL_FATL, "failed to start winsock, aborting\n");
         logger_log(CHANNEL_FATL, "%s", format_error(WSAGetLastError()));
@@ -135,7 +135,7 @@ void server_main() {
 #endif
     char* config_path = args_config_path;
     if (config_path == 0) {
-        config_path = malloc(255);
+        config_path = (char*)malloc(255);
         memset(config_path, 0, 255);
 #ifdef WIN32
         strcat(config_path, getenv("USERPROFILE"));
@@ -155,7 +155,7 @@ void server_main() {
     int one = 1;
 
     int server;
-    struct sockaddr_in* server_addr = malloc(sizeof(struct sockaddr_in));
+    struct sockaddr_in* server_addr = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
 
     server = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -174,8 +174,8 @@ void server_main() {
     listen(server, 3);
 
     pollfd_count = 1;
-    pollfds      = malloc(sizeof(struct pollfd));
-    clients      = malloc(1);
+    pollfds      = (struct pollfd*)malloc(sizeof(struct pollfd));
+    clients      = (struct client**)malloc(1);
 
     pollfds[0].fd = server;
     pollfds[0].events = POLLIN;
@@ -187,14 +187,17 @@ void server_main() {
         poll(pollfds, pollfd_count, -1);
 #endif
         if (pollfds[0].revents & POLLIN) {
-            struct sockaddr_in* addr     = malloc(sizeof(struct sockaddr_in));
-            int*                addr_len = malloc(4);
+            struct sockaddr_in* addr     = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
+            int*                addr_len = (int*)malloc(4);
             addr_len[0]                  = sizeof(struct sockaddr_in);
 
+#ifdef WIN32
             int fd = accept(server, (struct sockaddr*)addr, addr_len);
-
+#else
+            int fd = accept(server, (struct sockaddr*)addr, (socklen_t*)addr_len);
+#endif
             pollfd_count++;
-            pollfds = realloc(pollfds, pollfd_count * sizeof(struct pollfd));
+            pollfds = (struct pollfd*)realloc(pollfds, pollfd_count * sizeof(struct pollfd));
             pollfds[pollfd_count - 1].fd = fd;
             pollfds[pollfd_count - 1].events = POLLIN;
         }
@@ -214,7 +217,7 @@ void server_main() {
                 int   buflen = 0;
                 int   op     = 0;
 
-                if (recv(pollfds[i].fd, header, 8, 0) == 0) {
+                if (recv(pollfds[i].fd, (char*)header, 8, 0) == 0) {
                     logger_log(CHANNEL_DBUG, "got 0 bytes of data. assuming broken connection. kicking\n");
                     close(pollfds[i].fd);
                     disconnect_socket(pollfds[i].fd, 1, 1, 1, "read error");
@@ -222,7 +225,7 @@ void server_main() {
                     op     = read_int(header);
                     buflen = read_int(header + 4);
                     
-                    msgbuf = malloc(buflen + 1);
+                    msgbuf = (char*)malloc(buflen + 1);
                     memset(msgbuf, 0, buflen + 1);
 
                     unused int res = recv(pollfds[i].fd, msgbuf, buflen, 0);
@@ -231,14 +234,14 @@ void server_main() {
                         unused int has_ident    = read_bool(msgbuf);
                         unused nstring_t* ident = read_string(msgbuf + 1);
                         client_count++;
-                        clients = realloc(clients, sizeof(void*) * client_count);
-                        struct client* c = malloc(sizeof(struct client));
+                        clients = (struct client**)realloc(clients, sizeof(void*) * client_count);
+                        struct client* c = (struct client*)malloc(sizeof(struct client));
                         clients[client_count - 1] = c;
-                        c->nickname = malloc(5);
+                        c->nickname = (char*)malloc(5);
                         
                         strcpy(c->nickname, "anon");
                         c->fd = pollfds[i].fd;
-                        set_nickname_t* snpacket = malloc(sizeof(set_nickname_t));
+                        set_nickname_t* snpacket = (set_nickname_t*)malloc(sizeof(set_nickname_t));
                         snpacket->nickname = "anon";
                         send_set_nickname(c->fd, snpacket);
                         free(snpacket);
@@ -249,7 +252,7 @@ void server_main() {
                     } else if (op == OPCODE_SET_NICKNAME) {
                         struct client* c = find_client(pollfds[i].fd);
                         nstring_t* nick = read_string(msgbuf);
-                        set_nickname_t* packet = malloc(sizeof(set_nickname_t));
+                        set_nickname_t* packet = (set_nickname_t*)malloc(sizeof(set_nickname_t));
 
                         logger_log(CHANNEL_DBUG, "client set nickname %s -> %s\n", c->nickname, nick->str);
 

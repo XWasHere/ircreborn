@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
+#include <unistd.h>
 
 #ifdef WIN32
 int pread(int fd, void* buf, int count, int offset) {  

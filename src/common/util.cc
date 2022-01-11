@@ -54,7 +54,7 @@ char* format_error(int errorcode) {
         0,
         errorcode,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        &errordesc,
+        errordesc,
         0,
         0
     );
@@ -63,7 +63,7 @@ char* format_error(int errorcode) {
     errordesc = strerror(errorcode);
 #endif
 
-    error = malloc(strlen(errordesc) + 14);
+    error = (char*)malloc(strlen(errordesc) + 14);
     memset(error, 0, strlen(errordesc) + 14);
     sprintf(error, "0x%08x - %s", errorcode, errordesc);
 

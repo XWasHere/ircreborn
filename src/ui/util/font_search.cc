@@ -26,12 +26,12 @@
 #include <ui/util/font_search.h>
 
 xcb_font_t request_font(xcb_connection_t* connection, font_request_t* req) {
-    char* fn = malloc(255 * 14);
-    char* slant = malloc(255);
-    char* style = malloc(255);
-    char* resx = malloc(255);
-    char* resy = malloc(255);
-    char* spacing = malloc(255);
+    char* fn = (char*)malloc(255 * 14);
+    char* slant = (char*)malloc(255);
+    char* style = (char*)malloc(255);
+    char* resx = (char*)malloc(255);
+    char* resy = (char*)malloc(255);
+    char* spacing = (char*)malloc(255);
 
     memset(fn, 0, 255 * 14);
     memset(slant, 0, 255);

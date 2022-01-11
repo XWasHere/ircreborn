@@ -33,7 +33,7 @@
 
 void send_hello(int sock, hello_t* packet) {
     int   olen = 8 + 1 + 4 + strlen(packet->ident);
-    char* obuf = malloc(olen);
+    char* obuf = (char*)malloc(olen);
 
     write_int    (obuf,     OPCODE_HELLO);
     write_int    (obuf + 4, olen - 8);    
@@ -47,7 +47,7 @@ void send_hello(int sock, hello_t* packet) {
 
 void send_message(int sock, message_t* packet) {
     int   olen = 8 + 4 + strlen(packet->message) + 4 + strlen(packet->name);
-    char* obuf = malloc(olen);
+    char* obuf = (char*)malloc(olen);
 
     write_int    (obuf,     OPCODE_MESSAGE);
     write_int    (obuf + 4, olen - 8);
@@ -61,7 +61,7 @@ void send_message(int sock, message_t* packet) {
 
 void send_set_nickname(int sock, set_nickname_t* packet) {
     int olen = 8 + 4 + strlen(packet->nickname);
-    char* obuf = malloc(olen);
+    char* obuf = (char*)malloc(olen);
 
     write_int    (obuf,     OPCODE_SET_NICKNAME);
     write_int    (obuf + 4, olen - 8);

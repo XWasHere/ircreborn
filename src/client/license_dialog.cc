@@ -48,14 +48,14 @@ void open_license_dialog() {
     dialog = window_init();
     
     okw = button_init();
-    oke = okw->extra_data;
+    oke = (button_t*)okw->extra_data;
     
     text0w = label_init();
-    text0e = text0w->extra_data;    
+    text0e = (label_t*)text0w->extra_data;    
     text1w = label_init();
-    text1e = text1w->extra_data;    
+    text1e = (label_t*)text1w->extra_data;    
     text2w = label_init();
-    text2e = text2w->extra_data;
+    text2e = (label_t*)text2w->extra_data;
 
     label_set_text(text0w, "This program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.");
     label_set_color(

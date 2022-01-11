@@ -19,6 +19,10 @@
 #ifndef IRCREBORN_UTIL_ATTRIB_H
 #define IRCREBORN_UTIL_ATTRIB_H
 
-#define unused            __attribute__(( unused ))
+#ifdef C
+#define unused __attribute__(( unused ))
+#else
+#define unused
+#endif
 
 #endif

@@ -18,9 +18,11 @@
 
 // Finally! A logging library that doesnt execute random code
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <common/logger.h>
 #include <common/attrib.h>
@@ -40,7 +42,7 @@ static int                channel_width;
 __attribute__((constructor))
 void logger_init() {
     // fill some values
-    channels      = malloc(1);
+    channels      = (logger_channel_t**)malloc(1);
     channel_count = 0;
     channel_width = 0;
 
@@ -58,9 +60,9 @@ void logger_init() {
 // add a logger channel. usually the four default ones will be enough but idk
 int logger_add_channel(int fd, char* name) {
     channel_count++;
-    channels = realloc(channels, sizeof(void*) * channel_count);
+    channels = (logger_channel_t**)realloc(channels, sizeof(void*) * channel_count);
 
-    logger_channel_t* channel = malloc(sizeof(logger_channel_t));
+    logger_channel_t* channel = (logger_channel_t*)malloc(sizeof(logger_channel_t));
 
     channel->fd   = fd;
     channel->name = name;
@@ -78,8 +80,8 @@ void logger_log(int channel, char* format, ...) {
     va_list hi;
     va_start(hi, format);
 
-    char* data  = malloc(64);
-    char* data2 = malloc(64);
+    char* data  = (char*)malloc(64);
+    char* data2 = (char*)malloc(64);
 
     sprintf(data, " % -*s | %s", channel_width, channels[channel]->name, format);
     vsprintf(data2, data, hi);

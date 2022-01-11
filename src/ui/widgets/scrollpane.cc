@@ -42,13 +42,13 @@ int  scroll_pane_scroll_down(widget_t*, window_t*);
 
 widget_t* scroll_pane_init() {
     widget_t* widget    = widget_init();
-    scroll_pane_t* pane = malloc(sizeof(scroll_pane_t));
+    scroll_pane_t* pane = (scroll_pane_t*)malloc(sizeof(scroll_pane_t));
 
     pane->widget           = widget;
     pane->pos              = 0;
     pane->prev_pos         = 0;
     pane->itemc            = 0;
-    pane->items            = malloc(1);
+    pane->items            = (scroll_pane_item_t**)malloc(1);
     pane->thumb_dragging   = 0;
 
     widget->extra_data     = pane;
@@ -65,20 +65,20 @@ widget_t* scroll_pane_init() {
 }
 
 scroll_pane_item_t* scroll_pane_add_item(widget_t* scrollpane, widget_t* widget) {
-    scroll_pane_item_t* item = malloc(sizeof(scroll_pane_item_t));
+    scroll_pane_item_t* item = (scroll_pane_item_t*)malloc(sizeof(scroll_pane_item_t));
     item->widget = widget;
     item->x = 0;
     item->y = 0;
-    scroll_pane_t* pane = scrollpane->extra_data;
+    scroll_pane_t* pane = (scroll_pane_t*)scrollpane->extra_data;
     pane->itemc++;
-    pane->items = realloc(pane->items, sizeof(void*) * (pane->itemc + 1));
+    pane->items = (scroll_pane_item_t**)realloc(pane->items, sizeof(void*) * (pane->itemc + 1));
     pane->items[pane->itemc - 1] = item;
 
     return item;
 }
 
 void scroll_pane_draw(widget_t* widget, window_t* window) {
-    scroll_pane_t* sp = widget->extra_data;
+    scroll_pane_t* sp = (scroll_pane_t*)widget->extra_data;
 
     int csize = 0;
     for (int i = 0; i < sp->itemc; i++) {
@@ -107,8 +107,8 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
     sp->thumb_pos = ceil(tpos);
 
 #ifdef WIN32
-    PAINTSTRUCT* hi   = malloc(sizeof(PAINTSTRUCT));
-    RECT*        rect = malloc(sizeof(RECT));
+    PAINTSTRUCT* hi   = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
+    RECT*        rect = (RECT*)malloc(sizeof(RECT));
 
     // gotta please the wm
     SetRect(
@@ -168,7 +168,7 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
 
     EndPaint(window->window, hi);
 #else
-    xcb_rectangle_t* rect = malloc(sizeof(xcb_rectangle_t) * 4);
+    xcb_rectangle_t* rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t) * 4);
 
     rect[0].x      = widget->x;
     rect[0].y      = widget->y;
@@ -318,7 +318,7 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
 }
 
 void scroll_pane_set_color(widget_t* widget, int type, rgba_t value) {
-    scroll_pane_t* pane = widget->extra_data;
+    scroll_pane_t* pane = (scroll_pane_t*)widget->extra_data;
 
     if (type == SCROLLPANE_COLOR_BG) {
         pane->bg_color = value;
@@ -332,7 +332,7 @@ void scroll_pane_set_color(widget_t* widget, int type, rgba_t value) {
 }
 
 int scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
-    scroll_pane_t* pane = widget->extra_data;
+    scroll_pane_t* pane = (scroll_pane_t*)widget->extra_data;
 
     if (widget->x + widget->width - 20 < x) {
         if (widget->y < y && y < widget->y + 20) {
@@ -356,7 +356,7 @@ int scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
 }
 
 int scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y) {
-    scroll_pane_t* scroll_pane = widget->extra_data;
+    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
     
     if (widget->x + widget->width - 20 < x) {
         if (widget->y + 20 < y && y < widget->y + widget->height - 20) {
@@ -369,7 +369,7 @@ int scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y) {
 }
 
 int scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y) {
-    scroll_pane_t* scroll_pane = widget->extra_data;
+    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
 
     scroll_pane->thumb_dragging = 0;
 
@@ -379,7 +379,7 @@ int scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y) {
 }
 
 int scroll_pane_mouseout(widget_t* widget, window_t* window) {
-    scroll_pane_t* scroll_pane = widget->extra_data;
+    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
 
     scroll_pane->thumb_dragging = 0;
 
@@ -387,7 +387,7 @@ int scroll_pane_mouseout(widget_t* widget, window_t* window) {
 }
 
 int scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y) {
-    scroll_pane_t* scroll_pane = widget->extra_data;
+    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
 
     if (scroll_pane->thumb_dragging) {
         int a = ceil((-y + scroll_pane->thumb_drag_src + widget->y + 20) * (double)(scroll_pane->csize)) / (widget->height-40);
@@ -404,7 +404,7 @@ int scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y) {
 }
 
 int scroll_pane_scroll_up(widget_t* widget, window_t* window) {
-    scroll_pane_t* scroll_pane = widget->extra_data;
+    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
 
     scroll_pane->pos += 10;
     widget->draw(widget, window);
@@ -413,7 +413,7 @@ int scroll_pane_scroll_up(widget_t* widget, window_t* window) {
 }
 
 int scroll_pane_scroll_down(widget_t* widget, window_t* window) {
-    scroll_pane_t* scroll_pane = widget->extra_data;
+    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
 
     scroll_pane->pos -= 10;
     widget->draw(widget, window);
@@ -422,7 +422,7 @@ int scroll_pane_scroll_down(widget_t* widget, window_t* window) {
 }
 
 void scroll_pane_free(widget_t* widget) {
-    scroll_pane_t* scrollpane = widget->extra_data;
+    scroll_pane_t* scrollpane = (scroll_pane_t*)widget->extra_data;
 
     for (int i = 0; i < scrollpane->itemc; i++) {
         free(scrollpane->items[i]);

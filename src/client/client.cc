@@ -121,7 +121,7 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
                 return 1;
             }
 
-            struct sockaddr_in* addr = malloc(sizeof(struct sockaddr_in));
+            struct sockaddr_in* addr = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
 
             addr->sin_family = AF_INET;
             addr->sin_port   = htons(servers[i]->server->port);
@@ -139,7 +139,7 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
                 return 1;
             }
 
-            hello_t* hi = malloc(sizeof(hello_t));
+            hello_t* hi = (hello_t*)malloc(sizeof(hello_t));
             memset(hi, 0, sizeof(hello_t));
 
             hi->has_ident = 1; // we have an identity :)
@@ -148,7 +148,7 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
             send_hello(sc, hi);
 
             if (servers[i]->server->nick) {
-                set_nickname_t* setn = malloc(sizeof(set_nickname_t));
+                set_nickname_t* setn = (set_nickname_t*)malloc(sizeof(set_nickname_t));
                 setn->nickname = servers[i]->server->nick;
 
                 send_set_nickname(sc, setn);
@@ -168,10 +168,10 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
 }
 
 struct server* server_list_add_server(widget_t* serverlist, client_config_server_t* server) {
-    struct server* s = malloc(sizeof(struct server));
+    struct server* s = (struct server*)malloc(sizeof(struct server));
     s->button = button_init();
     s->server = server;
-    button_t* btn = s->button->extra_data;
+    button_t* btn = (button_t*)s->button->extra_data;
 
     s->button->height = 20;
     s->button->width  = serverlist->width - 20;
@@ -214,7 +214,7 @@ struct server* server_list_add_server(widget_t* serverlist, client_config_server
     nextpos += 20;
 
     server_count++;
-    servers = realloc(servers, sizeof(void*) * server_count);
+    servers = (struct server**)realloc(servers, sizeof(void*) * server_count);
     servers[server_count - 1] = s;
 
     return s;
@@ -222,9 +222,9 @@ struct server* server_list_add_server(widget_t* serverlist, client_config_server
 
 void message_submit(widget_t* tb, window_t* window, char* text, int len) {
     if (sc_connected) {
-        message_t* msg = malloc(sizeof(message_t));
+        message_t* msg = (message_t*)malloc(sizeof(message_t));
 
-        msg->message = malloc(len + 1);
+        msg->message = (char*)malloc(len + 1);
         msg->name    = ""; // ignored
 
         memset(msg->message, 0,    len + 1);
@@ -235,7 +235,7 @@ void message_submit(widget_t* tb, window_t* window, char* text, int len) {
         free(msg->message);
         free(msg);
 
-        textbox_t* t = tb->extra_data;
+        textbox_t* t = (textbox_t*)tb->extra_data;
         t->cursorpos = 0;
         t->textlen = 0;
         t->text[0] = 0; 
@@ -249,8 +249,8 @@ void client_add_message(window_t* window, char* message, char* name) {
     msglw->style = STYLE_NBB | STYLE_NBR;
     namelw->style = STYLE_NBB;
 
-    label_t*  msgle  = msglw->extra_data;
-    label_t*  namele = namelw->extra_data;
+    label_t*  msgle  = (label_t*)msglw->extra_data;
+    label_t*  namele = (label_t*)namelw->extra_data;
 
     int lines = 1;
     int len = strlen(message);
@@ -315,7 +315,7 @@ void client_run_tasks(window_t* window) {
         ioctl(sc, FIONREAD, &data);
 #endif
         if (data) {
-            char* head = malloc(9);
+            char* head = (char*)malloc(9);
             memset(head, 0, 9);
             recv(sc, head, 8, 0);
 
@@ -325,7 +325,7 @@ void client_run_tasks(window_t* window) {
             // the nice thing about doing it this way, is even 
             // if the client gets a message it doesn't recognize,
             // it wont crash
-            char* body = malloc(len + 1);
+            char* body = (char*)malloc(len + 1);
             memset(body, 0, len + 1);
             recv(sc, body, len, 0);
 
@@ -342,7 +342,7 @@ void client_run_tasks(window_t* window) {
             } else if (op == OPCODE_SET_NICKNAME) {
                 nstring_t* nick = read_string(body);
                 
-                char* notify_message = malloc(SSTRLEN("you are now known as \"") + nick->len + sizeof("\""));
+                char* notify_message = (char*)malloc(SSTRLEN("you are now known as \"") + nick->len + sizeof("\""));
                 sprintf(notify_message, "you are now known as \"%s\"", nick->str);
 
                 client_add_message(window, notify_message, " == ");
@@ -400,7 +400,7 @@ void client_recalculate_sizes(window_t* window) {
 */
 }
 
-int handle_mb_kp(widget_t* widget, window_t* window, uint8_t key, uint16_t mod) {
+int handle_mb_kp(widget_t* widget, window_t* window, uint32_t key, uint16_t mod) {
     int v = textbox_keypress(widget, window, key, mod);
     client_recalculate_sizes(window);
     return v;
@@ -425,7 +425,7 @@ void client_main() {
     set_node_default_rgb("common.text_color", RGBA(0xffffffff));
 
 #ifdef WIN32
-    wsadata = malloc(sizeof(WSADATA));
+    wsadata = (WSADATA*)malloc(sizeof(WSADATA));
     if (WSAStartup(MAKEWORD(2,2), wsadata)) {
         logger_log(CHANNEL_FATL, "failed to start winsock, aborting\n");
         logger_log(CHANNEL_FATL, "%s", format_error(WSAGetLastError()));
@@ -434,7 +434,7 @@ void client_main() {
 #endif
     char* config_path = args_config_path;
     if (config_path == 0) {
-        config_path = malloc(255);
+        config_path = (char*)malloc(255);
         memset(config_path, 0, 255);
 #ifdef WIN32
         strcat(config_path, getenv("USERPROFILE"));
@@ -452,12 +452,12 @@ void client_main() {
     close(configfd);
     free(config_path);
 
-    servers = malloc(1);
+    servers = (struct server**)malloc(1);
 
     main_window = window_init();
     
     stripw    = menubar_init();
-    stripe    = stripw->extra_data;
+    stripe    = (menubar_t*)stripw->extra_data;
     stripw->z = 1000;
     
     filemenu = menubar_add_menu(stripw, "file");
@@ -541,11 +541,11 @@ void client_main() {
     // button_set_color(licensebutton->button, BUTTON_COLOR_BR, config->theme.toolbar_menu_item_border_color);
 
     serverlistw = scroll_pane_init();
-    serverliste = serverlistw->extra_data;
+    serverliste = (scroll_pane_t*)serverlistw->extra_data;
     messagesw = scroll_pane_init();
-    messagese = messagesw->extra_data;
+    messagese = (scroll_pane_t*)messagesw->extra_data;
     messagebox = textbox_init();
-    messageboxe = messagebox->extra_data;
+    messageboxe = (textbox_t*)messagebox->extra_data;
     messages_thing = messagesw;
 
     scroll_pane_set_color(

@@ -29,7 +29,7 @@
 int run_tests() {
     TEST(nettype_int, {
         int in    = 42069;
-        char* out = malloc(255);
+        char* out = (char*)malloc(255);
 
         write_int(out, in);
         int res = read_int(out);
@@ -41,7 +41,7 @@ int run_tests() {
 
     TEST(nettype_string, {
         char* in  = "if youre seeing this, the thing worked";
-        char* out = malloc(255);
+        char* out = (char*)malloc(255);
 
         write_string(out, in, strlen(in));
         nstring_t* res = read_string(out);
@@ -55,7 +55,7 @@ int run_tests() {
 
     TEST(nettype_true, {
         int   in  = 1;
-        char* out = malloc(255);
+        char* out = (char*)malloc(255);
 
         write_bool(out, in);
         int res = read_bool(out);
@@ -67,7 +67,7 @@ int run_tests() {
 
     TEST(nettype_false, {
         int   in  = 0;
-        char* out = malloc(255);
+        char* out = (char*)malloc(255);
 
         write_bool(out, in);
         int res = read_bool(out);

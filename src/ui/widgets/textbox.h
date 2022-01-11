@@ -46,5 +46,6 @@ struct __textbox {
 widget_t* textbox_init();
 void      textbox_free(widget_t* widget);
 void      textbox_set_color(widget_t* widget, int type, rgba_t value);
+int       textbox_keypress(widget_t* widget, window_t* window, uint32_t key, uint16_t mod);
 
 #endif

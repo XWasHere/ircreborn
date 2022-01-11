@@ -21,12 +21,12 @@
 #include <stdlib.h>
 
 void frame_draw(widget_t* widget, window_t* window) {
-    frame_t* frame = widget->extra_data;
+    frame_t* frame = (frame_t*)widget->extra_data;
 
     if (frame->bg_color.a != 0) {
 #ifdef WIN32
-        PAINTSTRUCT* ps = malloc(sizeof(PAINTSTRUCT));
-        RECT* rect = malloc(sizeof(RECT));
+        PAINTSTRUCT* ps = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
+        RECT* rect = (RECT*)malloc(sizeof(RECT));
 
         SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
         InvalidateRect(window->window, rect, 1);
@@ -91,7 +91,7 @@ void frame_draw(widget_t* widget, window_t* window) {
 }
 
 int frame_click(widget_t* widget, window_t* window, int x, int y) {
-    frame_t* frame = widget->extra_data;
+    frame_t* frame = (frame_t*)widget->extra_data;
 
     for (int i = 0; i < frame->item_count; i++) {
         frame_managed_t* item = frame->items[i];
@@ -105,10 +105,10 @@ int frame_click(widget_t* widget, window_t* window, int x, int y) {
 }
 
 widget_t* frame_init() {
-    frame_t* frame = malloc(sizeof(frame_t));
+    frame_t* frame = (frame_t*)malloc(sizeof(frame_t));
 
     frame->item_count = 0;
-    frame->items      = malloc(1);
+    frame->items      = (frame_managed_t**)malloc(1);
     frame->widget     = widget_init();
 
     frame->widget->extra_data = frame;
@@ -119,19 +119,19 @@ widget_t* frame_init() {
 }
 
 frame_managed_t* frame_add_item(frame_t* frame, widget_t* widget) {
-    frame_managed_t* managed = malloc(sizeof(frame_managed_t));
+    frame_managed_t* managed = (frame_managed_t*)malloc(sizeof(frame_managed_t));
     
     managed->widget = widget;
     
     frame->item_count++;
-    frame->items = realloc(frame->items, sizeof(void*) * frame->item_count);
+    frame->items = (frame_managed_t**)realloc(frame->items, sizeof(void*) * frame->item_count);
     frame->items[frame->item_count - 1] = managed;
     
     return managed;
 }
 
 void frame_set_color(widget_t* widget, int type, rgba_t value) {
-    frame_t* frame = widget->extra_data;
+    frame_t* frame = (frame_t*)widget->extra_data;
 
     if (type == FRAME_COLOR_BG) {
         frame->bg_color = value;
@@ -139,7 +139,7 @@ void frame_set_color(widget_t* widget, int type, rgba_t value) {
 }
 
 void frame_free(widget_t* widget) {
-    frame_t* frame = widget->extra_data;
+    frame_t* frame = (frame_t*)widget->extra_data;
 
     for (int i = 0; i < frame->item_count; i++) {
         free(frame->items[i]);

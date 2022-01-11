@@ -40,15 +40,15 @@ static button_t* cancele;
 
 static int lock = 0;
 
-static int set_nickname_dialog_cancel_clicked() {
+static int set_nickname_dialog_cancel_clicked(widget_t* widget, window_t* window, int x, int y) {
     dialog->should_exit = 1;
 
     return 1;
 }
 
-int set_nickname_dialog_ok_clicked() {
+int set_nickname_dialog_ok_clicked(widget_t* widget, window_t* window, int x, int y) {
     if (sc_connected) {
-        set_nickname_t* packet = malloc(sizeof(set_nickname_t));
+        set_nickname_t* packet = (set_nickname_t*)malloc(sizeof(set_nickname_t));
         
         packet->nickname = entrye->text;
         
@@ -79,10 +79,10 @@ void open_set_nickname_dialog() {
         okw     = button_init();
         cancelw = button_init();
 
-        texte   = textw->extra_data;
-        entrye  = entryw->extra_data;
-        oke     = okw->extra_data;
-        cancele = cancelw->extra_data;
+        texte   = (label_t*)textw->extra_data;
+        entrye  = (textbox_t*)entryw->extra_data;
+        oke     = (button_t*)okw->extra_data;
+        cancele = (button_t*)cancelw->extra_data;
 
         textw->x      = 110;
         textw->y      = 10;
@@ -182,8 +182,8 @@ void open_set_nickname_dialog() {
         textw   = label_init();
         okw     = button_init();
 
-        texte = textw->extra_data;
-        oke   = okw->extra_data;
+        texte = (label_t*)textw->extra_data;
+        oke   = (button_t*)okw->extra_data;
 
         textw->x      = 10;
         textw->y      = 10;

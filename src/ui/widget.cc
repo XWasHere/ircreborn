@@ -32,7 +32,7 @@ int  __DEFAULT_scroll_up(widget_t* a, window_t* b) { return 1; }
 int  __DEFAULT_scroll_down(widget_t* a, window_t* b) { return 1; }
 
 widget_t* widget_init() {
-    widget_t* widget = malloc(sizeof(widget_t));
+    widget_t* widget = (widget_t*)malloc(sizeof(widget_t));
 
     widget->draw = &__DEFAULT_draw;
     widget->clicked = &__DEFAULT_clicked;
