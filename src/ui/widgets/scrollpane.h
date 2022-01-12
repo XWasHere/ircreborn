@@ -19,46 +19,55 @@
 #ifndef IRCREBORN_UI_WIDGET_SCROLLPANE_H
 #define IRCREBORN_UI_WIDGET_SCROLLPANE_H
 
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 
 #define SCROLLPANE_COLOR_BG     0x00
 #define SCROLLPANE_COLOR_THUMB  0x01
 #define SCROLLPANE_COLOR_TRACK  0x02
 #define SCROLLPANE_COLOR_BUTTON 0x03
 
-typedef struct scroll_pane      scroll_pane_t;
-typedef struct scroll_pane_item scroll_pane_item_t;
+class scroll_pane_t;
+class scroll_pane_item_t;
 
-struct scroll_pane_item {
-    widget_t*           widget;
+class scroll_pane_item_t : public widget_t {
+    public:
+        widget_t*           widget;
 
-    int                 x;
-    int                 y;
+        int                 x;
+        int                 y;
 };
 
-struct scroll_pane {
-    widget_t*            widget;
+struct scroll_pane_t : public widget_t {
+    public:
+        scroll_pane_item_t** items;
+        int                  itemc;
 
-    scroll_pane_item_t** items;
-    int                  itemc;
+        int                  pos;
+        int                  prev_pos;
+        int                  csize;
 
-    int                  pos;
-    int                  prev_pos;
-    int                  csize;
+        int                  thumb_dragging;
+        int                  thumb_drag_src;
+        int                  thumb_pos;
 
-    int                  thumb_dragging;
-    int                  thumb_drag_src;
-    int                  thumb_pos;
+        rgba_t               bg_color;
+        rgba_t               track_color;
+        rgba_t               thumb_color;
+        rgba_t               button_color;
 
-    rgba_t               bg_color;
-    rgba_t               track_color;
-    rgba_t               thumb_color;
-    rgba_t               button_color;
+        scroll_pane_t();
+        ~scroll_pane_t();
+
+        scroll_pane_item_t* add_item(widget_t* widget);
+        
+        void draw();
+        int clicked(int x, int y);
+        int mousedown(int x, int y);
+        int mouseup(int x, int y);
+        int mouseout();
+        int mousemove(int x, int y);
+        int scroll_up();
+        int scroll_down();
 };
-
-widget_t* scroll_pane_init();
-scroll_pane_item_t* scroll_pane_add_item(widget_t* scroll_pane, widget_t* widget);
-void scroll_pane_set_color(widget_t* widget, int type, rgba_t value);
-void scroll_pane_free(widget_t* widget);
 
 #endif

@@ -19,19 +19,25 @@
 #ifndef IRCREBORN_UI_FRAME_H
 #define IRCREBORN_UI_FRAME_H
 
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 
 #define FRAME_COLOR_BG 0x00
 
-typedef struct __frame         frame_t;
 typedef struct __frame_managed frame_managed_t;
 
-struct __frame {
-    widget_t* widget;
+class frame_t : public widget_t  {
+    public:
+        frame_t();
+        ~frame_t();
+        
+        rgba_t            bg_color;
+        int               item_count;
+        frame_managed_t** items;
 
-    rgba_t            bg_color;
-    int               item_count;
-    frame_managed_t** items;
+        void draw();
+        int clicked(int x, int y);
+
+        frame_managed_t* add_item(widget_t* widget);
 };
 
 struct __frame_managed {
@@ -40,10 +46,5 @@ struct __frame_managed {
     int x;
     int y;
 };
-
-widget_t*        frame_init();
-frame_managed_t* frame_add_item(frame_t* frame, widget_t* widget);
-void             frame_set_color(widget_t* widget, int type, rgba_t value);
-void             frame_free(widget_t* widget);
 
 #endif

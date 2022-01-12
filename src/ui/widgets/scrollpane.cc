@@ -17,7 +17,7 @@
 */
 
 #include <ui/widgets/scrollpane.h>
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 #include <ui/window.h>
 #include <common/util.h>
 #include <math.h>
@@ -31,80 +31,53 @@
 
 #endif
 
-void scroll_pane_draw(widget_t*, window_t*);
-int  scroll_pane_clicked(widget_t*, window_t*, int, int);
-int  scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y);
-int  scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y);
-int  scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y);
-int  scroll_pane_mouseout(widget_t*, window_t*);
-int  scroll_pane_scroll_up(widget_t*, window_t*);
-int  scroll_pane_scroll_down(widget_t*, window_t*);
-
-widget_t* scroll_pane_init() {
-    widget_t* widget    = widget_init();
-    scroll_pane_t* pane = (scroll_pane_t*)malloc(sizeof(scroll_pane_t));
-
-    pane->widget           = widget;
-    pane->pos              = 0;
-    pane->prev_pos         = 0;
-    pane->itemc            = 0;
-    pane->items            = (scroll_pane_item_t**)malloc(1);
-    pane->thumb_dragging   = 0;
-
-    widget->extra_data     = pane;
-    widget->draw           = &scroll_pane_draw;
-    widget->clicked        = &scroll_pane_clicked;
-    widget->mousedown      = &scroll_pane_mousedown;
-    widget->mouseup        = &scroll_pane_mouseup;
-    widget->mousemove      = &scroll_pane_mousemove;
-    widget->mouseout       = &scroll_pane_mouseout;
-    widget->scroll_up      = &scroll_pane_scroll_up;
-    widget->scroll_down    = &scroll_pane_scroll_down;
-
-    return pane->widget;
+scroll_pane_t::scroll_pane_t() {
+    this->pos              = 0;
+    this->prev_pos         = 0;
+    this->itemc            = 0;
+    this->items            = (scroll_pane_item_t**)malloc(1);
+    this->thumb_dragging   = 0;
 }
 
-scroll_pane_item_t* scroll_pane_add_item(widget_t* scrollpane, widget_t* widget) {
+scroll_pane_item_t* scroll_pane_t::add_item(widget_t* widget) {
     scroll_pane_item_t* item = (scroll_pane_item_t*)malloc(sizeof(scroll_pane_item_t));
     item->widget = widget;
     item->x = 0;
     item->y = 0;
-    scroll_pane_t* pane = (scroll_pane_t*)scrollpane->extra_data;
-    pane->itemc++;
-    pane->items = (scroll_pane_item_t**)realloc(pane->items, sizeof(void*) * (pane->itemc + 1));
-    pane->items[pane->itemc - 1] = item;
+
+    this->itemc++;
+    this->items = (scroll_pane_item_t**)realloc(this->items, sizeof(void*) * (this->itemc + 1));
+    this->items[this->itemc - 1] = item;
 
     return item;
 }
 
-void scroll_pane_draw(widget_t* widget, window_t* window) {
-    scroll_pane_t* sp = (scroll_pane_t*)widget->extra_data;
-
+void scroll_pane_t::draw() {
     int csize = 0;
-    for (int i = 0; i < sp->itemc; i++) {
-        int a = sp->items[i]->y + sp->items[i]->widget->height;
+    for (int i = 0; i < this->itemc; i++) {
+        int a = this->items[i]->y + this->items[i]->widget->height;
         if (a > csize) csize = a;
     }
 
-    sp->csize = csize;
+    this->csize = csize;
 
     // thumb position.
     double tpos;
-    if (csize >= widget->height) {
-        tpos = (-sp->pos/(double)(csize))*(widget->height-40);
+    if (csize >= this->height) {
+        tpos = (-this->pos/(double)(csize))*(this->height-40);
     } else {
         tpos = 0;
     }
 
     // thumb size
     double tsize;
-    if (csize >= widget->height) {
-        tsize = (widget->height/(double)(csize))*(widget->height-40);
+    if (csize >= this->height) {
+        tsize = (this->height/(double)(csize))*(this->height-40);
     } else {
-        tsize = widget->height - 40;
+        tsize = this->height - 40;
     }
 
-    sp->thumb_pos = ceil(tpos);
+    this->thumb_pos = ceil(tpos);
 
 #ifdef WIN32
     PAINTSTRUCT* hi   = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
@@ -113,76 +86,76 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
     // gotta please the wm
     SetRect(
         rect,
-        widget->x,
-        widget->y,
-        widget->x + widget->width,
-        widget->y + widget->height
+        this->x,
+        this->y,
+        this->x + this->width,
+        this->y + this->height
     );
     InvalidateRect(window->window, rect, 1);
 
     BeginPaint(window->window, hi);
     
     SelectObject(hi->hdc, GetStockObject(DC_BRUSH));
-    SetDCBrushColor(hi->hdc, W32RGBAC(sp->bg_color));
+    SetDCBrushColor(hi->hdc, W32RGBAC(this->bg_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     SetRect(
         rect,
-        widget->x + widget->width - 20,
-        widget->y,
-        widget->x + widget->width,
-        widget->y + widget->height
+        this->x + this->width - 20,
+        this->y,
+        this->x + this->width,
+        this->y + this->height
     );
-    SetDCBrushColor(hi->hdc, W32RGBAC(sp->track_color));
+    SetDCBrushColor(hi->hdc, W32RGBAC(this->track_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     SetRect(
         rect,
-        widget->x + widget->width - 20,
-        widget->y,
-        widget->x + widget->width,
-        widget->y + 20
+        this->x + this->width - 20,
+        this->y,
+        this->x + this->width,
+        this->y + 20
     );
-    SetDCBrushColor(hi->hdc, W32RGBAC(sp->button_color));
+    SetDCBrushColor(hi->hdc, W32RGBAC(this->button_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     SetRect(
         rect,
-        widget->x + widget->width - 20,
-        widget->y + widget->height - 20,
-        widget->x + widget->width,
-        widget->y + widget->height
+        this->x + this->width - 20,
+        this->y + this->height - 20,
+        this->x + this->width,
+        this->y + this->height
     );
-    SetDCBrushColor(hi->hdc, W32RGBAC(sp->button_color));
+    SetDCBrushColor(hi->hdc, W32RGBAC(this->button_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     SetRect(
         rect,
-        widget->x + widget->width - 20,
-        widget->y + 20 + ceil(tpos),
-        widget->x + widget->width,
-        widget->y + 20 + ceil(tpos) + ceil(tsize)
+        this->x + this->width - 20,
+        this->y + 20 + ceil(tpos),
+        this->x + this->width,
+        this->y + 20 + ceil(tpos) + ceil(tsize)
     );
-    SetDCBrushColor(hi->hdc, W32RGBAC(sp->thumb_color));
+    SetDCBrushColor(hi->hdc, W32RGBAC(this->thumb_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
     EndPaint(window->window, hi);
 #else
     xcb_rectangle_t* rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t) * 4);
 
-    rect[0].x      = widget->x;
-    rect[0].y      = widget->y;
-    rect[0].height = widget->height;
-    rect[0].width  = widget->width;
+    rect[0].x      = this->x;
+    rect[0].y      = this->y;
+    rect[0].height = this->height;
+    rect[0].width  = this->width;
     
     xcb_alloc_color_reply_t* r = xcb_alloc_color_reply(
         window->connection,
         xcb_alloc_color(
             window->connection,
             window->cmap,
-            sp->bg_color.r << 8,
-            sp->bg_color.g << 8,
-            sp->bg_color.b << 8
+            this->bg_color.r << 8,
+            this->bg_color.g << 8,
+            this->bg_color.b << 8
         ),
         NULL
     );
@@ -206,9 +179,9 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         xcb_alloc_color(
             window->connection,
             window->cmap,
-            sp->track_color.r << 8,
-            sp->track_color.g << 8, 
-            sp->track_color.b << 8
+            this->track_color.r << 8,
+            this->track_color.g << 8, 
+            this->track_color.b << 8
         ),
         NULL
     );
@@ -219,19 +192,19 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         maskd,
         maskv
     );
-    rect[0].x      = widget->x + widget->width - 20;
-    rect[0].y      = widget->y;
+    rect[0].x      = this->x + this->width - 20;
+    rect[0].y      = this->y;
     rect[0].width  = 20;
-    rect[0].height = widget->height;
+    rect[0].height = this->height;
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
     r = xcb_alloc_color_reply(
         window->connection,
         xcb_alloc_color(
             window->connection,
             window->cmap,
-            sp->button_color.r << 8,
-            sp->button_color.g << 8,
-            sp->button_color.b << 8
+            this->button_color.r << 8,
+            this->button_color.g << 8,
+            this->button_color.b << 8
         ),
         NULL
     );
@@ -242,8 +215,8 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         maskd,
         maskv
     );
-    rect[0].x      = widget->x + widget->width - 20;
-    rect[0].y      = widget->y;
+    rect[0].x      = this->x + this->width - 20;
+    rect[0].y      = this->y;
     rect[0].width  = 20;
     rect[0].height = 20;
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
@@ -252,9 +225,9 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         xcb_alloc_color(
             window->connection,
             window->cmap,
-            sp->button_color.r << 8,
-            sp->button_color.g << 8,
-            sp->button_color.b << 8
+            this->button_color.r << 8,
+            this->button_color.g << 8,
+            this->button_color.b << 8
         ),
         NULL
     );
@@ -265,8 +238,8 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         maskd,
         maskv
     );
-    rect[0].x      = widget->x + widget->width  - 20;
-    rect[0].y      = widget->y + widget->height - 20;
+    rect[0].x      = this->x + this->width  - 20;
+    rect[0].y      = this->y + this->height - 20;
     rect[0].width  = 20;
     rect[0].height = 20;
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
@@ -275,9 +248,9 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         xcb_alloc_color(
             window->connection,
             window->cmap,
-            sp->thumb_color.r << 8,
-            sp->thumb_color.g << 8,
-            sp->thumb_color.b << 8
+            this->thumb_color.r << 8,
+            this->thumb_color.g << 8,
+            this->thumb_color.b << 8
         ),
         NULL
     );
@@ -288,26 +261,26 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
         maskd,
         maskv
     );
-    rect[0].x      = widget->x + widget->width - 20;
-    rect[0].y      = widget->y + 20 + ceil(tpos);
+    rect[0].x      = this->x + this->width - 20;
+    rect[0].y      = this->y + 20 + ceil(tpos);
     rect[0].width  = 20;
-    rect[0].height = csize <= widget->height ? 0 : ceil(tsize);
+    rect[0].height = csize <= this->height ? 0 : ceil(tsize);
 //    printf("%i %i\n", csize, widget->height);
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
 
     xcb_flush(window->connection);
 #endif
 
-    for (int i = 0; i < sp->itemc; i++) {
-        scroll_pane_item_t* item = sp->items[i];
-        item->widget->x = item->x + widget->x;
-        if (csize >= widget->height) {
-            item->widget->y = item->y + widget->y + sp->pos;
+    for (int i = 0; i < this->itemc; i++) {
+        scroll_pane_item_t* item = this->items[i];
+        item->widget->x = item->x + this->x;
+        if (csize >= this->height) {
+            item->widget->y = item->y + this->y + this->pos;
         } else {
-            item->widget->y = item->y + widget->y;
+            item->widget->y = item->y + this->y;
         }
-        if (item->widget->y >= widget->y && item->widget->y + item->widget->height <= widget->y + widget->height) {
-            item->widget->draw(item->widget, window);
+        if (item->widget->y >= this->y && item->widget->y + item->widget->height <= this->y + this->height) {
+            item->widget->draw();
         }
     }
 
@@ -317,37 +290,21 @@ void scroll_pane_draw(widget_t* widget, window_t* window) {
 #endif
 }
 
-void scroll_pane_set_color(widget_t* widget, int type, rgba_t value) {
-    scroll_pane_t* pane = (scroll_pane_t*)widget->extra_data;
-
-    if (type == SCROLLPANE_COLOR_BG) {
-        pane->bg_color = value;
-    } else if (type == SCROLLPANE_COLOR_TRACK) {
-        pane->track_color = value;
-    } else if (type == SCROLLPANE_COLOR_THUMB) {
-        pane->thumb_color = value;
-    } else if (type == SCROLLPANE_COLOR_BUTTON) {
-        pane->button_color = value;
-    }
-}
-
-int scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
-    scroll_pane_t* pane = (scroll_pane_t*)widget->extra_data;
-
-    if (widget->x + widget->width - 20 < x) {
-        if (widget->y < y && y < widget->y + 20) {
-            pane->pos += 10;
-        } else if (widget->y + widget->height - 20 < y && y < widget->y + widget->height) {
-            pane->pos -= 10;
+int scroll_pane_t::clicked(int x, int y) {
+    if (this->x + this->width - 20 < x) {
+        if (this->y < y && y < this->y + 20) {
+            this->pos += 10;
+        } else if (this->y + this->height - 20 < y && y < this->y + this->height) {
+            this->pos -= 10;
         }
-        widget->draw(widget, window);
+        this->draw();
     } else {
-        for (int i = 0; i < pane->itemc; i++) {
-            scroll_pane_item_t* item = pane->items[i];
+        for (int i = 0; i < this->itemc; i++) {
+            scroll_pane_item_t* item = this->items[i];
             widget_t* target = item->widget;
 
             if (target->x <= x && x <= target->x + target->width && target->y <= y && y <= target->y + target->height) {
-                target->clicked(target, window, x, y);
+                target->clicked(x, y);
             }
         }
     }
@@ -355,80 +312,66 @@ int scroll_pane_clicked(widget_t* widget, window_t* window, int x, int y) {
     return 1;
 }
 
-int scroll_pane_mousedown(widget_t* widget, window_t* window, int x, int y) {
-    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
-    
-    if (widget->x + widget->width - 20 < x) {
-        if (widget->y + 20 < y && y < widget->y + widget->height - 20) {
-            scroll_pane->thumb_dragging = 1;
-            scroll_pane->thumb_drag_src = y - widget->y - 20 + scroll_pane->pos;
+int scroll_pane_t::mousedown(int x, int y) {
+    if (this->x + this->width - 20 < x) {
+        if (this->y + 20 < y && y < this->y + this->height - 20) {
+            this->thumb_dragging = 1;
+            this->thumb_drag_src = y - this->y - 20 + this->pos;
         }
     }
 
     return 1;
 }
 
-int scroll_pane_mouseup(widget_t* widget, window_t* window, int x, int y) {
-    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
+int scroll_pane_t::mouseup(int x, int y) {
+    this->thumb_dragging = 0;
 
-    scroll_pane->thumb_dragging = 0;
-
-    widget->draw(widget, window);
+    this->draw();
 
     return 1;
 }
 
-int scroll_pane_mouseout(widget_t* widget, window_t* window) {
-    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
-
-    scroll_pane->thumb_dragging = 0;
-
+int scroll_pane_t::mouseout() {
+    this->thumb_dragging = 0;
+    
     return 1;
 }
 
-int scroll_pane_mousemove(widget_t* widget, window_t* window, int x, int y) {
-    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
-
-    if (scroll_pane->thumb_dragging) {
-        int a = ceil((-y + scroll_pane->thumb_drag_src + widget->y + 20) * (double)(scroll_pane->csize)) / (widget->height-40);
+int scroll_pane_t::mousemove(int x, int y) {
+    if (this->thumb_dragging) {
+        int a = ceil((-y + this->thumb_drag_src + this->y + 20) * (double)(this->csize)) / (this->height-40);
         a = a < 0 ? a : 0;
-        a = a > -scroll_pane->csize + (scroll_pane->csize / (widget->height - 40)) * widget->height ? a : -scroll_pane->csize + (scroll_pane->csize / (widget->height - 40)) * widget->height;
-        scroll_pane->pos = a;
-        if (scroll_pane->pos != scroll_pane->prev_pos) {
-            scroll_pane->prev_pos = scroll_pane->pos;
-            widget->draw(widget, window);
+        a = a > -this->csize + (this->csize / (this->height - 40)) * this->height ? a : -this->csize + (this->csize / (this->height - 40)) * this->height;
+        this->pos = a;
+        if (this->pos != this->prev_pos) {
+            this->prev_pos = this->pos;
+            this->draw();
         }
     }
 
     return 1;
 }
 
-int scroll_pane_scroll_up(widget_t* widget, window_t* window) {
-    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
-
-    scroll_pane->pos += 10;
-    widget->draw(widget, window);
+int scroll_pane_t::scroll_up() {
+    this->pos += 10;
+    
+    this->draw();
 
     return 1;
 }
 
-int scroll_pane_scroll_down(widget_t* widget, window_t* window) {
-    scroll_pane_t* scroll_pane = (scroll_pane_t*)widget->extra_data;
-
-    scroll_pane->pos -= 10;
-    widget->draw(widget, window);
+int scroll_pane_t::scroll_down() {
+    this->pos -= 10;
+    
+    this->draw();
     
     return 1;
 }
 
-void scroll_pane_free(widget_t* widget) {
-    scroll_pane_t* scrollpane = (scroll_pane_t*)widget->extra_data;
-
-    for (int i = 0; i < scrollpane->itemc; i++) {
-        free(scrollpane->items[i]);
+scroll_pane_t::~scroll_pane_t() {
+    for (int i = 0; i < this->itemc; i++) {
+        free(this->items[i]);
     }
 
-    widget_free(widget);
-    free(scrollpane->items);
-    free(scrollpane);
+    free(this->items);
 }

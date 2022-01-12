@@ -18,7 +18,7 @@
 
 #include <main.h>
 #include <common/util.h>
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 #include <ui/window.h>
 #include <stdio.h>
 #include <stdlib.h>

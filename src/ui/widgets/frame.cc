@@ -17,44 +17,42 @@
 */
 
 #include <ui/widgets/frame.h>
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 #include <stdlib.h>
 
-void frame_draw(widget_t* widget, window_t* window) {
-    frame_t* frame = (frame_t*)widget->extra_data;
-
-    if (frame->bg_color.a != 0) {
+void frame_t::draw() {
+    if (this->bg_color.a != 0) {
 #ifdef WIN32
         PAINTSTRUCT* ps = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
         RECT* rect = (RECT*)malloc(sizeof(RECT));
 
-        SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
-        InvalidateRect(window->window, rect, 1);
-        BeginPaint(window->window, ps);
+        SetRect(rect, this->x, this->y, this->x + this->width, this->y + this->height);
+        InvalidateRect(this->window->window, rect, 1);
+        BeginPaint(this->window->window, ps);
 
-        SetBkColor(ps->hdc, W32RGBAC(frame->bg_color));
+        SetBkColor(ps->hdc, W32RGBAC(this->bg_color));
         Rectangle(ps->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
-        EndPaint(window->window, ps);
+        EndPaint(this->window->window, ps);
 
         free(rect);
         free(ps);
 #else
         xcb_rectangle_t rect;
 
-        rect.height = frame->widget->height;
-        rect.width  = frame->widget->width;
-        rect.x      = frame->widget->x;
-        rect.y      = frame->widget->y;
+        rect.height = this->height;
+        rect.width  = this->width;
+        rect.x      = this->x;
+        rect.y      = this->y;
 
         xcb_alloc_color_reply_t* r = xcb_alloc_color_reply(
-            window->connection,
+            this->window->connection,
             xcb_alloc_color(
-                window->connection,
-                window->cmap,
-                frame->bg_color.r << 8,
-                frame->bg_color.g << 8,
-                frame->bg_color.b << 8
+                this->window->connection,
+                this->window->cmap,
+                this->bg_color.r << 8,
+                this->bg_color.g << 8,
+                this->bg_color.b << 8
             ),
             NULL
         );
@@ -64,88 +62,65 @@ void frame_draw(widget_t* widget, window_t* window) {
         };
 
         xcb_change_gc(
-            window->connection,
-            window->gc,
+            this->window->connection,
+            this->window->gc,
             XCB_GC_FOREGROUND,
             hi
         );
 
         xcb_poly_fill_rectangle(
-            window->connection,
-            window->window,
-            window->gc,
+            this->window->connection,
+            this->window->window,
+            this->window->gc,
             1,
             &rect
         );
 #endif
     }
 
-    for (int i = 0; i < frame->item_count; i++) {
-        frame_managed_t* item = frame->items[i];
+    for (int i = 0; i < this->item_count; i++) {
+        frame_managed_t* item = this->items[i];
         
-        item->widget->x = item->x + widget->x;
-        item->widget->y = item->y + widget->y;
+        item->widget->x = item->x + this->x;
+        item->widget->y = item->y + this->y;
 
-        item->widget->draw(item->widget, window);
+        item->widget->draw();
     }
 }
 
-int frame_click(widget_t* widget, window_t* window, int x, int y) {
-    frame_t* frame = (frame_t*)widget->extra_data;
-
-    for (int i = 0; i < frame->item_count; i++) {
-        frame_managed_t* item = frame->items[i];
+int frame_t::clicked(int x, int y) {
+    for (int i = 0; i < this->item_count; i++) {
+        frame_managed_t* item = this->items[i];
         widget_t* target = item->widget;
         if (target->x <= x && x <= target->x + target->width && target->y <= y && y <= target->y + target->height) {
-            target->clicked(target, window, x, y);
+            target->clicked(x, y);
         }
     }
 
     return 1;
 }
 
-widget_t* frame_init() {
-    frame_t* frame = (frame_t*)malloc(sizeof(frame_t));
-
-    frame->item_count = 0;
-    frame->items      = (frame_managed_t**)malloc(1);
-    frame->widget     = widget_init();
-
-    frame->widget->extra_data = frame;
-    frame->widget->draw       = frame_draw;
-    frame->widget->clicked    = frame_click;
-
-    return frame->widget;
+frame_t::frame_t() {
+    this->item_count = 0;
+    this->items      = (frame_managed_t**)malloc(1);
 }
 
-frame_managed_t* frame_add_item(frame_t* frame, widget_t* widget) {
+frame_managed_t* frame_t::add_item(widget_t* widget) {
     frame_managed_t* managed = (frame_managed_t*)malloc(sizeof(frame_managed_t));
     
     managed->widget = widget;
     
-    frame->item_count++;
-    frame->items = (frame_managed_t**)realloc(frame->items, sizeof(void*) * frame->item_count);
-    frame->items[frame->item_count - 1] = managed;
+    this->item_count++;
+    this->items = (frame_managed_t**)realloc(this->items, sizeof(void*) * this->item_count);
+    this->items[this->item_count - 1] = managed;
     
     return managed;
 }
 
-void frame_set_color(widget_t* widget, int type, rgba_t value) {
-    frame_t* frame = (frame_t*)widget->extra_data;
-
-    if (type == FRAME_COLOR_BG) {
-        frame->bg_color = value;
-    }
-}
-
-void frame_free(widget_t* widget) {
-    frame_t* frame = (frame_t*)widget->extra_data;
-
-    for (int i = 0; i < frame->item_count; i++) {
-        free(frame->items[i]);
+frame_t::~frame_t() {
+    for (int i = 0; i < this->item_count; i++) {
+        free(this->items[i]);
     }
     
-    free(frame->items);
-    free(frame);
-    widget_free(widget);
+    free(this->items);
 }

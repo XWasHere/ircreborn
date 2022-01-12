@@ -21,33 +21,29 @@
 #include <string.h>
 #include <stdlib.h>
 
-void menubar_draw(widget_t* widget, window_t* window) {
-    menubar_t* menubar = (menubar_t*)widget->extra_data;
+void menubar_t::draw() {
+    this->container->draw();
 
-    menubar->container->draw(menubar->container, window);
-
-    for (int i = 0; i < menubar->menu_count; i++) {
-        if (menubar->menus[i]->is_open) {
-            menubar->menus[i]->container->draw(menubar->menus[i]->container, window);
+    for (int i = 0; i < this->menu_count; i++) {
+        if (this->menus[i]->is_open) {
+            this->menus[i]->container->draw();
         }
     }
 }
 
-int menubar_clicked(widget_t* widget, window_t* window, int x, int y) {
-    menubar_t* menubar = (menubar_t*)widget->extra_data;
-
-    window_paint(window);
+int menubar_t::clicked(int x, int y) {
+    window_paint(this->window);
 
     if (y < 20) {
-        for (int i = 0; i < menubar->menu_count; i++) menubar->menus[i]->is_open = 0;        
-        menubar->container->clicked(menubar->container, window, x, y);
+        for (int i = 0; i < this->menu_count; i++) this->menus[i]->is_open = 0;
+        this->container->clicked(x, y);
         return 1;
-    } else {
-        for (int i = 0; i < menubar->menu_count; i++) {
-            menu_t* menu = menubar->menus[i];
+    } else {   
+        for (int i = 0; i < this->menu_count; i++) {
+            menu_t* menu = this->menus[i];
             if (menu->is_open) {
-                menu->container->clicked(menu->container, window, x, y);
-                for (int i = 0; i < menubar->menu_count; i++) menubar->menus[i]->is_open = 0;
+                menu->container->clicked(x, y);
+                for (int i = 0; i < this->menu_count; i++) this->menus[i]->is_open = 0;
                 return 1;
             }
         }
@@ -55,142 +51,119 @@ int menubar_clicked(widget_t* widget, window_t* window, int x, int y) {
     }
 }
 
-int menu_clicked(widget_t* widget, window_t* window, int x, int y) {
-    menu_t* menu = (menu_t*)widget->extra_data;
-    menu->is_open = 0;
+int menu_t::clicked(int x, int y) {
+    this->is_open = 0;
     return 1;
 }
 
-widget_t* menubar_init() {
-    menubar_t* menubar = (menubar_t*)malloc(sizeof(menubar_t));
-
-    menubar->container  = frame_init();
-    menubar->menu_count = 0;
-    menubar->menus      = (menu_t**)malloc(1);
-    menubar->widget     = widget_init();
-    menubar->next_menu_x= 0;
-
-    menubar->widget->extra_data = menubar;
-    menubar->widget->draw       = menubar_draw;
-    menubar->widget->clicked    = menubar_clicked;
-
-    return menubar->widget;
+menubar_t::menubar_t() {
+    this->container  = &frame_t();
+    this->menu_count = 0;
+    this->menus      = (menu_t**)malloc(1);
+    this->next_menu_x= 0;
 }
 
-int menubar_button_clicked(widget_t* widget, window_t* window, int x, int y) {
-    menu_t* menu = (menu_t*)widget->extra_data_2;
-    menubar_t* menubar = (menubar_t*)menu->widget->extra_data_2;
+int menubar_t::button_clicked(button_t* button, int x, int y) {
+    menu_t*       menu       = (menu_t*)button->parent;
+    menubar_t*    menubar    = (menubar_t*)menu->parent;
+
     menu->is_open = 1;
-    menu->container->draw(menu->container, window);
+    menu->container->draw();
     
     // this stupid hack makes sure that the menu closes if the user
     // clicks elsewhere
-    menubar->widget->height = 10000;
+    menubar->height = 10000;
     
     return 1;
 }
 
-int menu_button_clicked(widget_t* widget, window_t* window, int x, int y) {
-    menubutton_t* btn = (menubutton_t*)widget->extra_data_2;
+int menu_t::button_clicked(button_t* button, int x, int y) {
+    menubutton_t* btn = (menubutton_t*)button->parent;
 
-    btn->clicked();
+    btn->on_click();
 
     return 1;
 }
 
-menu_t* menubar_add_menu(widget_t* widget, char* name) {
-    menubar_t* menubar = (menubar_t*)widget->extra_data;
-    menu_t* menu = (menu_t*)malloc(sizeof(menu_t));
+menu_t::menu_t() {
+    this->next_button_y = 0;
+    this->open_button   = &button_t();
+    this->button_count  = 0;
+    this->container     = &frame_t();
+    this->is_open       = 0;
+    this->buttons       = (menubutton_t**)malloc(1);
     
-    menu->next_button_y= 0;
-    menu->open_button  = button_init();
-    menu->button_count = 0;
-    menu->container    = frame_init();
-    menu->is_open      = 0;
-    menu->buttons      = (menubutton_t**)malloc(1);
-    menu->widget       = widget_init();
+    this->open_button->on_clicked = menubar_t::button_clicked;
+}
+
+menu_t* menubar_t::add_menu(char* name) {
+    menu_t* menu = &menu_t();
+        
+    this->menu_count++;
+    this->menus = (menu_t**)realloc(this->menus, sizeof(void*) * this->menu_count);
+    this->menus[this->menu_count - 1] = menu;
     
-    menu->widget->extra_data = menu;
-    menu->widget->extra_data_2 = menubar;
-    menu->widget->clicked    = menu_clicked;
+    menu->open_button->text = (char*)malloc(strlen(name) + 1);
+    menu->open_button->type = BUTTON_TEXT;
 
-    menubar->menu_count++;
-    menubar->menus = (menu_t**)realloc(menubar->menus, sizeof(void*) * menubar->menu_count);
-    menubar->menus[menubar->menu_count - 1] = menu;
-    
-    button_t* obtn = (button_t*)menu->open_button->extra_data;
-    obtn->text = (char*)malloc(strlen(name) + 1);
-    obtn->type = BUTTON_TEXT;
+    strcpy(menu->open_button->text, name);
 
-    strcpy(obtn->text, name);
-
-    menu->open_button->width = strlen(obtn->text) * 10;
+    menu->open_button->width = strlen(menu->open_button->text) * 10;
     menu->open_button->height = 20;
-    menu->open_button->clicked = menubar_button_clicked;
-    menu->open_button->extra_data_2 = menu;
 
-    frame_managed_t* item = frame_add_item((frame_t*)menubar->container->extra_data, menu->open_button);
-    item->x = menubar->next_menu_x;
+    frame_managed_t* item = this->container->add_item(menu->open_button);
+    item->x = this->next_menu_x;
     item->y = 0;
 
-    menubar->next_menu_x += obtn->widget->width;
+    this->next_menu_x += menu->open_button->width;
 
     menu->container->y = 20;
     menu->container->x = item->x;
+    
     return menu;
 }
 
-menubutton_t* menu_add_button(menu_t* menu, char* name, void(*clicked)()) {
-    menu->button_count++;
-    menu->buttons = (menubutton_t**)realloc(menu->buttons, sizeof(void*) * menu->button_count);
-    
-    menubutton_t* button = (menubutton_t*)malloc(sizeof(menubutton_t));
+menubutton_t::menubutton_t() {
+    this->button = &button_t();
+    this->button->on_clicked = menu_t::button_clicked;
+    this->button->height = 20;
+    this->button->type = BUTTON_TEXT;
+}
 
-    button->button = button_init();
-    button->clicked = clicked;
-    button->widget = widget_init();
-    button->widget->extra_data_2 = menu;
-    button->button->clicked = menu_button_clicked;
-    button->button->height = 20;
+menubutton_t* menu_t::add_button(char* name, void(*clicked)()) {
+    this->button_count++;
+    this->buttons = (menubutton_t**)realloc(this->buttons, sizeof(void*) * this->button_count);
+    
+    menubutton_t* button = &menubutton_t();
+
     button->button->width = strlen(name) * 10;
 
-    button_set_type(button->button, BUTTON_TEXT);
-    button_set_text(button->button, name);
+    button->button->set_text(name);
 
-    frame_managed_t* item = frame_add_item((frame_t*)menu->container->extra_data, button->button);
+    frame_managed_t* item = this->container->add_item(button->button);
     item->x = 0;
-    item->y = menu->next_button_y;
+    item->y = this->next_button_y;
 
-    menu->next_button_y += 20;
+    this->next_button_y += 20;
 
-    button->button->extra_data_2 = button;
-    button->button->extra_data_3 = item;
-
-    menu->buttons[menu->button_count-1] = button;
+    this->buttons[this->button_count-1] = button;
     return button;
 }
 
-void menubar_free(widget_t* widget) {
-    menubar_t* menubar = (menubar_t*)widget->extra_data;
-
-    for (int i = 0; i < menubar->menu_count; i++) {
-        menu_t* menu = menubar->menus[i];
+menubar_t::~menubar_t() {
+    for (int i = 0; i < this->menu_count; i++) {
+        menu_t* menu = this->menus[i];
 
         for (int i = 0; i < menu->button_count; i++) {
             menubutton_t* button = menu->buttons[i];
 
-            widget_free(button->widget);
-            button_free(button->button);
-            free(button);
+            button->button->~button_t();
         }
-        frame_free(menu->container);
-        widget_free(menu->widget);
-        button_free(menu->open_button);
+        menu->container->~frame_t();
+        menu->open_button->~button_t();
         free(menu->buttons);
-        free(menu);
+        menu->~menu_t();
     }
-    free(menubar->menus);
-    frame_free(menubar->container);
-    free(menubar);
-    widget_free(widget);
+    free(this->menus);
+    this->container->~frame_t();
 }

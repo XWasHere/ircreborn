@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 #include <ui/window.h>
 #include <ui/widgets/label.h>
 #ifndef WIN32 
@@ -25,25 +25,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-void label_draw(widget_t* widget ,window_t* window) {
-    label_t* label = (label_t*)widget->extra_data;
-
+void label_t::draw() {
 #ifdef WIN32
     PAINTSTRUCT* hi = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
     RECT *rect = (RECT*)malloc(sizeof(RECT));
     
-    SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
+    SetRect(rect, this->x, this->y, this->x + this->width, this->y + this->height);
     InvalidateRect(window->window, rect, 1);
     BeginPaint(window->window, hi);
 
     SelectObject(hi->hdc, GetStockObject(DC_BRUSH));
-    SetDCBrushColor(hi->hdc, W32RGBAC(label->bg_color));
-    SetBkColor(hi->hdc, W32RGBAC(label->bg_color));
-    SetTextColor(hi->hdc, W32RGBAC(label->text_color));
+    SetDCBrushColor(hi->hdc, W32RGBAC(this->bg_color));
+    SetBkColor(hi->hdc, W32RGBAC(this->bg_color));
+    SetTextColor(hi->hdc, W32RGBAC(this->text_color));
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
     
-    SetRect(rect, widget->x + 1, widget->y + 1, widget->x + widget->width - 1, widget->y + widget->height - 1);
-    DrawText(hi->hdc, label->text, strlen(label->text), rect, 0);
+    SetRect(rect, this->x + 1, this->y + 1, this->x + this->width - 1, this->y + this->height - 1);
+    DrawText(hi->hdc, this->text, strlen(this->text), rect, 0);
 
     EndPaint(window->window, hi);
     
@@ -51,27 +49,27 @@ void label_draw(widget_t* widget ,window_t* window) {
     free(rect);
 #else
     // literally copied from button.c
-    xcb_gcontext_t gc = xcb_generate_id(window->connection);
+    xcb_gcontext_t gc = xcb_generate_id(this->window->connection);
 
     xcb_alloc_color_reply_t* bg = xcb_alloc_color_reply(
-        window->connection,
+        this->window->connection,
         xcb_alloc_color(
-            window->connection,
-            window->cmap,
-            label->bg_color.r << 8,
-            label->bg_color.g << 8,
-            label->bg_color.b << 8
+            this->window->connection,
+            this->window->cmap,
+            this->bg_color.r << 8,
+            this->bg_color.g << 8,
+            this->bg_color.b << 8
         ),
         NULL
     );
     xcb_alloc_color_reply_t* tx = xcb_alloc_color_reply(
-        window->connection,
+        this->window->connection,
         xcb_alloc_color(
-            window->connection,
-            window->cmap,
-            label->text_color.r << 8,
-            label->text_color.g << 8,
-            label->text_color.b << 8
+            this->window->connection,
+            this->window->cmap,
+            this->text_color.r << 8,
+            this->text_color.g << 8,
+            this->text_color.b << 8
         ),
         NULL
     );
@@ -80,33 +78,33 @@ void label_draw(widget_t* widget ,window_t* window) {
     uint32_t maskv[3] = {
         tx->pixel,
         bg->pixel,
-        window->main_font
+        this->window->main_font
     };
 
     xcb_create_gc(
-        window->connection,
+        this->window->connection,
         gc,
-        window->window,
+        this->window->window,
         maskd,
         maskv
     );
 
     int linecount = 0;
 
-    int len = strlen(label->text);
+    int len = strlen(this->text);
     int c = 0;
     int d = 0;
 
     for (int i = 0; i < len; i++) {
-        if (label->text[i] == '\n') {
+        if (this->text[i] == '\n') {
             xcb_image_text_8(
-                window->connection, 
+                this->window->connection, 
                 c,
-                window->window,
+                this->window->window,
                 gc,
-                widget->x + 3,
-                widget->y + 17 + 20 * linecount,
-                label->text + d - c
+                this->x + 3,
+                this->y + 17 + 20 * linecount,
+                this->text + d - c
             );
             linecount++;
             c = 0;
@@ -117,31 +115,31 @@ void label_draw(widget_t* widget ,window_t* window) {
     }
 
     xcb_image_text_8(
-        window->connection, 
+        this->window->connection, 
         c,
-        window->window,
+        this->window->window,
         gc,
-        widget->x + 3,
-        widget->y + 17 + 20 * linecount,
-        label->text + d - c
+        this->x + 3,
+        this->y + 17 + 20 * linecount,
+        this->text + d - c
     );
-    xcb_free_gc(window->connection, gc);
+    xcb_free_gc(this->window->connection, gc);
     
     xcb_rectangle_t *rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t));
     
-    rect->x = widget->x;
-    rect->y = widget->y;
-    rect->width = widget->width;
-    rect->height = widget->height;
+    rect->x = this->x;
+    rect->y = this->y;
+    rect->width = this->width;
+    rect->height = this->height;
     
     xcb_point_t points[2];
     
     // top
-    if (!(widget->style & STYLE_NBT)) {
-        points[0].x = widget->x;
-        points[0].y = widget->y;
-        points[1].x = widget->x + widget->width;
-        points[1].y = widget->y;
+    if (!(this->style & STYLE_NBT)) {
+        points[0].x = this->x;
+        points[0].y = this->y;
+        points[1].x = this->x + this->width;
+        points[1].y = this->y;
         
         xcb_poly_line(
             window->connection,
@@ -154,95 +152,63 @@ void label_draw(widget_t* widget ,window_t* window) {
 
     
     // right
-    if (!(widget->style & STYLE_NBR)) {
-        points[0].x = widget->x + widget->width;
-        points[0].y = widget->y;
-        points[1].x = widget->x + widget->width;
-        points[1].y = widget->y + widget->height;
+    if (!(this->style & STYLE_NBR)) {
+        points[0].x = this->x + this->width;
+        points[0].y = this->y;
+        points[1].x = this->x + this->width;
+        points[1].y = this->y + this->height;
 
         xcb_poly_line(
-            window->connection,
+            this->window->connection,
             CoordModeOrigin,
-            window->window,
-            window->gc,
+            this->window->window,
+            this->window->gc,
             2, (xcb_point_t*)&points
         );
     }
 
     // bottom
-    if (!(widget->style & STYLE_NBB)) {
-        points[0].x = widget->x + widget->width;
-        points[0].y = widget->y + widget->height;
-        points[1].x = widget->x;
-        points[1].y = widget->y + widget->height;
+    if (!(this->style & STYLE_NBB)) {
+        points[0].x = this->x + this->width;
+        points[0].y = this->y + this->height;
+        points[1].x = this->x;
+        points[1].y = this->y + this->height;
         
         xcb_poly_line(
-            window->connection,
+            this->window->connection,
             CoordModeOrigin,
-            window->window,
-            window->gc,
+            this->window->window,
+            this->window->gc,
             2, (xcb_point_t*)&points
         );
     }
 
     // left
-    if (!(widget->style & STYLE_NBL)) {
-        points[0].x = widget->x;
-        points[0].y = widget->y + widget->height;
-        points[1].x = widget->x;
-        points[1].y = widget->y;
+    if (!(this->style & STYLE_NBL)) {
+        points[0].x = this->x;
+        points[0].y = this->y + this->height;
+        points[1].x = this->x;
+        points[1].y = this->y;
         
         xcb_poly_line(
-            window->connection,
+            this->window->connection,
             CoordModeOrigin,
-            window->window,
-            window->gc,
+            this->window->window,
+            this->window->gc,
             2, (xcb_point_t*)&points
         );
     }
 
-    xcb_flush(window->connection);
+    xcb_flush(this->window->connection);
     
     free(rect);
 #endif
 }
 
-widget_t* label_init() {
-    widget_t* label = widget_init();
-    label_t*  lab   = (label_t*)malloc(sizeof(label_t));
-
-    lab->text = 0;
-
-    lab->widget = label;
-    label->extra_data = lab;
-
-    label->draw = &label_draw;
-    
-    return label;
-}
-
-void label_set_text(widget_t* widget, char* text) {
-    label_t* label = (label_t*)widget->extra_data;
+void label_t::set_text(char* text) {
     char* buf = (char*)malloc(strlen(text) + 1);
 
     memset(buf, 0, strlen(text) + 1);
     strcpy(buf, text);
-    label->text = buf;
-}
-
-void label_set_color(widget_t* widget, int type, rgba_t value) {
-    label_t* label = (label_t*)widget->extra_data;
-    
-    if (type == LABEL_BG_COLOR) {
-        label->bg_color = value;
-    } else if (type == LABEL_TEXT_COLOR) {
-        label->text_color = value;
-    }
-}
-void label_free(widget_t* widget) {
-    label_t* label = (label_t*)widget->extra_data;
-
-    free(label->text);
-    free(label);
-    widget_free(widget);
+    this->text = buf;
 }

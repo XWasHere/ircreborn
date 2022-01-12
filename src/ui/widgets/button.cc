@@ -24,59 +24,40 @@
 #endif
 
 #include <ui/widgets/button.h>
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 #include <ui/util/font_search.h>
 
 #include <common/color.h>
 #include <common/util.h>
 
-void button_draw(widget_t*, window_t*);
-
-widget_t* button_init() {
-    widget_t* widget = widget_init();
-    button_t* button = (button_t*)malloc(sizeof(button_t));
-
-    widget->extra_data = button;
-    widget->draw    = &button_draw;
-    button->widget = widget;
-
-    return widget;
-}
-
-void button_set_type(widget_t* widget, int type) {
-    button_t* btn = (button_t*)widget->extra_data;
-    btn->type = type;
-}
-
-void button_draw(widget_t* widget, window_t* window) {
-    button_t* button = (button_t*)widget->extra_data;
+void button_t::draw() {
 #ifdef WIN32
     // ALL THIS TO DRAW A FUCKING RECTANGLE
     PAINTSTRUCT* hi = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
     RECT *rect = (RECT*)malloc(sizeof(RECT));
 
-    SetRect(rect, widget->x, widget->y, widget->x + widget->width, widget->y + widget->height);
+    SetRect(rect, this->x, this->y, this->x + this->width, this->y + this->height);
     
     // need this so beginpaint doesnt obliterate everything else trol
-    InvalidateRect(window->window, rect, 1);
-    BeginPaint(window->window, hi);
+    InvalidateRect(this->window->window, rect, 1);
+    BeginPaint(this->window->window, hi);
 
     SelectObject   (hi->hdc, GetStockObject(DC_BRUSH));
     SelectObject   (hi->hdc, GetStockObject(DC_PEN));
     
     // i couldnt figure out a good way to style buttons so ill just do this (sorry)
-    SetDCBrushColor(hi->hdc, W32RGBAC(button->bg_color));
-    SetDCPenColor  (hi->hdc, W32RGBAC(button->border_color));
-    SetBkColor     (hi->hdc, W32RGBAC(button->bg_color));
-    SetTextColor   (hi->hdc, W32RGBAC(button->text_color));
+    SetDCBrushColor(hi->hdc, W32RGBAC(this->bg_color));
+    SetDCPenColor  (hi->hdc, W32RGBAC(this->border_color));
+    SetBkColor     (hi->hdc, W32RGBAC(this->bg_color));
+    SetTextColor   (hi->hdc, W32RGBAC(this->text_color));
 
     Rectangle(hi->hdc, rect->left, rect->top, rect->right, rect->bottom);
 
-    if (button->type == BUTTON_TEXT) {
-        DrawText(hi->hdc, button->text, strlen(button->text), rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    if (this->type == BUTTON_TEXT) {
+        DrawText(hi->hdc, this->text, strlen(this->text), rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     }
 
-    EndPaint(window->window, hi);
+    EndPaint(this->window->window, hi);
     
     free(hi);
     free(rect);
@@ -85,49 +66,49 @@ void button_draw(widget_t* widget, window_t* window) {
     xcb_rectangle_t* rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t));
     
     // ???
-    rect->x = widget->x;
-    rect->y = widget->y;
-    rect->width = widget->width;
-    rect->height = widget->height;
+    rect->x = this->x;
+    rect->y = this->y;
+    rect->width = this->width;
+    rect->height = this->height;
 
     xcb_alloc_color_cookie_t c = xcb_alloc_color(
-        window->connection,
-        window->cmap,
-        button->bg_color.r << 8,
-        button->bg_color.g << 8,
-        button->bg_color.b << 8
+        this->window->connection,
+        this->window->cmap,
+        this->bg_color.r << 8,
+        this->bg_color.g << 8,
+        this->bg_color.b << 8
     );
 
     xcb_alloc_color_reply_t* bg = xcb_alloc_color_reply(
-        window->connection,
+        this->window->connection,
         c,
         NULL
     );
     
     c = xcb_alloc_color(
-        window->connection,
-        window->cmap,
-        button->text_color.r << 8,
-        button->text_color.g << 8,
-        button->text_color.b << 8
+        this->window->connection,
+        this->window->cmap,
+        this->text_color.r << 8,
+        this->text_color.g << 8,
+        this->text_color.b << 8
     );
 
     xcb_alloc_color_reply_t* tx = xcb_alloc_color_reply(
-        window->connection,
+        this->window->connection,
         c,
         NULL
     );
 
     c =  xcb_alloc_color(
-        window->connection,
-        window->cmap,
-        button->border_color.r << 8,
-        button->border_color.g << 8,
-        button->border_color.b << 8
+        this->window->connection,
+        this->window->cmap,
+        this->border_color.r << 8,
+        this->border_color.g << 8,
+        this->border_color.b << 8
     );
 
     xcb_alloc_color_reply_t* bd = xcb_alloc_color_reply(
-        window->connection,
+        this->window->connection,
         c,
         NULL
     );
@@ -138,98 +119,87 @@ void button_draw(widget_t* widget, window_t* window) {
     };
 
     xcb_change_gc(
-        window->connection,
-        window->gc,
+        this->window->connection,
+        this->window->gc,
         maskd,
         maskv
     );
 
-    if (button->type != BUTTON_INVIS) {
+    if (this->type != BUTTON_INVIS) {
         xcb_poly_fill_rectangle(
-            window->connection,
-            window->window,
-            window->gc,
+            this->window->connection,
+            this->window->window,
+            this->window->gc,
             1,
             rect
         );
     }
 
-    if (button->type == BUTTON_TEXT) {
+    if (this->type == BUTTON_TEXT) {
         maskd = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
         maskv[0] = tx->pixel;
         maskv[1] = bg->pixel;
-        maskv[2] = window->main_font;
+        maskv[2] = this->window->main_font;
 
         xcb_change_gc(
-            window->connection,
-            window->gc,
+            this->window->connection,
+            this->window->gc,
             maskd,
             maskv
         );
 
         xcb_image_text_8(
-            window->connection,
-            strlen(button->text),
-            window->window,
-            window->gc,
-            widget->x + 3,
-            widget->y + widget->height - 3,
-            button->text
+            this->window->connection,
+            strlen(this->text),
+            this->window->window,
+            this->window->gc,
+            this->x + 3,
+            this->y + this->height - 3,
+            this->text
         );
     }
 
     maskd = XCB_GC_FOREGROUND;
     maskv[0] = bd->pixel;
     xcb_change_gc(
-        window->connection,
-        window->gc,
+        this->window->connection,
+        this->window->gc,
         maskd,
         maskv
     );
 
-    if (button->type != BUTTON_INVIS) {
+    if (this->type != BUTTON_INVIS) {
         xcb_poly_rectangle(
-            window->connection,
-            window->window,
-            window->gc,
+            this->window->connection,
+            this->window->window,
+            this->window->gc,
             1,
             rect
         );
     }
 
-    xcb_flush(window->connection);
+    xcb_flush(this->window->connection);
     
     // bye
     free(rect);
 #endif
 }
 
-// this exists because it gets really chaotic setting these values in client.c
-void button_set_color(widget_t* widget, int t, rgba_t color) {
-    button_t* button = (button_t*)widget->extra_data;
-
-    if (t == BUTTON_COLOR_BG) {
-        button->bg_color = color;
-    } else if (t == BUTTON_COLOR_BR) {
-        button->border_color = color;
-    } else if (t == BUTTON_COLOR_TX) {
-        button->text_color = color;
-    }
+int button_t::clicked(int x, int y) {
+    if (this->on_clicked) this->on_clicked(this, x, y);
 }
 
-void button_set_text(widget_t* widget, char* text) {
-    button_t* button = (button_t*)widget->extra_data;
-    
+// safely sets a button's text so it wont break when freeing it
+void button_t::set_text(char* text) {
     char* buf = (char*)malloc(strlen(text) + 1);
     memset(buf, 0, strlen(text) + 1);
     strcpy(buf, text);
-    button->text = buf;
+    this->text = buf;
+    this->text_set = 1;
 }
 
-void button_free(widget_t* widget) {
-    button_t* button = (button_t*)widget->extra_data;
-
-    widget_free(widget);
-    free(button->text);
-    free(button);
+button_t::~button_t() {
+    if (this->text && this->text_set) {
+        free(this->text);
+    }
 }

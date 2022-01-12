@@ -23,21 +23,17 @@
 #define LABEL_TEXT_COLOR 0x01
 
 #include <ui/window.h>
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 
-typedef struct __label label_t;
-struct __label {
-    widget_t* widget;
-
+class label_t : public widget_t {
     char* text;
 
     rgba_t bg_color;
     rgba_t text_color;
-};
+    int style;
 
-widget_t* label_init();
-void      label_set_text(widget_t* widget, char* text);
-void      label_set_color(widget_t* widget, int type, rgba_t value);
-void      label_free(widget_t* widget);
+    void set_text(char* text);
+    void draw();
+};
 
 #endif

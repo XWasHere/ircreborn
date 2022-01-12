@@ -26,6 +26,7 @@
 #define IRCREBORN_UITYPES_H
 
 #include <stdint.h>
+
 #ifdef WIN32
 #include <windows.h>
 #else
@@ -40,87 +41,83 @@
 #define STYLE_NBR 0x4
 #define STYLE_NBL 0x8
 
-typedef struct __widget   widget_t;
-typedef struct __window   window_t;
+class window_t;
+class widget_t;
 
-struct __widget {
-    // position
-    int x;
-    int y;
-    int z;
+class widget_t {
+    public:
+        window_t* window;
+        widget_t* parent;
 
-    // size
-    int width;
-    int height;
+        int x;
+        int y;
+        int z;
 
-    // for widgets
-    void* extra_data;
-    void* extra_data_2;
-    void* extra_data_3;
-    void* extra_data_4;
-    
-    // for measuring the state in the window code
-    int hovered;
+        int width;
+        int height;
 
-    // most widgets have borders, so im putting them here
-    uint32_t style;
+        int hovered;
 
-    // draw function prototype (pretend window is window_t*)
-    void (*draw)(widget_t* widget, window_t* window);
-    int  (*clicked)(widget_t* widget, window_t* window, int x, int y);
-    int  (*mousein)(widget_t* widget, window_t* window);
-    int  (*mouseout)(widget_t* widget, window_t* window);
-    int  (*mousedown)(widget_t* widget, window_t* window, int x, int y);
-    int  (*mouseup)(widget_t* widget, window_t* window, int x, int y);
-    int  (*mousemove)(widget_t* widget, window_t* window, int x, int y);
-    int  (*keypress)(widget_t* widget, window_t* window, uint32_t key, uint16_t mod);
-    int  (*scroll_up)(widget_t* widget, window_t* window);
-    int  (*scroll_down)(widget_t* widget, window_t* window);
+        widget_t();
+        ~widget_t();
+
+        void draw();
+        int  clicked(int x, int y);
+        int  mousein();
+        int  mouseout();
+        int  mousedown(int x, int y);
+        int  mouseup(int x, int y);
+        int  mousemove(int x, int y);
+        int  keypress(uint32_t key, uint16_t mod);
+        int  scroll_up();
+        int  scroll_down();
 };
 
-struct __window {
+// death of all good things
+class window_t {
+    private:
+        int pending_free;
+
+        // do i even need to explain this.
+        int        should_exit;
+        
+    public:
 #ifdef WIN32
-    // windows api bullshit
-    HWND       window;
-    WNDCLASS   window_class;
-    ATOM       class_thing;
-    HINSTANCE  instance;
-    RECT       client_rect;
+        // windows api bullshit
+        HWND       window;
+        WNDCLASS   window_class;
+        ATOM       class_thing;
+        HINSTANCE  instance;
+        RECT       client_rect;
 #else
-    Display*          display;
-    xcb_connection_t* connection;
-    xcb_window_t      window;
-    xcb_gcontext_t    gc;
-    xcb_screen_t*     screen;
-    xcb_font_t        main_font;
-    xcb_colormap_t    cmap;
-    int               lshift_state;
-    int               rshift_state;
-    int               lctrl_state;
-    int               rctrl_state;
+        Display*          display;
+        xcb_connection_t* connection;
+        xcb_window_t      window;
+        xcb_gcontext_t    gc;
+        xcb_screen_t*     screen;
+        xcb_font_t        main_font;
+        xcb_colormap_t    cmap;
+        int               lshift_state;
+        int               rshift_state;
+        int               lctrl_state;
+        int               rctrl_state;
 #endif
+        // stuff
+        int        width;
+        int        height;
 
-    int               pending_free;
+        // widgets
+        widget_t** widgets;
+        int        widget_count;
+        
+        // keeping track of stuff
+        int        mouse_left_down;
+        widget_t*  focused;
 
-    // stuff
-    int        width;
-    int        height;
+        void (*handle_bg_tasks)(window_t* window);
+        void (*resized)(window_t* window);
 
-    // widgets
-    widget_t** widgets; // cant use widget_t lmao
-    int        widget_count;
-    
-    // keeping track of stuff
-    int        mouse_left_down;
-    widget_t*  focused;
-
-    // do i even need to explain this.
-    int        should_exit;
-
-    void (*handle_bg_tasks)(window_t* window);
-    void (*resized)(window_t* window);
-
-    rgba_t bg_color;
+        rgba_t bg_color;
 };
 
 #endif

@@ -17,41 +17,26 @@
 */
 
 #include <ui/window.h>
-#include <ui/widget.h>
 #include <stdlib.h>
 
-void __DEFAULT_draw(widget_t* a, window_t* b) {}
-int  __DEFAULT_clicked(widget_t* a, window_t* b, int c, int d) { return 1; }
-int  __DEFAULT_mousein(widget_t* a, window_t* b) { return 1; }
-int  __DEFAULT_mouseout(widget_t* a, window_t* b) { return 1; }
-int  __DEFAULT_mousedown(widget_t* a, window_t* b, int c, int d) { return 1; }
-int  __DEFAULT_mouseup(widget_t* a, window_t* b, int c, int d) { return 1; }
-int  __DEFAULT_mousemove(widget_t* a, window_t* b, int c, int d) { return 1; }
-int  __DEFAULT_keypress(widget_t* a, window_t* b, uint32_t c, uint16_t s) { return 1; }
-int  __DEFAULT_scroll_up(widget_t* a, window_t* b) { return 1; }
-int  __DEFAULT_scroll_down(widget_t* a, window_t* b) { return 1; }
+void widget_t::draw() {}
+int  widget_t::clicked(int c, int d) { return 1; }
+int  widget_t::mousein() { return 1; }
+int  widget_t::mouseout() { return 1; }
+int  widget_t::mousedown(int c, int d) { return 1; }
+int  widget_t::mouseup(int c, int d) { return 1; }
+int  widget_t::mousemove(int c, int d) { return 1; }
+int  widget_t::keypress(uint32_t c, uint16_t s) { return 1; }
+int  widget_t::scroll_up() { return 1; }
+int  widget_t::scroll_down() { return 1; }
 
-widget_t* widget_init() {
-    widget_t* widget = (widget_t*)malloc(sizeof(widget_t));
-
-    widget->draw = &__DEFAULT_draw;
-    widget->clicked = &__DEFAULT_clicked;
-    widget->mousein = &__DEFAULT_mousein;
-    widget->mouseout = &__DEFAULT_mouseout;
-    widget->mousedown = &__DEFAULT_mousedown;
-    widget->mouseup = &__DEFAULT_mouseup;
-    widget->mousemove = &__DEFAULT_mousemove;
-    widget->keypress = &__DEFAULT_keypress;
-    widget->scroll_down = &__DEFAULT_scroll_down;
-    widget->scroll_up = &__DEFAULT_scroll_up;
-    widget->x = 0;
-    widget->y = 0;
-    widget->z = 0;
-    widget->style = 0;
-
-    return widget;
+widget_t::widget_t() {
+    this->x = 0;
+    this->y = 0;
+    this->z = 0;
+    this->width = 0;
 }
 
-void widget_free(widget_t* widget) {
-    free(widget);
+widget_t::~widget_t() {
+    
 }

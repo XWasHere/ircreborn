@@ -19,7 +19,7 @@
 #ifndef IRCREBORN_UI_WIDGETS_BUTTON_H
 #define IRCREBORN_UI_WIDGETS_BUTTON_H
 
-#include <ui/widget.h>
+#include <ui/uitypes.h>
 #include <ui/window.h>
 
 #ifdef WIN32
@@ -36,23 +36,25 @@
 #define BUTTON_COLOR_TX 0x01
 #define BUTTON_COLOR_BR 0x02
 
-typedef struct __button button_t;
-struct __button {
-    widget_t* widget;
-    
-    int type;
+class button_t : public widget_t {
+    public:
+        button_t();
+        ~button_t();
+        
+        int type;
 
-    char* text;
+        char* text;
+        int text_set;
 
-    rgba_t bg_color;
-    rgba_t text_color;
-    rgba_t border_color;
+        rgba_t bg_color;
+        rgba_t text_color;
+        rgba_t border_color;
+
+        void set_text(char* text);
+        void draw();
+        int  clicked(int x, int y);
+
+        int (*on_clicked)(button_t* button, int x, int y);
 };
-
-widget_t* button_init();
-void      button_set_type(widget_t* widget, int type);
-void      button_set_text(widget_t* widget, char* text);
-void      button_set_color(widget_t* widget, int c, rgba_t color);
-void      button_free(widget_t* widget);
 
 #endif

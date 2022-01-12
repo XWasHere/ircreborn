@@ -3,11 +3,11 @@ TARGET   ?= linux
 ifeq ($(TARGET),win32)
 CC        = x86_64-w64-mingw32-g++
 CC_ARGS  ?= -ggdb -Wall
-CC_FARGS  = -Isrc -lgdi32 -lws2_32
+CC_FARGS  = -Isrc -lgdi32 -lws2_32 -fpermissive
 else 
 CC       ?= g++
 CC_ARGS  ?= -ggdb -Wall
-CC_FARGS  = -Isrc -lxcb -lrt -lm -lX11 -lX11-xcb
+CC_FARGS  = -Isrc -lxcb -lrt -lm -lX11 -lX11-xcb -fpermissive
 endif
 
 OBJS = \

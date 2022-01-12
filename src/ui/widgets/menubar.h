@@ -16,36 +16,62 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <common/util.h>
 #include <ui/widgets/frame.h>
+#include <ui/widgets/button.h>
 #include <ui/uitypes.h>
 
-typedef struct __menubar    menubar_t;
-typedef struct __menu       menu_t;
-typedef struct __menubutton menubutton_t;
+class menubar_t;
+class menu_t;
+class menubutton_t;
 
-struct __menubar {
-    widget_t* widget;
-    widget_t* container;
-    int       ow;
-    int       next_menu_x;
-    int       menu_count;
-    menu_t**  menus;
+class menubar_t : public widget_t {
+    private:
+        static int button_clicked(button_t* button, int x, int y);
+
+    public:
+        menubar_t();
+        ~menubar_t();
+
+        frame_t* container;
+        int      ow;
+        int      next_menu_x;
+        
+        int      menu_count;
+        menu_t** menus;
+
+        void    draw();
+        int     clicked(int x, int y);
+        menu_t* add_menu(char* name);
 };
 
-struct __menu {
-    widget_t*      widget;
-    widget_t*      open_button;
-    widget_t*      container;
-    int            is_open;
-    int            next_button_y;
-    int            button_count;
-    menubutton_t** buttons;
+class menu_t : public widget_t {
+    private:
+        static int button_clicked(button_t* button, int x, int y);
+
+    public:
+        menu_t();
+
+        button_t*      open_button;
+        frame_t*       container;
+        
+        bool           is_open;
+        int            next_button_y;
+        
+        int            button_count;
+        menubutton_t** buttons;
+
+        int           clicked(int x, int y);
+        menubutton_t* add_button(char* name, void (*clicked)());
 };
 
-struct __menubutton {
-    widget_t* widget;
-    widget_t* button;
-    void (*clicked)();
+class menubutton_t : public widget_t {
+    public:
+        menubutton_t();
+
+        button_t* button;
+
+        void (*on_click)();
 };
 
 widget_t*     menubar_init();

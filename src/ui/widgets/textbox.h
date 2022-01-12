@@ -19,28 +19,37 @@
 #ifndef IRCREBORN_UI_TEXTBOX_H
 #define IRCREBORN_UI_TEXTBOX_H
 
-#include <ui/widget.h>
+#include <common/util.h>
+#include <ui/uitypes.h>
 
 #define TEXTBOX_COLOR_BG     0x00
 #define TEXTBOX_COLOR_TEXT   0x01
 #define TEXTBOX_COLOR_BORDER 0x02
 
-typedef struct __textbox textbox_t;
-struct __textbox {
-    widget_t* widget;
-    
-    int multiline;
+class textbox_t : public widget_t {
+    private:
+        static void default_submit(textbox_t* tb, char* text, int textlen);
 
-    char* text;
-    
-    int textlen;
-    int cursorpos;
+    public:
+        int multiline;
 
-    void (*submit)(widget_t* widget, window_t* window, char* text, int textlen);
+        char* text;
+        
+        int textlen;
+        int cursorpos;
 
-    rgba_t bg_color;
-    rgba_t text_color;
-    rgba_t border_color;
+        void (*submit)(textbox_t* tb, char* text, int textlen);
+
+        rgba_t bg_color;
+        rgba_t text_color;
+        rgba_t border_color;
+
+        textbox_t();
+        ~textbox_t();
+
+        int keypress(uint32_t key, uint16_t mod);
+        int clicked(int x, int y);
+        void draw();
 };
 
 widget_t* textbox_init();
