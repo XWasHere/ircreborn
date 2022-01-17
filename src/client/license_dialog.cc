@@ -23,19 +23,14 @@
 
 static window_t* dialog;
 
-static widget_t* okw;
-static widget_t* text0w; // TODO: holy shit add newline support
-static widget_t* text1w;
-static widget_t* text2w;
-
-static button_t* oke;
-static label_t*  text0e;
-static label_t*  text1e;
-static label_t*  text2e;
+static button_t* ok;
+static label_t*  text0;
+static label_t*  text1;
+static label_t*  text2;
 
 static int lock = 0;
 
-static int ok_clicked(widget_t* widget, window_t* window, int x, int y) {
+static int ok_clicked(button_t* widget, int x, int y) {
     dialog->should_exit = 1;
     return 1;
 }
@@ -44,106 +39,60 @@ void open_license_dialog() {
     if (lock) return;
     lock = 1;
 
-    dialog = window_init();
+    dialog = &window_t();
     
-    okw = button_init();
-    oke = (button_t*)okw->extra_data;
-    
-    text0w = label_init();
-    text0e = (label_t*)text0w->extra_data;    
-    text1w = label_init();
-    text1e = (label_t*)text1w->extra_data;    
-    text2w = label_init();
-    text2e = (label_t*)text2w->extra_data;
+    ok = &button_t();
+    text0 = &label_t();
+    text1 = &label_t();
+    text2 = &label_t();
 
-    label_set_text(text0w, "This program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.");
-    label_set_color(
-        text0w,
-        LABEL_BG_COLOR,
-        get_node_rgb(config->theme, "common.primary_color")
-    );
-    label_set_color(
-        text0w,
-        LABEL_TEXT_COLOR,
-        get_node_rgb(config->theme, "common.text_color")
-    );
-    label_set_text(text1w, "This program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.");
-    label_set_color(
-        text1w,
-        LABEL_BG_COLOR,
-        get_node_rgb(config->theme, "common.primary_color")
-    );
-    label_set_color(
-        text1w,
-        LABEL_TEXT_COLOR,
-        get_node_rgb(config->theme, "common.text_color")
-    );
-    label_set_text(text2w, "You should have received a copy of the GNU General Public License\nalong with this program.  If not, see <https://www.gnu.org/licenses/>.");
-    label_set_color(
-        text2w,
-        LABEL_BG_COLOR,
-        get_node_rgb(config->theme, "common.primary_color")
-    );
-    label_set_color(
-        text2w,
-        LABEL_TEXT_COLOR,
-        get_node_rgb(config->theme, "common.text_color")
-    );
+    text0->set_text("This program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.");
+    text0->bg_color = get_node_rgb(config->theme, "common.primary_color");
+    text0->text_color = get_node_rgb(config->theme, "common.text_color");
+    text1->set_text("This program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.");
+    text1->bg_color = get_node_rgb(config->theme, "common.primary_color");
+    text1->text_color = get_node_rgb(config->theme, "common.text_color");
+    text2->set_text("You should have received a copy of the GNU General Public License\nalong with this program.  If not, see <https://www.gnu.org/licenses/>.");
+    text2->bg_color = get_node_rgb(config->theme, "common.primary_color");
+    text2->text_color = get_node_rgb(config->theme, "common.text_color");
 
-    text0w->x = 10;
-    text0w->y = 10;
-    text0w->width = 600;
-    text0w->height = 80;
-    text0w->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
-    text1w->x = 10;
-    text1w->y = 100;
-    text1w->width = 600;
-    text1w->height = 80;
-    text1w->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
-    text2w->x = 10;
-    text2w->y = 190;
-    text2w->width = 600;
-    text2w->height = 40;
-    text2w->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
-    okw->x    = 280;
-    okw->y    = 240;
-    okw->width  = 40;
-    okw->height = 20;
+    text0->x = 10;
+    text0->y = 10;
+    text0->width = 600;
+    text0->height = 80;
+    text0->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
+    text1->x = 10;
+    text1->y = 100;
+    text1->width = 600;
+    text1->height = 80;
+    text1->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
+    text2->x = 10;
+    text2->y = 190;
+    text2->width = 600;
+    text2->height = 40;
+    text2->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
+    ok->x    = 280;
+    ok->y    = 240;
+    ok->width  = 40;
+    ok->height = 20;
 
-    button_set_type(okw, BUTTON_TEXT);
-    button_set_text(okw, "cool");
-    button_set_color(
-        okw,
-        BUTTON_COLOR_BG,
-        get_node_rgb(config->theme, "common.secondary_color")
-    );
-    button_set_color(
-       okw, 
-       BUTTON_COLOR_TX, 
-       get_node_rgb(config->theme, "common.text_color")
-    );
+    ok->type = BUTTON_TEXT;
+    ok->set_text("cool");
+    ok->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    ok->text_color = get_node_rgb(config->theme, "common.text_color");
+    ok->on_clicked = ok_clicked;
 
-    okw->clicked = ok_clicked;
+    dialog->add_widget(ok);
+    dialog->add_widget(text0);
+    dialog->add_widget(text1);
+    dialog->add_widget(text2);
 
-    window_add_widget(dialog, okw);
-    window_add_widget(dialog, text0w);
-    window_add_widget(dialog, text1w);
-    window_add_widget(dialog, text2w);
+    dialog->set_type(WINDOW_WM_TYPE_DIALOG);
+    dialog->set_size(620, 270);
+    dialog->bg_color = get_node_rgb(config->theme, "common.primary_color");
+    dialog->show(1);
 
-    window_set_type(dialog, WINDOW_WM_TYPE_DIALOG);
-    window_set_size(dialog, 620, 270);
-    window_set_bg(
-        dialog,
-        get_node_rgb(config->theme, "common.primary_color")
-    );
-    window_display(dialog, 1);
-
-    label_free(text0w);
-    label_free(text1w);
-    label_free(text2w);
-    button_free(okw);
-
-    window_free(dialog);
+    dialog->~window_t();
     
     lock = 0;
 }

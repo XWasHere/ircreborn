@@ -32,7 +32,7 @@ void menubar_t::draw() {
 }
 
 int menubar_t::clicked(int x, int y) {
-    window_paint(this->window);
+    this->window->paint();
 
     if (y < 20) {
         for (int i = 0; i < this->menu_count; i++) this->menus[i]->is_open = 0;

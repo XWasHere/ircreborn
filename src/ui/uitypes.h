@@ -35,6 +35,7 @@
 #endif
 
 #include <common/color.h>
+#include <common/util.h>
 
 #define STYLE_NBT 0x1
 #define STYLE_NBB 0x2
@@ -115,9 +116,32 @@ class window_t {
         widget_t*  focused;
 
         void (*handle_bg_tasks)(window_t* window);
-        void (*resized)(window_t* window);
+        void (*on_resized)(window_t* window);
 
         rgba_t bg_color;
+
+        static window_t** windows;
+        static int window_count;
+        static int window_count_2;
+
+        window_t();
+        ~window_t();
+        void set_type(int type);
+        void set_size(int height, int width);
+        void keypress(uint32_t key, uint16_t mod);
+        void run_bg_tasks();
+        widget_t** sort_z();
+        void close();
+        void paint();
+        void left_mouse_down(int x, int y);
+        void left_mouse_up(int x, int y);
+        void scroll_up(int x, int y);
+        void scroll_down(int x, int y);
+        void mouse_move(int x, int y);
+        void resized(int x, int y);
+        void show(int all);
+        void add_widget(widget_t* widget);
+        void remove_widget(widget_t* widget);
 };
 
 #endif

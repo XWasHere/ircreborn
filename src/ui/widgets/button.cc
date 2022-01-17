@@ -198,6 +198,10 @@ void button_t::set_text(char* text) {
     this->text_set = 1;
 }
 
+button_t::button_t() {
+
+}
+
 button_t::~button_t() {
     if (this->text && this->text_set) {
         free(this->text);

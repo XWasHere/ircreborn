@@ -57,7 +57,7 @@ WSADATA* wsadata;
 
 struct server {
     client_config_server_t* server;    
-    widget_t* button;
+    button_t* button;
 };
 
 struct server** servers;
@@ -67,10 +67,8 @@ int             label_count;
 
 client_config_t* config;
 
-widget_t* messages_thing;
-widget_t* messagebox;
-widget_t* stripw;
-menubar_t* stripe;
+scroll_pane_t* messages_thing;
+menubar_t* strip;
 menu_t* filemenu;
 menubutton_t* exitbutton;
 menu_t* servermenu; 
@@ -78,17 +76,13 @@ menubutton_t* setnicknamebutton;
 menu_t* helpmenu;
 menubutton_t* licensebutton;
 window_t* main_window;
-widget_t* serverlistw;
-scroll_pane_t* serverliste;
+scroll_pane_t* serverlist;
 widget_t* serverlistcollapsebtnw;
 button_t* serverlistcollapsebtne;
-widget_t* messagesw;
-scroll_pane_t* messagese;
-textbox_t* messageboxe;
-widget_t* dialogthingw;
+scroll_pane_t* messages;
+textbox_t* messagebox;
 frame_t* dialogthinge;
-widget_t* dialogbgw;
-button_t* dialogbge;
+button_t* dialogbg;
 
 // server connection
 int sc;
@@ -106,7 +100,7 @@ int server_list_collapse_button_clicked(widget_t* widget, window_t* window, int 
     return 1;
 }
 
-int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
+int server_button_clicked(button_t* widget, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
             logger.log(CHANNEL_DBUG, "connecting to server %s\n", servers[i]->server->name);
@@ -168,15 +162,14 @@ int server_button_clicked(widget_t* widget, window_t* window, int x, int y) {
     return 1;
 }
 
-struct server* server_list_add_server(widget_t* serverlist, client_config_server_t* server) {
+struct server* server_list_add_server(scroll_pane_t* serverlist, client_config_server_t* server) {
     struct server* s = (struct server*)malloc(sizeof(struct server));
-    s->button = button_init();
-    s->server = server;
-    button_t* btn = (button_t*)s->button->extra_data;
+    s->button = &button_t();
+    s->server = server;;
 
     s->button->height = 20;
     s->button->width  = serverlist->width - 20;
-    s->button->clicked= &server_button_clicked;
+    s->button->on_clicked = &server_button_clicked;
 
 /*    
     btn->bg_color.r = config->theme.server_list_item_bg_color.r;
@@ -190,26 +183,18 @@ struct server* server_list_add_server(widget_t* serverlist, client_config_server
     btn->border_color.b = config->theme.server_list_item_border_color.b;
 */
 
-    button_set_color(
-        s->button,
-        BUTTON_COLOR_BG,
-        get_node_rgb(config->theme, "common.tertiary_color")
-    );
-    button_set_color(
-        s->button,
-        BUTTON_COLOR_TX,
-        get_node_rgb(config->theme, "common.text_color")
-    );
+    s->button->bg_color = get_node_rgb(config->theme, "common.tertiary_color");
+    s->button->text_color = get_node_rgb(config->theme, "common.text_color");
     // button_set_color(
         // btn,
         // BUTTON_COLOR_BR,
         // 0
     // );
 
-    button_set_type(s->button, BUTTON_TEXT);
-    button_set_text(s->button, server->name);
+    s->button->type = BUTTON_TEXT;
+    s->button->set_text(server->name);
 
-    scroll_pane_item_t* item = scroll_pane_add_item(serverlist, s->button);
+    scroll_pane_item_t* item = serverlist->add_item(s->button);
     item->x = 0;
     item->y = nextpos;
     nextpos += 20;
@@ -221,7 +206,7 @@ struct server* server_list_add_server(widget_t* serverlist, client_config_server
     return s;
 }
 
-void message_submit(widget_t* tb, window_t* window, char* text, int len) {
+void message_submit(textbox_t* tb, char* text, int len) {
     if (sc_connected) {
         message_t* msg = (message_t*)malloc(sizeof(message_t));
 
@@ -236,22 +221,18 @@ void message_submit(widget_t* tb, window_t* window, char* text, int len) {
         free(msg->message);
         free(msg);
 
-        textbox_t* t = (textbox_t*)tb->extra_data;
-        t->cursorpos = 0;
-        t->textlen = 0;
-        t->text[0] = 0; 
+        tb->cursorpos = 0;
+        tb->textlen = 0;
+        tb->text[0] = 0; 
     }
 }
 
 void client_add_message(window_t* window, char* message, char* name) {
-    widget_t* msglw  = label_init();
-    widget_t* namelw = label_init();
+    label_t* msgl  = &label_t();
+    label_t* namel = &label_t();
 
-    msglw->style = STYLE_NBB | STYLE_NBR;
-    namelw->style = STYLE_NBB;
-
-    label_t*  msgle  = (label_t*)msglw->extra_data;
-    label_t*  namele = (label_t*)namelw->extra_data;
+    msgl->style = STYLE_NBB | STYLE_NBR;
+    namel->style = STYLE_NBB;
 
     int lines = 1;
     int len = strlen(message);
@@ -259,37 +240,21 @@ void client_add_message(window_t* window, char* message, char* name) {
         if (message[i] == '\n') lines++;
     }
 
-    msglw->width = strlen(message) * 10;
-    msglw->height = 20 * lines;
+    msgl->width = strlen(message) * 10;
+    msgl->height = 20 * lines;
     
-    namelw->width = config->nickname_width;
-    namelw->height = 20;
+    namel->width = config->nickname_width;
+    namel->height = 20;
 
-    label_set_text(msglw, message);
-    label_set_color(
-        msglw,
-        LABEL_BG_COLOR,
-        get_node_rgb(config->theme, "common.primary_color")
-    );
-    label_set_color(
-        msglw,
-        LABEL_TEXT_COLOR,
-        get_node_rgb(config->theme, "common.text_color")
-    );
-    label_set_text(namelw, name);
-    label_set_color(
-        namelw,
-        LABEL_BG_COLOR,
-        get_node_rgb(config->theme, "common.primary_color")
-    );
-    label_set_color(
-        namelw,
-        LABEL_TEXT_COLOR,
-        get_node_rgb(config->theme, "common.text_color")
-    );
+    msgl->set_text(message);
+    msgl->bg_color = get_node_rgb(config->theme, "common.primary_color");
+    msgl->text_color = get_node_rgb(config->theme, "common.text_color");
+    namel->set_text(name);
+    namel->bg_color = get_node_rgb(config->theme, "common.primary_color");
+    namel->text_color = get_node_rgb(config->theme, "common.text_color");
 
-    scroll_pane_item_t* msgli  = scroll_pane_add_item(messages_thing, msglw);
-    scroll_pane_item_t* nameli = scroll_pane_add_item(messages_thing, namelw);
+    scroll_pane_item_t* msgli  = messages_thing->add_item(msgl);
+    scroll_pane_item_t* nameli = messages_thing->add_item(namel);
 
     msgli->x = config->nickname_width;
     msgli->y = label_count * 20;
@@ -300,10 +265,10 @@ void client_add_message(window_t* window, char* message, char* name) {
     label_count += lines;
 
     if (label_count * 20 > messages_thing->height) {
-        ((scroll_pane_t*)messages_thing->extra_data)->pos = -(label_count * 20 - messages_thing->height);
+        messages_thing->pos = -(label_count * 20 - messages_thing->height);
     }
 
-    messages_thing->draw(messages_thing, window);
+    messages_thing->draw();
 }
 
 void client_run_tasks(window_t* window) {
@@ -360,23 +325,23 @@ void client_run_tasks(window_t* window) {
 }
 
 void client_recalculate_sizes(window_t* window) {
-    stripw->x = 0;
-    stripw->y = 0;
-    stripw->width = window->width;
-    stripw->height = 20;
+    strip->x = 0;
+    strip->y = 0;
+    strip->width = window->width;
+    strip->height = 20;
     
-    serverlistw->x = 0;
-    serverlistw->y = 20;
-    serverlistw->width = 200;
-    serverlistw->height = window->height - serverlistw->y;
+    serverlist->x = 0;
+    serverlist->y = 20;
+    serverlist->width = 200;
+    serverlist->height = window->height - serverlist->y;
     
-    messagesw->x = serverlistw->x + serverlistw->width;
-    messagesw->y = 20;
-    messagesw->width = window->width - messagesw->x;
-    messagesw->height = window->height - messagesw->y - 20;
+    messages->x = serverlist->x + serverlist->width;
+    messages->y = 20;
+    messages->width = window->width - messages->x;
+    messages->height = window->height - messages->y - 20;
 
-    char* t = messageboxe->text;
-    int tl =  messageboxe->textlen;
+    char* t = messagebox->text;
+    int tl =  messagebox->textlen;
 
     int mh = 20;
 
@@ -384,13 +349,13 @@ void client_recalculate_sizes(window_t* window) {
         if (t[i] == '\n') mh += 20;
     }
 
-    messagebox->x = serverlistw->x + serverlistw->width;
+    messagebox->x = serverlist->x + serverlist->width;
     messagebox->y = window->height - mh;
     messagebox->width = window->width - messagebox->x;
     messagebox->height = mh;
 
     for (int i = 0; i < server_count; i++) {
-        servers[i]->button->width = serverlistw->width - 20;
+        servers[i]->button->width = serverlist->width - 20;
     }
 
 /*
@@ -401,10 +366,8 @@ void client_recalculate_sizes(window_t* window) {
 */
 }
 
-int handle_mb_kp(widget_t* widget, window_t* window, uint32_t key, uint16_t mod) {
-    int v = textbox_keypress(widget, window, key, mod);
-    client_recalculate_sizes(window);
-    return v;
+void handle_mb_kp(textbox_t* tb, uint32_t key, uint16_t mod) {
+    client_recalculate_sizes(tb->window);
 }
 
 void client_main() {
@@ -455,187 +418,79 @@ void client_main() {
 
     servers = (struct server**)malloc(1);
 
-    main_window = window_init();
+    main_window = &window_t();
     
-    stripw    = menubar_init();
-    stripe    = (menubar_t*)stripw->extra_data;
-    stripw->z = 1000;
+    strip    = &menubar_t();
+    strip->z = 1000;
     
-    filemenu = menubar_add_menu(stripw, "file");
-    exitbutton = menu_add_button(filemenu, "exit", exit_button_clicked);
-    servermenu = menubar_add_menu(stripw, "server");
-    setnicknamebutton = menu_add_button(servermenu, "set nickname", open_set_nickname_dialog);
-    helpmenu = menubar_add_menu(stripw, "help");
-    licensebutton = menu_add_button(helpmenu, "license", open_license_dialog);    
+    filemenu = strip->add_menu("file");
+    exitbutton = filemenu->add_button("exit", exit_button_clicked);
+    servermenu = strip->add_menu("server");
+    setnicknamebutton = servermenu->add_button("set nickname", open_set_nickname_dialog);
+    helpmenu = strip->add_menu("help");
+    licensebutton = helpmenu->add_button("license", open_license_dialog);    
     
-    frame_set_color(
-        stripe->container,
-        FRAME_COLOR_BG,
-        get_node_rgb(config->theme, "common.primary_color")
-    );
+    strip->container->bg_color = get_node_rgb(config->theme, "common.primary_color");
+    filemenu->open_button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    exitbutton->button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    servermenu->open_button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
 
-    button_set_color(
-        filemenu->open_button,
-        BUTTON_COLOR_BG,
-        get_node_rgb(config->theme, "common.secondary_color")
-    );
-    button_set_color(
-       filemenu->open_button, 
-       BUTTON_COLOR_TX, 
-       get_node_rgb(config->theme, "common.text_color")
-    );
-//    button_set_color(filemenu->open_button, BUTTON_COLOR_BR, config->theme.toolbar_item_border_color);
-    button_set_color(
-        exitbutton->button,
-        BUTTON_COLOR_BG,
-        get_node_rgb(config->theme, "common.secondary_color")
-    );
-    button_set_color(
-        exitbutton->button,
-        BUTTON_COLOR_TX,
-        get_node_rgb(config->theme, "common.text_color")
-    );
-    // button_set_color(exitbutton->button, BUTTON_COLOR_BR, config->theme.toolbar_menu_item_border_color);
-    button_set_color(
-        servermenu->open_button,
-        BUTTON_COLOR_BG,
-        get_node_rgb(config->theme, "common.secondary_color")
-    );
-    button_set_color(
-        servermenu->open_button, 
-        BUTTON_COLOR_TX, 
-        get_node_rgb(config->theme, "common.text_color")
-    );
-    // button_set_color(servermenu->open_button, BUTTON_COLOR_BR, config->theme.toolbar_item_border_color);
-    button_set_color(
-        setnicknamebutton->button,
-        BUTTON_COLOR_BG,
-        get_node_rgb(config->theme, "common.secondary_color")
-    );
-    button_set_color(
-        setnicknamebutton->button,
-        BUTTON_COLOR_TX,
-        get_node_rgb(config->theme, "common.text_color")    
-    );
-    // button_set_color(setnicknamebutton->button, BUTTON_COLOR_BR, config->theme.toolbar_menu_item_border_color);
-    button_set_color(
-        helpmenu->open_button,
-        BUTTON_COLOR_BG,
-        get_node_rgb(config->theme, "common.secondary_color")
-    );
-    button_set_color(
-        helpmenu->open_button,
-        BUTTON_COLOR_TX,
-        get_node_rgb(config->theme, "common.text_color")
-    );
-    // button_set_color(helpmenu->open_button, BUTTON_COLOR_BR, config->theme.toolbar_item_border_color);
-    button_set_color(
-        licensebutton->button,
-        BUTTON_COLOR_BG,
-        get_node_rgb(config->theme, "common.secondary_color")
-    );
-    button_set_color(
-        licensebutton->button, 
-        BUTTON_COLOR_TX, 
-        get_node_rgb(config->theme, "common.text_color")
-    );
-    // button_set_color(licensebutton->button, BUTTON_COLOR_BR, config->theme.toolbar_menu_item_border_color);
+    servermenu->open_button->text_color = get_node_rgb(config->theme, "common.text_color");
+    setnicknamebutton->button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    setnicknamebutton->button->text_color = get_node_rgb(config->theme, "common.text_color");
+    helpmenu->open_button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    helpmenu->open_button->text_color = get_node_rgb(config->theme, "common.text_color");
+    licensebutton->button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    licensebutton->button->text_color = get_node_rgb(config->theme, "common.text_color");
 
-    serverlistw = scroll_pane_init();
-    serverliste = (scroll_pane_t*)serverlistw->extra_data;
-    messagesw = scroll_pane_init();
-    messagese = (scroll_pane_t*)messagesw->extra_data;
-    messagebox = textbox_init();
-    messageboxe = (textbox_t*)messagebox->extra_data;
-    messages_thing = messagesw;
+    serverlist = &scroll_pane_t();
+    messages = &scroll_pane_t();
+    messagebox = &textbox_t();
+    messages_thing = messages;
 
-    scroll_pane_set_color(
-        serverlistw,
-        SCROLLPANE_COLOR_BG,
-        get_node_rgb(config->theme, "common.secondary_color")
-    );
-    scroll_pane_set_color(
-        serverlistw,
-        SCROLLPANE_COLOR_BUTTON,
-        get_node_rgb(config->theme, "common.scrollbar_button_color")
-    );
-    scroll_pane_set_color(
-        serverlistw,
-        SCROLLPANE_COLOR_TRACK,
-        get_node_rgb(config->theme, "common.scrollbar_track_color")
-    );
-    scroll_pane_set_color(
-        serverlistw,
-        SCROLLPANE_COLOR_THUMB,
-        get_node_rgb(config->theme, "common.scrollbar_thumb_color")
-    );
+    serverlist->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    serverlist->button_color = get_node_rgb(config->theme, "common.scrollbar_button_color");
+    serverlist->track_color = get_node_rgb(config->theme, "common.scrollbar_track_color");
+    serverlist->thumb_color = get_node_rgb(config->theme, "common.scrollbar_thumb_color");
 
-    scroll_pane_set_color(
-        messagesw,
-        SCROLLPANE_COLOR_BG,
-        get_node_rgb(config->theme, "common.primary_color")
-    );
-    scroll_pane_set_color(
-        messagesw,
-        SCROLLPANE_COLOR_BUTTON,
-        get_node_rgb(config->theme, "common.scrollbar_button_color")
-    );
-    scroll_pane_set_color(
-        messagesw,
-        SCROLLPANE_COLOR_TRACK,
-        get_node_rgb(config->theme, "common.scrollbar_track_color")
-    );
-    scroll_pane_set_color(
-        messagesw,
-        SCROLLPANE_COLOR_THUMB,
-        get_node_rgb(config->theme, "common.scrollbar_thumb_color")
-    );
+    messages->bg_color = get_node_rgb(config->theme, "common.primary_color");
+    messages->button_color = get_node_rgb(config->theme, "common.scrollbar_button_color");
+    messages->track_color = get_node_rgb(config->theme, "common.scrollbar_track_color");
+    messages->thumb_color = get_node_rgb(config->theme, "common.scrollbar_thumb_color");
 
-    messageboxe->submit = &message_submit;
-    messagebox->keypress = &handle_mb_kp;
+    messagebox->submit = &message_submit;
+    messagebox->on_keypress = &handle_mb_kp;
 
-    textbox_set_color(
-        messagebox, 
-        TEXTBOX_COLOR_BG,
-        get_node_rgb(config->theme, "common.tertiary_color")
-    );
-    textbox_set_color(
-        messagebox, 
-        TEXTBOX_COLOR_BORDER,
-        get_node_rgb(config->theme, "common.tertiary_color")
-    );
-    textbox_set_color(
-        messagebox, 
-        TEXTBOX_COLOR_TEXT,
-        get_node_rgb(config->theme, "common.text_color")
-    );
+    messagebox->bg_color = get_node_rgb(config->theme, "common.tertiary_color");
+    messagebox->border_color = get_node_rgb(config->theme, "common.tertiary_color");
+    messagebox->text_color = get_node_rgb(config->theme, "common.text_color");
 
     main_window->handle_bg_tasks = &client_run_tasks;
-    main_window->resized         = &client_recalculate_sizes;
+    main_window->on_resized      = &client_recalculate_sizes;
 
-    window_add_widget(main_window, stripw);
-    window_add_widget(main_window, serverlistw);
-    window_add_widget(main_window, messagebox);
-    window_add_widget(main_window, messagesw);
+    main_window->add_widget(strip);
+    main_window->add_widget(serverlist);
+    main_window->add_widget(messagebox);
+    main_window->add_widget(messages);
 
     for (int i = 0; i < config->server_count; i++) {
-        server_list_add_server(serverlistw, config->servers[i]);
+        server_list_add_server(serverlist, config->servers[i]);
     }
 
-    window_display(main_window, 1);
+    main_window->show(1);
     
     // cleanup
-    menubar_free(stripw);
-    for (int i = 0; i < serverliste->itemc; i++) {
-        button_free(serverliste->items[i]->widget);
+    strip->~menubar_t();
+    for (int i = 0; i < serverlist->itemc; i++) {
+//        serverlist->items[i]->~();
     }
-    scroll_pane_free(serverlistw);
-    for (int i = 0; i < messagese->itemc; i++) {
-        label_free(messagese->items[i]->widget);
+    serverlist->~scroll_pane_t();
+    for (int i = 0; i < messages->itemc; i++) {
+//    messagese->items[i]->widget);
     }
-    scroll_pane_free(messagesw);
-    textbox_free(messagebox);
-    window_free(main_window);
+    messages->~scroll_pane_t();
+    messagebox->~textbox_t();
+    main_window->~window_t();
     for (int i = 0; i < server_count; i++) {
         free(servers[i]);
     }

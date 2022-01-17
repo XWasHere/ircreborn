@@ -39,7 +39,8 @@ class textbox_t : public widget_t {
         int cursorpos;
 
         void (*submit)(textbox_t* tb, char* text, int textlen);
-
+        void (*on_keypress)(textbox_t* tb, uint32_t key, uint16_t mod);
+        
         rgba_t bg_color;
         rgba_t text_color;
         rgba_t border_color;

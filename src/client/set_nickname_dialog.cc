@@ -29,29 +29,22 @@
 
 static window_t* dialog;
 
-static widget_t* textw;
-static widget_t* entryw;
-static widget_t* okw;
-static widget_t* cancelw;
-
-static label_t* texte;
-static textbox_t* entrye;
-static button_t* oke;
-static button_t* cancele;
+static label_t* text;
+static textbox_t* entry;
+static button_t* ok;
+static button_t* cancel;
 
 static int lock = 0;
 
-static int set_nickname_dialog_cancel_clicked(widget_t* widget, window_t* window, int x, int y) {
+static int set_nickname_dialog_cancel_clicked(button_t* widget, int x, int y) {
     dialog->should_exit = 1;
-
-    return 1;
 }
 
-int set_nickname_dialog_ok_clicked(widget_t* widget, window_t* window, int x, int y) {
+static int set_nickname_dialog_ok_clicked(button_t* widget, int x, int y) {
     if (sc_connected) {
         set_nickname_t* packet = (set_nickname_t*)malloc(sizeof(set_nickname_t));
         
-        packet->nickname = entrye->text;
+        packet->nickname = entry->text;
         
         send_set_nickname(sc, packet);
         
@@ -66,174 +59,107 @@ int set_nickname_dialog_ok_clicked(widget_t* widget, window_t* window, int x, in
 void open_set_nickname_dialog() {
     if (lock) return;
     lock = 1;
-    dialog = window_init();
+    dialog = &window_t();
     
-    window_set_type(dialog, WINDOW_WM_TYPE_DIALOG);
-    window_set_bg(
-        dialog, 
-        get_node_rgb(config->theme, "common.primary_color") 
-    );
+    dialog->set_type(WINDOW_WM_TYPE_DIALOG);
+    dialog->bg_color = get_node_rgb(config->theme, "common.primary_color");
 
     if (sc_connected) {
-        textw   = label_init();
-        entryw  = textbox_init();
-        okw     = button_init();
-        cancelw = button_init();
+        text   = &label_t();
+        entry  = &textbox_t();
+        ok     = &button_t();
+        cancel = &button_t();
 
-        texte   = (label_t*)textw->extra_data;
-        entrye  = (textbox_t*)entryw->extra_data;
-        oke     = (button_t*)okw->extra_data;
-        cancele = (button_t*)cancelw->extra_data;
+        text->x      = 110;
+        text->y      = 10;
+        text->width  = 120;
+        text->height = 20;
+        text->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
 
-        textw->x      = 110;
-        textw->y      = 10;
-        textw->width  = 120;
-        textw->height = 20;
-        textw->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
+        entry->x      = 10;
+        entry->y      = 40;
+        entry->width  = 320;
+        entry->height = 20;
 
-        entryw->x      = 10;
-        entryw->y      = 40;
-        entryw->width  = 320;
-        entryw->height = 20;
+        ok->x       = 120;
+        ok->y       = 70;
+        ok->width   = 20;
+        ok->height  = 20;
+        ok->on_clicked = set_nickname_dialog_ok_clicked;
 
-        okw->x       = 120;
-        okw->y       = 70;
-        okw->width   = 20;
-        okw->height  = 20;
-        okw->clicked = set_nickname_dialog_ok_clicked;
+        cancel->x       = 150;
+        cancel->y       = 70;
+        cancel->width   = 60;
+        cancel->height  = 20;
+        cancel->on_clicked = set_nickname_dialog_cancel_clicked;
 
-        cancelw->x       = 150;
-        cancelw->y       = 70;
-        cancelw->width   = 60;
-        cancelw->height  = 20;
-        cancelw->clicked = set_nickname_dialog_cancel_clicked;
+        entry->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+        entry->border_color = get_node_rgb(config->theme, "common.secondary_color");
+        entry->text_color = get_node_rgb(config->theme, "common.text_color");
 
-        textbox_set_color(
-            entryw, 
-            TEXTBOX_COLOR_BG,
-            get_node_rgb(config->theme, "common.secondary_color")
-        );
-        textbox_set_color(
-            entryw, 
-            TEXTBOX_COLOR_BORDER,
-            get_node_rgb(config->theme, "common.secondary_color")
-        );
-        textbox_set_color(
-            entryw, 
-            TEXTBOX_COLOR_TEXT,
-            get_node_rgb(config->theme, "common.text_color")
-        );
+        text->set_text("set nickname");
+        text->bg_color = get_node_rgb(config->theme, "common.primary_color");
+        text->text_color = get_node_rgb(config->theme, "common.text_color");
 
-        label_set_text(textw, "set nickname");
-        label_set_color(
-            textw,
-            LABEL_BG_COLOR,
-            get_node_rgb(config->theme, "common.primary_color")
-        );
-        label_set_color(
-            textw,
-            LABEL_TEXT_COLOR,
-            get_node_rgb(config->theme, "common.text_color")
-        );
+        ok->type = BUTTON_TEXT;
+        ok->set_text("ok");
+        ok->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+        ok->text_color = get_node_rgb(config->theme, "common.text_color");
 
-        button_set_type(okw, BUTTON_TEXT);
-        button_set_text(okw, "ok");
-        button_set_color(
-            okw,
-            BUTTON_COLOR_BG,
-            get_node_rgb(config->theme, "common.secondary_color")
-        );
-        button_set_color(
-            okw, 
-            BUTTON_COLOR_TX, 
-            get_node_rgb(config->theme, "common.text_color")
-        );
+        cancel->type = BUTTON_TEXT;
+        cancel->set_text("cancel");
+        cancel->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+        cancel->text_color = get_node_rgb(config->theme, "common.text_color");
 
-        button_set_type(cancelw, BUTTON_TEXT);
-        button_set_text(cancelw, "cancel");
-        button_set_color(
-            cancelw,
-            BUTTON_COLOR_BG,
-            get_node_rgb(config->theme, "common.secondary_color")
-        );
-        button_set_color(
-            cancelw, 
-            BUTTON_COLOR_TX, 
-            get_node_rgb(config->theme, "common.text_color")
-        );
+        dialog->add_widget(text);
+        dialog->add_widget(entry);
+        dialog->add_widget(ok);
+        dialog->add_widget(cancel);
 
-        window_add_widget(dialog, textw);
-        window_add_widget(dialog, entryw);
-        window_add_widget(dialog, okw);
-        window_add_widget(dialog, cancelw);
-
-        window_set_size(dialog, 340, 100);
+        dialog->set_size(340, 100);
         
-        window_display(dialog, 1);
+        dialog->show(1);
 
-        label_free(textw);
-        textbox_free(entryw);
-        button_free(okw);
-        button_free(cancelw);
+//        text->~t\w\;
+//        entry;
+//        ok;
+ //       cancel;
 
-        window_free(dialog);
+        dialog->~window_t();
     } else {
         logger.log(CHANNEL_WARN, "connect to a server before setting your nickname you phycopath\n");
 
-        textw   = label_init();
-        okw     = button_init();
+        text   = &label_t();
+        ok     = &button_t();
 
-        texte = (label_t*)textw->extra_data;
-        oke   = (button_t*)okw->extra_data;
+        text->x      = 10;
+        text->y      = 10;
+        text->width  = 300;
+        text->height = 20;
+        text->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
 
-        textw->x      = 10;
-        textw->y      = 10;
-        textw->width  = 300;
-        textw->height = 20;
-        textw->style = STYLE_NBB | STYLE_NBL | STYLE_NBR | STYLE_NBT;
+        ok->x        = 110;
+        ok->y        = 40;
+        ok->width    = 90;
+        ok->height   = 20;
+        ok->on_clicked  = set_nickname_dialog_ok_clicked;
 
-        okw->x        = 110;
-        okw->y        = 40;
-        okw->width    = 90;
-        okw->height   = 20;
-        okw->clicked  = set_nickname_dialog_ok_clicked;
+        text->set_text("you need to connect to a server first");
+        text->bg_color = get_node_rgb(config->theme, "common.primary_color");
+        text->text_color = get_node_rgb(config->theme, "common.text_color");
 
-        label_set_text(textw, "you need to connect to a server first");
-        label_set_color(
-            textw,
-            LABEL_BG_COLOR,
-            get_node_rgb(config->theme, "common.primary_color")
-        );
-        label_set_color(
-            textw,
-            LABEL_TEXT_COLOR,
-            get_node_rgb(config->theme, "common.text_color")
-        );
+        ok->type = BUTTON_TEXT;
+        ok->set_text("well shit");
+        ok->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+        ok->text_color = get_node_rgb(config->theme, "common.text_color");
 
-        button_set_type(okw, BUTTON_TEXT);
-        button_set_text(okw, "well shit");
-        button_set_color(
-            okw,
-            BUTTON_COLOR_BG,
-            get_node_rgb(config->theme, "common.secondary_color")
-        );
-        button_set_color(
-            okw, 
-            BUTTON_COLOR_TX, 
-            get_node_rgb(config->theme, "common.text_color")
-        );
+        dialog->add_widget(text);
+        dialog->add_widget(ok);
 
-        window_add_widget(dialog, textw);
-        window_add_widget(dialog, okw);
+        dialog->set_size(320, 70);
+        dialog->show(1);
 
-        window_set_size(dialog, 320, 70);
-        
-        window_display(dialog, 1);
-
-        label_free(textw);
-        button_free(okw);
-
-        window_free(dialog);
+        dialog->~window_t();
     }
     lock = 0;
 }

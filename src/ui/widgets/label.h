@@ -26,14 +26,15 @@
 #include <ui/uitypes.h>
 
 class label_t : public widget_t {
-    char* text;
+    public:
+        char* text;
 
-    rgba_t bg_color;
-    rgba_t text_color;
-    int style;
+        rgba_t bg_color;
+        rgba_t text_color;
+        int style;
 
-    void set_text(char* text);
-    void draw();
+        void set_text(char* text);
+        void draw();
 };
 
 #endif

@@ -34,15 +34,18 @@
 #include <ui/util/font_search.h>
 #endif
 
-window_t** windows      = 0;
-int        window_count = 0;
-int        window_count_2 = 0;
+// what the fuck
+void* __gxx_personality_v0;
 
 void __DEFAULT_window_handle_bg_tasks(window_t* a) {};
 void __DEFAULT_window_handle_resize(window_t* a) {};
 
+window_t** window_t::windows;
+int        window_t::window_count;
+int        window_t::window_count_2;
+
 #ifdef WIN32
-window_t* resolve_window(HWND a) {
+window_t* window_t::resolve_window(HWND a) {
     for (int i = 0; i < window_count; i++) {
         if (windows[i]->window == a) return windows[i];
     }
@@ -51,17 +54,17 @@ window_t* resolve_window(HWND a) {
 #endif
 
 // this is bad. really bad.
-widget_t** window_sort_z(window_t* window) {
-    widget_t** sorted   = (widget_t**)malloc(window->widget_count * sizeof(void*));
-    widget_t** unsorted = (widget_t**)malloc(window->widget_count * sizeof(void*));
-    int        ulen     = window->widget_count;
+widget_t** window_t::sort_z() {
+    widget_t** sorted   = (widget_t**)malloc(this->widget_count * sizeof(void*));
+    widget_t** unsorted = (widget_t**)malloc(this->widget_count * sizeof(void*));
+    int        ulen     = this->widget_count;
     int        slen     = 0;
 
-    memcpy(unsorted, window->widgets, window->widget_count * sizeof(void*));
+    memcpy(unsorted, this->widgets, this->widget_count * sizeof(void*));
 
     while (ulen > 0) {
         widget_t*  hi = unsorted[0];
-        widget_t** nunsorted = (widget_t**)malloc(window->widget_count * sizeof(void*));
+        widget_t** nunsorted = (widget_t**)malloc(this->widget_count * sizeof(void*));
         int        nlen = 0;
 
         for (int i = 0; i < ulen; i++) {        
@@ -91,36 +94,36 @@ widget_t** window_sort_z(window_t* window) {
     return sorted;
 }
 
-void window_close(window_t* window) {
-    window->should_exit = 1;
+void window_t::close() {
+    this->should_exit = 1;
 }
 
-void window_paint(window_t* window) {
+void window_t::paint() {
 #ifdef WIN32
     PAINTSTRUCT* ps = (PAINTSTRUCT*)malloc(sizeof(PAINTSTRUCT));
     RECT* rect = (RECT*)malloc(sizeof(RECT));
     SetRect(
         rect,
         0, 0,
-        window->width, window->height
+        this->width, this->height
     );
-    InvalidateRect(window->window, rect, 1);
-    BeginPaint(window->window, ps);
+    InvalidateRect(this->window, rect, 1);
+    BeginPaint(this->window, ps);
     SelectObject(ps->hdc, GetStockObject(DC_BRUSH));
-    SetDCBrushColor(ps->hdc, W32RGBAC(window->bg_color));
+    SetDCBrushColor(ps->hdc, W32RGBAC(this->bg_color));
     Rectangle(ps->hdc, rect->left, rect->top, rect->right, rect->bottom);
-    EndPaint(window->window, ps);
+    EndPaint(this->window, ps);
     free(rect);
     free(ps);
 #else
     xcb_alloc_color_reply_t* bg = xcb_alloc_color_reply(
-        window->connection,
+        this->connection,
         xcb_alloc_color(
-            window->connection,
-            window->cmap,
-            window->bg_color.r << 8,
-            window->bg_color.g << 8,
-            window->bg_color.b << 8
+            this->connection,
+            this->cmap,
+            this->bg_color.r << 8,
+            this->bg_color.g << 8,
+            this->bg_color.b << 8
         ),
         NULL
     );
@@ -130,58 +133,58 @@ void window_paint(window_t* window) {
         bg->pixel
     };
     xcb_change_gc(
-        window->connection,
-        window->gc,
+        this->connection,
+        this->gc,
         maskd,
         maskv
     );
     xcb_rectangle_t* rect = (xcb_rectangle_t*)malloc(sizeof(xcb_rectangle_t));
     rect->x = 0;
     rect->y = 0;
-    rect->height = window->height;
-    rect->width = window->width;
+    rect->height = this->height;
+    rect->width = this->width;
     xcb_poly_fill_rectangle(
-        window->connection,
-        window->window,
-        window->gc,
+        this->connection,
+        this->window,
+        this->gc,
         1, rect
     );
     free(rect);
 #endif
-    for (int i = 0; i < window->widget_count; i++) {
-        widget_t* widget = window->widgets[i];
-        widget->draw(widget, window);
+    for (int i = 0; i < this->widget_count; i++) {
+        widget_t* widget = this->widgets[i];
+        widget->draw();
     }
 }
 
-void window_left_mouse_down(window_t* window, int x, int y) {        
-    window->mouse_left_down = 1; // the mouse button is down :catnod:
-    for (int i = 0; i < window->widget_count; i++) {
-        widget_t* widget = window->widgets[i];
+void window_t::left_mouse_down(int x, int y) {        
+    this->mouse_left_down = 1; // the mouse button is down :catnod:
+    for (int i = 0; i < this->widget_count; i++) {
+        widget_t* widget = this->widgets[i];
         if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
-            widget->mousedown(widget, window, x, y);
+            widget->mousedown(x, y);
         }
     }
 }
 
-void window_left_mouse_up(window_t* window, int x, int y) {
-    window->mouse_left_down = 0;
+void window_t::left_mouse_up(int x, int y) {
+    this->mouse_left_down = 0;
 
     int clickdone = 0;
     int updone    = 0;
 
-    widget_t** widgets = window_sort_z(window);
-    int        widget_count = window->widget_count;
+    widget_t** widgets = this->sort_z();
+    int        widget_count = this->widget_count;
 
     // this is a click B)
     for (int i = 0; i < widget_count; i++) {
         widget_t* widget = widgets[i];
         if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
             if (!updone) {
-                updone = widget->mouseup(widget, window, x, y);
+                updone = widget->mouseup(x, y);
             }
             if (!clickdone) {
-                clickdone = widget->clicked(widget, window, x, y);
+                clickdone = widget->clicked(x, y);
             }
         }
     }
@@ -189,17 +192,17 @@ void window_left_mouse_up(window_t* window, int x, int y) {
     free(widgets);
 }
 
-void window_scroll_up(window_t* window, int x, int y) {
+void window_t::scroll_up(int x, int y) {
     int done = 0;
 
-    widget_t** widgets = window_sort_z(window);
-    int        widget_count = window->widget_count;
+    widget_t** widgets = this->sort_z();
+    int        widget_count = this->widget_count;
 
     for (int i = 0; i < widget_count; i++) {
         widget_t* widget = widgets[i];
         if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
             if (!done) {
-                widget->scroll_up(widget, window);
+                widget->scroll_up();
             }
         }
     }
@@ -207,17 +210,17 @@ void window_scroll_up(window_t* window, int x, int y) {
     free(widgets);
 }
 
-void window_scroll_down(window_t* window, int x, int y) {
+void window_t::scroll_down(int x, int y) {
     int done = 0;
 
-    widget_t** widgets = window_sort_z(window);
-    int        widget_count = window->widget_count;
+    widget_t** widgets = this->sort_z();
+    int        widget_count = this->widget_count;
 
     for (int i = 0; i < widget_count; i++) {
         widget_t* widget = widgets[i];
         if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
             if (!done) {
-                widget->scroll_down(widget, window);
+                widget->scroll_down();
             }
         }
     }
@@ -225,74 +228,74 @@ void window_scroll_down(window_t* window, int x, int y) {
     free(widgets);
 }
 
-void window_mouse_move(window_t* window, int x, int y) {
-    for (int i = 0; i < window->widget_count; i++) {
-        widget_t* widget = window->widgets[i];
+void window_t::mouse_move(int x, int y) {
+    for (int i = 0; i < this->widget_count; i++) {
+        widget_t* widget = this->widgets[i];
         if (widget->x < x && x < widget->x + widget->width && widget->y < y && y < widget->y + widget->height) {
             if (widget->hovered == 0) {
                 widget->hovered = 1;
-                widget->mousein(widget, window);
+                widget->mousein();
             }
-            widget->mousemove(widget, window, x, y);
+            widget->mousemove(x, y);
         } else {
             if (widget->hovered == 1) {
                 widget->hovered = 0;
-                widget->mouseout(widget, window);
+                widget->mouseout();
             }
         }
     }    
 }
 
-void window_resized(window_t* window, int w, int h) {
-    window->width = w;
-    window->height = h;
+void window_t::resized(int w, int h) {
+    this->width = w;
+    this->height = h;
 
-    window->resized(window);
+    this->on_resized(this);
 }
 
-void window_keypress(window_t* window, uint32_t key, uint16_t mod) {
-    widget_t* focused = window->focused;
+void window_t::keypress(uint32_t key, uint16_t mod) {
+    widget_t* focused = this->focused;
             
     if (focused == 0) return;
 
-    focused->keypress(focused, window, key, mod);
+    focused->keypress(key, mod);
 }
 
-void window_run_bg_tasks(window_t* window) {
-    window->handle_bg_tasks(window);
+void window_t::run_bg_tasks() {
+    this->handle_bg_tasks(this);
 }
 
 #ifdef WIN32
-LRESULT window_proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) {
-    window_t* me = resolve_window(window);
+LRESULT proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) {
+    window_t* me = window_t::resolve_window(window);
     switch (message) {
         // please also update the delete code in the xorg part
         case WM_CLOSE: {
-            window_close(me);
+            window_t::close(me);
             return 0;
         }
         case WM_PAINT: {
-            window_paint(me);
+            window_t::paint(me);
             return 0;
         }
         case WM_LBUTTONDOWN: {
             ClipCursor(&me->client_rect);
             int cx = LOWORD(otherthing); 
             int cy = HIWORD(otherthing);
-            window_left_mouse_down(me, cx, cy);
+            window_t::left_mouse_down(me, cx, cy);
             return 0;
         }
         case WM_LBUTTONUP: {
             int cx = LOWORD(otherthing); 
             int cy = HIWORD(otherthing);
             ClipCursor(0);
-            window_left_mouse_up(me, cx, cy);
+            window_t::left_mouse_up(me, cx, cy);
             return 0;
         }
         case WM_MOUSEMOVE: {
             int cx      = LOWORD(otherthing); 
             int cy      = HIWORD(otherthing);
-            window_mouse_move(me, cx, cy);
+            window_t::mouse_move(me, cx, cy);
             return 0;
         }
         case WM_MOVE:
@@ -312,11 +315,11 @@ LRESULT window_proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) 
             
             SetRect(&me->client_rect, a.x, a.y, b.x, b.y);
 
-            window_resized(me, me->client_rect.right - me->client_rect.left, me->client_rect.bottom - me->client_rect.top);
+            window_t::resized(me, me->client_rect.right - me->client_rect.left, me->client_rect.bottom - me->client_rect.top);
             return 0;
         }
         case WM_CHAR: {
-            window_keypress(me, thing, 0);
+            window_t::keypress(me, thing, 0);
             return 0;
         }
         case WM_TIMER: {
@@ -330,24 +333,22 @@ LRESULT window_proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) 
 }
 #endif
 
-window_t* window_init() {
-    window_t* window = (window_t*)malloc(sizeof(window_t));
-
+window_t::window_t() {
 #ifdef WIN32
-    window->instance                   = GetModuleHandle(0);
-    window->window_class.style         = CS_HREDRAW | CS_VREDRAW;
-    window->window_class.lpfnWndProc   = &window_proc;
-    window->window_class.cbClsExtra    = 0;
-    window->window_class.cbWndExtra    = 0;
-    window->window_class.hInstance     = window->instance;
-    window->window_class.hIcon         = LoadIcon(0, IDI_APPLICATION);
-    window->window_class.hCursor       = LoadCursor(0, IDC_ARROW);
-    window->window_class.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
-    window->window_class.lpszMenuName  = 0;
-    window->window_class.lpszClassName = "IRCRebornMain";
-    window->class_thing                = RegisterClass(&window->window_class);
+    this->instance                   = GetModuleHandle(0);
+    this->window_class.style         = CS_HREDRAW | CS_VREDRAW;
+    this->window_class.lpfnWndProc   = &window_proc;
+    this->window_class.cbClsExtra    = 0;
+    this->window_class.cbWndExtra    = 0;
+    this->window_class.hInstance     = this->instance;
+    this->window_class.hIcon         = LoadIcon(0, IDI_APPLICATION);
+    this->window_class.hCursor       = LoadCursor(0, IDC_ARROW);
+    this->window_class.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
+    this->window_class.lpszMenuName  = 0;
+    this->window_class.lpszClassName = "IRCRebornMain";
+    this->class_thing                = RegisterClass(&this->window_class);
     
-    window->window = CreateWindowEx(
+    this->window = CreateWindowEx(
         0,
         "IRCRebornMain",
         "IRCReborn",
@@ -358,38 +359,38 @@ window_t* window_init() {
         CW_USEDEFAULT,
         0,
         0,
-        window->instance,
+        this->instance,
         0
     );
 #else
-    window->display = XOpenDisplay(0);
+    this->display = XOpenDisplay(0);
 
     // connect to xorg
-    window->connection = XGetXCBConnection(window->display);
+    this->connection = XGetXCBConnection(this->display);
     
     // get a gc id
-    window->gc     = xcb_generate_id(window->connection);
+    this->gc     = xcb_generate_id(this->connection);
     
     // get a window id
-    window->window = xcb_generate_id(window->connection);
+    this->window = xcb_generate_id(this->connection);
 
     // get a cmap id
-    window->cmap = xcb_generate_id(window->connection);
+    this->cmap = xcb_generate_id(this->connection);
 
     // get the screen
-    window->screen = xcb_setup_roots_iterator(xcb_get_setup(window->connection)).data;
+    this->screen = xcb_setup_roots_iterator(xcb_get_setup(this->connection)).data;
 
     // make the gcontext mask
     uint32_t gcmaskv[2] = { 
-        window->screen->black_pixel,
+        this->screen->black_pixel,
         0
     };
     
     // make the gcontext
     xcb_create_gc(
-        window->connection,
-        window->gc,
-        window->screen->root,
+        this->connection,
+        this->gc,
+        this->screen->root,
         XCB_GC_FOREGROUND | XCB_GC_GRAPHICS_EXPOSURES,
         gcmaskv
     );
@@ -397,7 +398,7 @@ window_t* window_init() {
     // window mask
     uint32_t wmaskv[2] = {
         // bg color
-        window->screen->white_pixel,
+        this->screen->white_pixel,
         // things to listen for
         XCB_EVENT_MASK_EXPOSURE |
         XCB_EVENT_MASK_STRUCTURE_NOTIFY |
@@ -410,31 +411,31 @@ window_t* window_init() {
 
     // make the sexy window
     xcb_create_window(
-        window->connection,
+        this->connection,
         XCB_COPY_FROM_PARENT,
-        window->window,
-        window->screen->root,
+        this->window,
+        this->screen->root,
         0, 0, 400, 200, // xpos, ypos, width, height
         0, // this is the window managers problem now
         XCB_WINDOW_CLASS_INPUT_OUTPUT,
-        window->screen->root_visual,
+        this->screen->root_visual,
         XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK,
         wmaskv
     );
     
     // make the cmap
     xcb_create_colormap(
-        window->connection,
+        this->connection,
         XCB_COLORMAP_ALLOC_NONE,
-        window->cmap,
-        window->window,
-        window->screen->root_visual
+        this->cmap,
+        this->window,
+        this->screen->root_visual
     );
 
     xcb_change_property(
-        window->connection,
+        this->connection,
         XCB_PROP_MODE_REPLACE,
-        window->window,
+        this->window,
         XCB_ATOM_WM_NAME,
         XCB_ATOM_STRING,
         8,
@@ -443,9 +444,9 @@ window_t* window_init() {
     );
 
     xcb_change_property(
-        window->connection,
+        this->connection,
         XCB_PROP_MODE_REPLACE,
-        window->window,
+        this->window,
         XCB_ATOM_WM_CLASS,
         XCB_ATOM_STRING,
         8,
@@ -464,7 +465,7 @@ window_t* window_init() {
     fr->resy         = 100;
     fr->want_spacing = 1;
     fr->spacing      = FSEARCH_SPACING_MONO;
-    window->main_font = request_font(window->connection, fr);
+    this->main_font = request_font(this->connection, fr);
     
     free(fr);
 #endif
@@ -473,37 +474,35 @@ window_t* window_init() {
         windows = (window_t**)malloc(sizeof(void*));
     }
 
-    window->height = 0;
-    window->width = 0;
+    this->height = 0;
+    this->width = 0;
     
-    window->widget_count = 0;
-    window->widgets = (widget_t**)malloc(1);
-    window->should_exit = 0;
-    window->handle_bg_tasks = &__DEFAULT_window_handle_bg_tasks;
-    window->resized = __DEFAULT_window_handle_resize;
+    this->widget_count = 0;
+    this->widgets = (widget_t**)malloc(1);
+    this->should_exit = 0;
+    this->handle_bg_tasks = &__DEFAULT_window_handle_bg_tasks;
+    this->on_resized = __DEFAULT_window_handle_resize;
 
     windows = (window_t**)realloc(windows, sizeof(void*) * (window_count + 1));
 
-    windows[window_count] = window;
+    windows[window_count] = this;
     window_count++;
     window_count_2++;
 
-    window->pending_free = 0;
-
-    return window;
+    this->pending_free = 0;
 }
 
-void window_set_type(window_t* window, int type) {
+void window_t::set_type(int type) {
 #ifdef WIN32
 
 #else
-    xcb_intern_atom_cookie_t wmtypecookie       = xcb_intern_atom(window->connection, 0, 19, "_NET_WM_WINDOW_TYPE");
-    xcb_intern_atom_reply_t* wmtype             = xcb_intern_atom_reply(window->connection, wmtypecookie, 0);
-    xcb_intern_atom_cookie_t wmtypedialogcookie = xcb_intern_atom(window->connection, 0, 26, "_NET_WM_WINDOW_TYPE_DIALOG");
-    xcb_intern_atom_reply_t* wmtypedialog       = xcb_intern_atom_reply(window->connection, wmtypedialogcookie, 0);
+    xcb_intern_atom_cookie_t wmtypecookie       = xcb_intern_atom(this->connection, 0, 19, "_NET_WM_WINDOW_TYPE");
+    xcb_intern_atom_reply_t* wmtype             = xcb_intern_atom_reply(this->connection, wmtypecookie, 0);
+    xcb_intern_atom_cookie_t wmtypedialogcookie = xcb_intern_atom(this->connection, 0, 26, "_NET_WM_WINDOW_TYPE_DIALOG");
+    xcb_intern_atom_reply_t* wmtypedialog       = xcb_intern_atom_reply(this->connection, wmtypedialogcookie, 0);
     
     if (type == WINDOW_WM_TYPE_DIALOG) {
-        xcb_change_property(window->connection, XCB_PROP_MODE_REPLACE, window->window, wmtype->atom, 4, 32, 1, &wmtypedialog->atom);
+        xcb_change_property(this->connection, XCB_PROP_MODE_REPLACE, this->window, wmtype->atom, 4, 32, 1, &wmtypedialog->atom);
     }
 
     free(wmtype);
@@ -511,7 +510,7 @@ void window_set_type(window_t* window, int type) {
 #endif
 }
 
-void window_set_size(window_t* window, int width, int height) {
+void window_t::set_size(int width, int height) {
 #ifdef WIN32
 
 #else
@@ -522,14 +521,14 @@ void window_set_size(window_t* window, int width, int height) {
     };
 
     xcb_configure_window(
-        window->connection, 
-        window->window, 
+        this->connection, 
+        this->window, 
         propd, propv
     );
 #endif
 }
 
-void window_display(window_t* window, int all) {
+void window_t::show(int all) {
 #ifdef WIN32
     ShowWindow(window->window, SW_SHOWDEFAULT);
     UpdateWindow(window->window);
@@ -555,20 +554,20 @@ void window_display(window_t* window, int all) {
     // see https://marc.info/?l=freedesktop-xcb&m=129381953404497 for the close solution
 
     // this bullshit just for a close event
-    xcb_intern_atom_cookie_t protocookie = xcb_intern_atom(window->connection, 1, 12, "WM_PROTOCOLS");
-    xcb_intern_atom_reply_t* proto = xcb_intern_atom_reply(window->connection, protocookie, 0);
-    xcb_intern_atom_cookie_t deletecookie = xcb_intern_atom(window->connection, 0, 16, "WM_DELETE_WINDOW");
-    xcb_intern_atom_reply_t* wm_delete = xcb_intern_atom_reply(window->connection, deletecookie, 0);
-    xcb_change_property(window->connection, XCB_PROP_MODE_REPLACE, window->window, proto->atom, 4, 32, 1, &wm_delete->atom);
+    xcb_intern_atom_cookie_t protocookie = xcb_intern_atom(this->connection, 1, 12, "WM_PROTOCOLS");
+    xcb_intern_atom_reply_t* proto = xcb_intern_atom_reply(this->connection, protocookie, 0);
+    xcb_intern_atom_cookie_t deletecookie = xcb_intern_atom(this->connection, 0, 16, "WM_DELETE_WINDOW");
+    xcb_intern_atom_reply_t* wm_delete = xcb_intern_atom_reply(this->connection, deletecookie, 0);
+    xcb_change_property(this->connection, XCB_PROP_MODE_REPLACE, this->window, proto->atom, 4, 32, 1, &wm_delete->atom);
     
     // show the window
-    xcb_map_window(window->connection, window->window);
+    xcb_map_window(this->connection, this->window);
     
     // flush the io buffer
-    xcb_flush(window->connection);
+    xcb_flush(this->connection);
 
     // main loop
-    while (!window->should_exit) {
+    while (!this->should_exit) {
         for (int i = 0; i < window_count; i++) {
             window_t* window = windows[i];
             xcb_generic_event_t* e;
@@ -578,7 +577,7 @@ void window_display(window_t* window, int all) {
                     // repaint
                     case XCB_EXPOSE: {
                         unused xcb_expose_event_t* event = (xcb_expose_event_t*)e;
-                        window_paint(window);
+                        window->paint();
                         break;
                     }
                     case XCB_CLIENT_MESSAGE: {
@@ -589,7 +588,7 @@ void window_display(window_t* window, int all) {
                         
                         // cant use a switch because we get the value at runtime
                         if (type == wm_delete->atom) {
-                            window_close(window);
+                            window->close();
                         } else {
                             logger.log(CHANNEL_DBUG, "got unknown message from the window manager, ignoring (%i)\n", type);
                         }
@@ -598,19 +597,19 @@ void window_display(window_t* window, int all) {
                     }
                     case XCB_CONFIGURE_NOTIFY: {
                         unused xcb_configure_notify_event_t* event = (xcb_configure_notify_event_t*)e;
-                        window_resized(window, event->width, event->height);                    
+                        window->resized(event->width, event->height);                    
                         break;
                     }
                     case XCB_MOTION_NOTIFY: {
                         unused xcb_motion_notify_event_t* event = (xcb_motion_notify_event_t*)e;
-                        window_mouse_move(window, event->event_x, event->event_y);
+                        window->mouse_move(event->event_x, event->event_y);
                         break;
                     }
                     case XCB_BUTTON_PRESS: {
                         unused xcb_button_press_event_t* event = (xcb_button_press_event_t*)e;
                         
                         if (event->detail == XCB_BUTTON_INDEX_1) {
-                            window_left_mouse_down(window, event->event_x, event->event_y);
+                            window->left_mouse_down(event->event_x, event->event_y);
                         } else if (event->detail == XCB_BUTTON_INDEX_4 || event->detail == XCB_BUTTON_INDEX_5) {
 
                         } else {
@@ -623,11 +622,11 @@ void window_display(window_t* window, int all) {
                         unused xcb_button_release_event_t* event = (xcb_button_release_event_t*)e;
                         
                         if (event->detail == XCB_BUTTON_INDEX_1) {
-                            window_left_mouse_up(window, event->event_x, event->event_y);
+                            window->left_mouse_up(event->event_x, event->event_y);
                         } else if (event->detail == XCB_BUTTON_INDEX_4) {
-                            window_scroll_up(window, event->event_x, event->event_y);
+                            window->scroll_up(event->event_x, event->event_y);
                         } else if (event->detail == XCB_BUTTON_INDEX_5) {
-                            window_scroll_down(window, event->event_x, event->event_y);
+                            window->scroll_down(event->event_x, event->event_y);
                         } else {
                             logger.log(CHANNEL_DBUG, "got unknown button press type %i\n", event->detail);
                         }
@@ -648,14 +647,14 @@ void window_display(window_t* window, int all) {
                         // https://tronche.com/gui/x/xlib/input/keyboard-encoding.html
                         if (event->state & XCB_MOD_MASK_LOCK) {
                             if (event->state & XCB_MOD_MASK_SHIFT) {
-                                window_keypress(window, ks[0], event->state);
+                                window->keypress(ks[0], event->state);
                             } else {
-                                window_keypress(window, ks[1], event->state);
+                                window->keypress(ks[1], event->state);
                             }
                         } else if (event->state & XCB_MOD_MASK_SHIFT) {
-                            window_keypress(window, ks[1] ? ks[1] : ks[0], event->state);
+                            window->keypress(ks[1] ? ks[1] : ks[0], event->state);
                         } else {
-                            window_keypress(window, ks[0] ? ks[0] : ks[1], event->state);
+                            window->keypress(ks[0] ? ks[0] : ks[1], event->state);
                         }
 
                         
@@ -685,14 +684,13 @@ void window_display(window_t* window, int all) {
 #endif
 }
 
-void window_free(window_t* window) {
+window_t::~window_t() {
 #ifndef WIN32
-    XCloseDisplay(window->display);
+    XCloseDisplay(this->display);
 #else
-    DestroyWindow(window->window);
+    DestroyWindow(this->window);
 #endif
-    free(window->widgets);
-    free(window);
+    free(this->widgets);
     window_count_2--;
     if (window_count_2 == 0) {
         window_count = 0;
@@ -700,22 +698,13 @@ void window_free(window_t* window) {
     }
 }
 
-void window_add_widget(window_t* window, widget_t* widget) {
-    window->widgets = (widget_t**)realloc(window->widgets, (window->widget_count+1) * sizeof(void*));
-    window->widgets[window->widget_count] = widget;
+void window_t::add_widget(widget_t* widget) {
+    this->widgets = (widget_t**)realloc(this->widgets, (this->widget_count+1) * sizeof(void*));
+    this->widgets[this->widget_count] = widget;
     widget->hovered = 0;
-    window->widget_count++;    
+    this->widget_count++;    
 }
 
-void window_remove_widget(window_t* window, widget_t* widget) {
+void window_t::remove_widget(widget_t* widget) {
 
-}
-
-// this is useless and only exists for consistency
-void window_set_bg(window_t* window, rgba_t value) {
-    window->bg_color = value;
-}
-
-void window_set_focus(window_t* window, widget_t* widget) {
-    window->focused = widget;
 }

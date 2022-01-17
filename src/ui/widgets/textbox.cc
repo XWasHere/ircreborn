@@ -68,12 +68,14 @@ int textbox_t::keypress(uint32_t key, uint16_t mod) {
         this->text[this->cursorpos] = 0;
     }
 
+    if (this->on_keypress) this->on_keypress(this, key, mod);
+
     this->draw();
     return 1;
 }
 
 int textbox_t::clicked(int x, int y) {
-    window_set_focus(window, this);
+    window->focused = this;
     return 1;
 }
 
