@@ -43,5 +43,6 @@
 char* format_last_error();
 char* format_error(int errorcode);
 void  debug_point();
+int   check_pointer_valid(void* addr);
 
 #endif

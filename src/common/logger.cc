@@ -107,7 +107,11 @@ void logger_t::vlog(logger_channel_t* channel, char* format, va_list args) {
     vsprintf(data2, format, args);
     
     data = (char*)malloc(dlen + 5 + this->width);
-    sprintf(data, " %-*s | %s", this->width, channel->name, data2);
+    if (check_pointer_valid(channel->name)) {
+        sprintf(data, " %-*s | %s", this->width, channel->name, data2);
+    } else {
+        sprintf(data, " %-*s | %s", this->width, "UKWN", data2);
+    }
 
     write(channel->fd, data, strlen(data));
 

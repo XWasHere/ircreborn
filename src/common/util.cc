@@ -69,3 +69,7 @@ char* format_error(int errorcode) {
 
     return error;
 }
+
+int check_pointer_valid(void* addr) {
+    return 1;
+}
