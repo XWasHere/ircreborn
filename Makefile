@@ -25,6 +25,7 @@ OBJS = \
 	build/common/args.o \
 	build/common/util.o \
 	build/common/logger.o \
+	build/common/funtime.o \
 	build/ui/window.o \
 	build/ui/widget.o \
 	build/ui/widgets/button.o \

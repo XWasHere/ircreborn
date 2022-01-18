@@ -43,6 +43,9 @@
 char* format_last_error();
 char* format_error(int errorcode);
 void  debug_point();
-int   check_pointer_valid(void* addr);
+// please dont investigate what happens here
+extern "C" {
+    int check_pointer_valid(void* addr);
+}
 
 #endif
