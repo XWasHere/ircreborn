@@ -42,6 +42,8 @@ int check_pointer_valid(void* addr) {
     volatile char a = *(char*)addr;
     recover:
     sigset_t stuff;
+    // fix this
+    signal(SIGSEGV, SIG_DFL);
     // clear stuff
     sigemptyset(&stuff);
     // apply to SIGSEGV
