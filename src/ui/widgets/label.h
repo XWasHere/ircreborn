@@ -27,6 +27,9 @@
 
 class label_t : public widget_t {
     public:
+        void* operator new(size_t count);
+        void  operator delete(void* address);
+        
         char* text;
 
         rgba_t bg_color;

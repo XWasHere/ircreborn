@@ -164,7 +164,7 @@ int server_button_clicked(button_t* widget, int x, int y) {
 
 struct server* server_list_add_server(scroll_pane_t* serverlist, client_config_server_t* server) {
     struct server* s = (struct server*)malloc(sizeof(struct server));
-    s->button = &button_t();
+    s->button = new button_t();
     s->server = server;;
 
     s->button->height = 20;
@@ -228,8 +228,8 @@ void message_submit(textbox_t* tb, char* text, int len) {
 }
 
 void client_add_message(window_t* window, char* message, char* name) {
-    label_t* msgl  = &label_t();
-    label_t* namel = &label_t();
+    label_t* msgl  = new label_t();
+    label_t* namel = new label_t();
 
     msgl->style = STYLE_NBB | STYLE_NBR;
     namel->style = STYLE_NBB;
@@ -418,9 +418,9 @@ void client_main() {
 
     servers = (struct server**)malloc(1);
 
-    main_window = &window_t();
+    main_window = new window_t();
     
-    strip    = &menubar_t();
+    strip    = new menubar_t();
     strip->z = 1000;
     
     filemenu = strip->add_menu("file");
@@ -443,9 +443,9 @@ void client_main() {
     licensebutton->button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
     licensebutton->button->text_color = get_node_rgb(config->theme, "common.text_color");
 
-    serverlist = &scroll_pane_t();
-    messages = &scroll_pane_t();
-    messagebox = &textbox_t();
+    serverlist = new scroll_pane_t();
+    messages = new scroll_pane_t();
+    messagebox = new textbox_t();
     messages_thing = messages;
 
     serverlist->bg_color = get_node_rgb(config->theme, "common.secondary_color");
@@ -480,7 +480,7 @@ void client_main() {
     main_window->show(1);
     
     // cleanup
-    strip->~menubar_t();
+    delete strip;
     for (int i = 0; i < serverlist->itemc; i++) {
 //        serverlist->items[i]->~();
     }

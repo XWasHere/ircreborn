@@ -27,8 +27,8 @@ typedef struct __frame_managed frame_managed_t;
 
 class frame_t : public widget_t  {
     public:
-        frame_t();
-        ~frame_t();
+        void* operator new(size_t count);
+        void  operator delete(void* address);
         
         rgba_t            bg_color;
         int               item_count;

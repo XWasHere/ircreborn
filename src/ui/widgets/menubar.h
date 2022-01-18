@@ -31,7 +31,9 @@ class menubar_t : public widget_t {
 
     public:
         menubar_t();
-        ~menubar_t();
+        
+        void* operator new(size_t count);
+        void  operator delete(void* address);
 
         frame_t* container;
         int      ow;
@@ -51,6 +53,9 @@ class menu_t : public widget_t {
 
     public:
         menu_t();
+    
+        void* operator new(size_t count);
+        void  operator delete(void* address);
 
         button_t*      open_button;
         frame_t*       container;
@@ -69,6 +74,9 @@ class menubutton_t : public widget_t {
     public:
         menubutton_t();
 
+        void* operator new(size_t count);
+        void  operator delete(void* address);
+        
         button_t* button;
 
         void (*on_click)();

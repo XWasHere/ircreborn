@@ -31,12 +31,28 @@
 
 #endif
 
-scroll_pane_t::scroll_pane_t() {
-    this->pos              = 0;
-    this->prev_pos         = 0;
-    this->itemc            = 0;
-    this->items            = (scroll_pane_item_t**)malloc(1);
-    this->thumb_dragging   = 0;
+void* scroll_pane_t::operator new(size_t count) {
+    scroll_pane_t* _this = malloc(sizeof(scroll_pane_t));
+
+    _this->pos              = 0;
+    _this->prev_pos         = 0;
+    _this->itemc            = 0;
+    _this->items            = (scroll_pane_item_t**)malloc(1);
+    _this->thumb_dragging   = 0;
+
+    return _this;
+}
+
+void scroll_pane_t::operator delete(void* address) {
+    scroll_pane_t* _this = address;
+
+    for (int i = 0; i < _this->itemc; i++) {
+        free(_this->items[i]);
+    }
+
+    free(_this->items);
+
+    return _this;
 }
 
 scroll_pane_item_t* scroll_pane_t::add_item(widget_t* widget) {
@@ -366,12 +382,4 @@ int scroll_pane_t::scroll_down() {
     this->draw();
     
     return 1;
-}
-
-scroll_pane_t::~scroll_pane_t() {
-    for (int i = 0; i < this->itemc; i++) {
-        free(this->items[i]);
-    }
-
-    free(this->items);
 }

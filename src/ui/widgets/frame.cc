@@ -100,9 +100,21 @@ int frame_t::clicked(int x, int y) {
     return 1;
 }
 
-frame_t::frame_t() {
-    this->item_count = 0;
-    this->items      = (frame_managed_t**)malloc(1);
+void* frame_t::operator new(size_t count) {
+    frame_t* _this = malloc(sizeof(frame_t));
+    _this->item_count = 0;
+    _this->items      = (frame_managed_t**)malloc(1);
+    return _this;
+}
+
+void frame_t::operator delete(void* address) {
+    frame_t* _this = address;
+
+    for (int i = 0; i < _this->item_count; i++) {
+        free(_this->items[i]);
+    }
+    
+    free(_this->items);
 }
 
 frame_managed_t* frame_t::add_item(widget_t* widget) {
@@ -115,12 +127,4 @@ frame_managed_t* frame_t::add_item(widget_t* widget) {
     this->items[this->item_count - 1] = managed;
     
     return managed;
-}
-
-frame_t::~frame_t() {
-    for (int i = 0; i < this->item_count; i++) {
-        free(this->items[i]);
-    }
-    
-    free(this->items);
 }

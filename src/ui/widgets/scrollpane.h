@@ -55,9 +55,9 @@ struct scroll_pane_t : public widget_t {
         rgba_t               thumb_color;
         rgba_t               button_color;
 
-        scroll_pane_t();
-        ~scroll_pane_t();
-
+        void* operator new(size_t count);
+        void  operator delete(void* address);
+        
         scroll_pane_item_t* add_item(widget_t* widget);
         
         void draw();

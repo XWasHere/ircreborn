@@ -40,14 +40,14 @@ class textbox_t : public widget_t {
 
         void (*submit)(textbox_t* tb, char* text, int textlen);
         void (*on_keypress)(textbox_t* tb, uint32_t key, uint16_t mod);
-        
+
         rgba_t bg_color;
         rgba_t text_color;
         rgba_t border_color;
 
-        textbox_t();
-        ~textbox_t();
-
+        void* operator new(size_t count);
+        void  operator delete(void* address);
+        
         int keypress(uint32_t key, uint16_t mod);
         int clicked(int x, int y);
         void draw();

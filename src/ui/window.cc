@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <common/attrib.h>
 #include <common/logger.h>
+
 #ifdef WIN32
 #include <windows.h> // ugh.
 #else
@@ -554,8 +555,9 @@ void window_t::show(int all) {
     // see https://marc.info/?l=freedesktop-xcb&m=129381953404497 for the close solution
 
     // this bullshit just for a close event
-    xcb_intern_atom_cookie_t protocookie = xcb_intern_atom(this->connection, 1, 12, "WM_PROTOCOLS");
-    xcb_intern_atom_reply_t* proto = xcb_intern_atom_reply(this->connection, protocookie, 0);
+    xcb_generic_error_t* hi;
+    xcb_intern_atom_cookie_t protocookie = xcb_intern_atom(this->connection, 0, 12, "WM_PROTOCOLS");
+    xcb_intern_atom_reply_t* proto = xcb_intern_atom_reply(this->connection, protocookie, &hi);
     xcb_intern_atom_cookie_t deletecookie = xcb_intern_atom(this->connection, 0, 16, "WM_DELETE_WINDOW");
     xcb_intern_atom_reply_t* wm_delete = xcb_intern_atom_reply(this->connection, deletecookie, 0);
     xcb_change_property(this->connection, XCB_PROP_MODE_REPLACE, this->window, proto->atom, 4, 32, 1, &wm_delete->atom);

@@ -212,3 +212,15 @@ void label_t::set_text(char* text) {
     strcpy(buf, text);
     this->text = buf;
 }
+
+void* label_t::operator new(size_t count) {
+    label_t* _this = malloc(sizeof(label_t));
+
+    return _this;
+}
+
+void label_t::operator delete(void* address) {
+    label_t* _this = address;
+
+    free(_this);
+}

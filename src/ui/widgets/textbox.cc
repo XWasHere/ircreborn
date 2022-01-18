@@ -226,17 +226,21 @@ void textbox_t::draw() {
 #endif
 }
 
-textbox_t::textbox_t() {
-    this->textlen = 0;
-    this->cursorpos = 0;
-    this->text = (char*)malloc(1);
-    this->text[0] = 0;
-    this->multiline = 0;
-    this->submit = textbox_t::default_submit;
+void* textbox_t::operator new(size_t count) {
+    textbox_t* _this = malloc(sizeof(textbox_t));
+    
+    _this->textlen = 0;
+    _this->cursorpos = 0;
+    _this->text = (char*)malloc(1);
+    _this->text[0] = 0;
+    _this->multiline = 0;
+    _this->submit = textbox_t::default_submit;
 }
 
-textbox_t::~textbox_t() {
-    if (this->text != 0) {
-        free(this->text);
+void textbox_t::operator delete(void* address) {
+    textbox_t* _this = address;
+
+    if (_this->text != 0) {
+        free(_this->text);
     }
 }

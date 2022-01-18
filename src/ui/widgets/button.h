@@ -38,8 +38,8 @@
 
 class button_t : public widget_t {
     public:
-        button_t();
-        ~button_t();
+        void* operator new(size_t count);
+        void  operator delete(void* address);
         
         int type;
 

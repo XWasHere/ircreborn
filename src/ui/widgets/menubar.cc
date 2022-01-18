@@ -57,10 +57,33 @@ int menu_t::clicked(int x, int y) {
 }
 
 menubar_t::menubar_t() {
-    this->container  = &frame_t();
+    this->container  = new frame_t();
     this->menu_count = 0;
     this->menus      = (menu_t**)malloc(1);
     this->next_menu_x= 0;
+}
+
+void* menubar_t::operator new(size_t count) {
+    return malloc(sizeof(menubar_t));
+}
+
+void menubar_t::operator delete(void* address) {
+    menubar_t* _this = address;
+    for (int i = 0; i < _this->menu_count; i++) {
+        menu_t* menu = _this->menus[i];
+
+        for (int i = 0; i < menu->button_count; i++) {
+            menubutton_t* button = menu->buttons[i];
+
+            button->button->~button_t();
+        }
+        menu->container->~frame_t();
+        menu->open_button->~button_t();
+        free(menu->buttons);
+        menu->~menu_t();
+    }
+    free(_this->menus);
+    _this->container->~frame_t();
 }
 
 int menubar_t::button_clicked(button_t* button, int x, int y) {
@@ -87,17 +110,27 @@ int menu_t::button_clicked(button_t* button, int x, int y) {
 
 menu_t::menu_t() {
     this->next_button_y = 0;
-    this->open_button   = &button_t();
+    this->open_button   = new button_t();
     this->button_count  = 0;
-    this->container     = &frame_t();
+    this->container     = new frame_t();
     this->is_open       = 0;
     this->buttons       = (menubutton_t**)malloc(1);
     
     this->open_button->on_clicked = menubar_t::button_clicked;
 }
 
+void* menu_t::operator new(size_t count) {
+    return malloc(count);
+}
+
+void menu_t::operator delete(void* address) {
+    menu_t* _this = address;
+
+    free(_this);
+}
+
 menu_t* menubar_t::add_menu(char* name) {
-    menu_t* menu = &menu_t();
+    menu_t* menu = new menu_t();
         
     this->menu_count++;
     this->menus = (menu_t**)realloc(this->menus, sizeof(void*) * this->menu_count);
@@ -124,10 +157,20 @@ menu_t* menubar_t::add_menu(char* name) {
 }
 
 menubutton_t::menubutton_t() {
-    this->button = &button_t();
+    this->button = new button_t();
     this->button->on_clicked = menu_t::button_clicked;
     this->button->height = 20;
     this->button->type = BUTTON_TEXT;
+}
+
+void* menubutton_t::operator new(size_t count) {
+    return malloc(count);
+}
+
+void menubutton_t::operator delete(void* address) {
+    menubutton_t* _this = address;
+
+    free(_this);
 }
 
 menubutton_t* menu_t::add_button(char* name, void(*clicked)()) {
@@ -148,22 +191,4 @@ menubutton_t* menu_t::add_button(char* name, void(*clicked)()) {
 
     this->buttons[this->button_count-1] = button;
     return button;
-}
-
-menubar_t::~menubar_t() {
-    for (int i = 0; i < this->menu_count; i++) {
-        menu_t* menu = this->menus[i];
-
-        for (int i = 0; i < menu->button_count; i++) {
-            menubutton_t* button = menu->buttons[i];
-
-            button->button->~button_t();
-        }
-        menu->container->~frame_t();
-        menu->open_button->~button_t();
-        free(menu->buttons);
-        menu->~menu_t();
-    }
-    free(this->menus);
-    this->container->~frame_t();
 }

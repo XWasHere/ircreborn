@@ -198,12 +198,16 @@ void button_t::set_text(char* text) {
     this->text_set = 1;
 }
 
-button_t::button_t() {
+void* button_t::operator new(size_t count) {
+    button_t* _this = malloc(count);
 
+    return _this;
 }
 
-button_t::~button_t() {
-    if (this->text && this->text_set) {
-        free(this->text);
+void button_t::operator delete(void* address) {
+    button_t* _this = address;
+    
+    if (_this->text && _this->text_set) {
+        free(_this->text);
     }
 }

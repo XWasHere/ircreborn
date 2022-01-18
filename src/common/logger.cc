@@ -105,6 +105,7 @@ void logger_t::vlog(logger_channel_t* channel, char* format, va_list args) {
     
     data2 = (char*)malloc(dlen + 1);
     vsprintf(data2, format, args);
+    printf("%s\n", data2);
     
     data = (char*)malloc(dlen + 5 + this->width);
     if (check_pointer_valid(channel->name)) {

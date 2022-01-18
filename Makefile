@@ -1,13 +1,19 @@
 TARGET   ?= linux
 
 ifeq ($(TARGET),win32)
-CC        = x86_64-w64-mingw32-g++
+CXX        = x86_64-w64-mingw32-g++
+CXX_ARGS  ?= -ggdb -Wall
+CXX_FARGS  = -Isrc -lgdi32 -lws2_32 -fpermissive
+CC        = x86_64-w64-mingw32-gcc
 CC_ARGS  ?= -ggdb -Wall
 CC_FARGS  = -Isrc -lgdi32 -lws2_32 -fpermissive
 else 
-CC       ?= g++
+CXX       ?= g++
+CXX_ARGS  ?= -ggdb -Wall
+CXX_FARGS  = -Isrc -lxcb -lrt -lm -lX11 -lX11-xcb -fpermissive
+CC       ?= gcc
 CC_ARGS  ?= -ggdb -Wall
-CC_FARGS  = -Isrc -lxcb -lrt -lm -lX11 -lX11-xcb -fpermissive
+CC_FARGS  = -Isrc -lxcb -lrt -lm -lX11 -lX11-xcb
 endif
 
 OBJS = \
@@ -52,9 +58,15 @@ build/docs/%.info: docs/%.tex
 	makeinfo -o $@ $<
 
 build/%.cc.d: src/%.cc
+	$(CXX) $(CXX_ARGS) $(CXX_FARGS) -M $< -MT $< -o $@
+
+build/%.cc.d: src/%.c
 	$(CC) $(CC_ARGS) $(CC_FARGS) -M $< -MT $< -o $@
 
 build/%.o: src/%.cc build/%.cc.d
+	$(CXX) $(CXX_ARGS) $(CXX_FARGS) -c $< -o $@
+
+build/%.o: src/%.c
 	$(CC) $(CC_ARGS) $(CC_FARGS) -c $< -o $@
 
 binit:
@@ -73,7 +85,7 @@ binit:
 	mkdir -p build/compat
 
 ircreborn: binit  $(OBJS)
-	$(CC) $(CC_ARGS) $(OBJS) -o ircreborn $(CC_FARGS)
+	$(CXX) $(CXX_ARGS) $(OBJS) -o ircreborn $(CXX_FARGS)
 
 install: ircreborn
 	install ircreborn                 $(PREFIX)/usr/bin
