@@ -38,6 +38,7 @@
 #include <ui/util/font_search.h>
 #endif
 
+
 // what the fuck
 void* __gxx_personality_v0;
 
@@ -509,8 +510,6 @@ void window_t::set_type(int type) {
         xcb_change_property(this->connection, XCB_PROP_MODE_REPLACE, this->window, wmtype->atom, 4, 32, 1, &wmtypedialog->atom);
     }
 
-    free(wmtype);
-    free(wmtypedialog);
 #endif
 }
 
@@ -573,6 +572,7 @@ void window_t::show(int all) {
 
     // main loop
     while (!this->should_exit) {
+         XInternAtom(this->display, "a", 0);
         for (int i = 0; i < window_count; i++) {
             window_t* window = windows[i];
             xcb_generic_event_t* e;

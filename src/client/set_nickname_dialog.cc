@@ -59,16 +59,16 @@ static int set_nickname_dialog_ok_clicked(button_t* widget, int x, int y) {
 void open_set_nickname_dialog() {
     if (lock) return;
     lock = 1;
-    dialog = &window_t();
+    dialog = new window_t();
     
     dialog->set_type(WINDOW_WM_TYPE_DIALOG);
     dialog->bg_color = get_node_rgb(config->theme, "common.primary_color");
 
     if (sc_connected) {
-        text   = &label_t();
-        entry  = &textbox_t();
-        ok     = &button_t();
-        cancel = &button_t();
+        text   = new label_t();
+        entry  = new textbox_t();
+        ok     = new button_t();
+        cancel = new button_t();
 
         text->x      = 110;
         text->y      = 10;
@@ -125,12 +125,12 @@ void open_set_nickname_dialog() {
 //        ok;
  //       cancel;
 
-        dialog->~window_t();
+        delete dialog;
     } else {
         logger.log(CHANNEL_WARN, "connect to a server before setting your nickname you phycopath\n");
 
-        text   = &label_t();
-        ok     = &button_t();
+        text   = new label_t();
+        ok     = new button_t();
 
         text->x      = 10;
         text->y      = 10;
@@ -159,7 +159,7 @@ void open_set_nickname_dialog() {
         dialog->set_size(320, 70);
         dialog->show(1);
 
-        dialog->~window_t();
+        delete dialog;
     }
     lock = 0;
 }

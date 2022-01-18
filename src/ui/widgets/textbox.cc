@@ -33,6 +33,7 @@
 void textbox_t::default_submit(textbox_t* tb, char* c, int d) {};
 
 int textbox_t::keypress(uint32_t key, uint16_t mod) {
+    unsigned char K = key & 0xff; // for some reason it comes out as 0xFF(key)
 #ifdef WIN32
     if (key == 8) {
 #else
@@ -47,7 +48,7 @@ int textbox_t::keypress(uint32_t key, uint16_t mod) {
 #ifdef WIN32
         if ((key == 10 || key == 13) && this->multiline == 0) {
 #else
-        if (key == 0xd && (this->multiline ==2  || (this->multiline == 0 && !(mod&XCB_MOD_MASK_SHIFT)))) {
+        if ((key == 0xd || key == 0xff0d) && (this->multiline == 2 || (this->multiline == 0 && !(mod&XCB_MOD_MASK_SHIFT)))) {
 #endif
             this->submit(this, this->text, this->textlen);
             return 1;
@@ -55,7 +56,7 @@ int textbox_t::keypress(uint32_t key, uint16_t mod) {
 
 #ifndef WIN32
         if (key == 0xff0d || key==0xd) key = '\n';
-        if (key == 0xe1 || key == 0xe2 || key == 0xe3 || key == 0xe4 || key == 0xe5 || key == 0xe6 || key == 0xe7 || key == 0xe8 || key == 0xe9 ) { return 1; }
+        if (K == 0xe1 || K == 0xe2 || K == 0xe3 || K == 0xe4 || K == 0xe5 || K == 0xe6 || K == 0xe7 || K == 0xe8 || K == 0xe9 ) { return 1; }
 #endif
         this->textlen++;
 

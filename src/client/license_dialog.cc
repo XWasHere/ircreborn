@@ -39,12 +39,12 @@ void open_license_dialog() {
     if (lock) return;
     lock = 1;
 
-    dialog = &window_t();
+    dialog = new window_t();
     
-    ok = &button_t();
-    text0 = &label_t();
-    text1 = &label_t();
-    text2 = &label_t();
+    ok = new button_t();
+    text0 = new label_t();
+    text1 = new label_t();
+    text2 = new label_t();
 
     text0->set_text("This program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.");
     text0->bg_color = get_node_rgb(config->theme, "common.primary_color");
@@ -92,7 +92,7 @@ void open_license_dialog() {
     dialog->bg_color = get_node_rgb(config->theme, "common.primary_color");
     dialog->show(1);
 
-    dialog->~window_t();
+    delete dialog;
     
     lock = 0;
 }
