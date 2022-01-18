@@ -29,6 +29,13 @@ int  widget_t::mousemove(int c, int d) { return 1; }
 int  widget_t::keypress(uint32_t c, uint16_t s) { return 1; }
 int  widget_t::scroll_up() { return 1; }
 int  widget_t::scroll_down() { return 1; }
+void widget_t::window_set(window_t* w) { this->window = w; }
+
+void* widget_t::operator new(size_t count) {
+    void* ptr = malloc(count);
+    memset(ptr, 0, count);
+    return ptr;
+}
 
 widget_t::widget_t() {
     this->x = 0;

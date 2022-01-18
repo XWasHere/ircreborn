@@ -1,2 +1,1 @@
-b debug_point
-skip pread
+handle SIGSEGV nostop

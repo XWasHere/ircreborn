@@ -214,9 +214,9 @@ void label_t::set_text(char* text) {
 }
 
 void* label_t::operator new(size_t count) {
-    label_t* _this = malloc(sizeof(label_t));
-
-    return _this;
+    void* t = malloc(count);
+    memset(t, 0, count);
+    return t;
 }
 
 void label_t::operator delete(void* address) {

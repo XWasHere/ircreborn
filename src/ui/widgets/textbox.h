@@ -31,6 +31,8 @@ class textbox_t : public widget_t {
         static void default_submit(textbox_t* tb, char* text, int textlen);
 
     public:
+        textbox_t();
+
         int multiline;
 
         char* text;

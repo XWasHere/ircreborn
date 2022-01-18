@@ -199,9 +199,9 @@ void button_t::set_text(char* text) {
 }
 
 void* button_t::operator new(size_t count) {
-    button_t* _this = malloc(count);
-
-    return _this;
+    void* t = malloc(count);
+    memset(t, 0, count);
+    return t;
 }
 
 void button_t::operator delete(void* address) {

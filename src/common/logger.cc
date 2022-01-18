@@ -98,54 +98,6 @@ void logger_t::log(int id, char* format, ...) {
     
     data2 = (char*)malloc(dlen + 1);
     vsprintf(data2, format, args);
-    printf("%s\n", data2);
-    
-    data = (char*)malloc(dlen + 5 + this->width);
-    if (check_pointer_valid(channel->name)) {
-        sprintf(data, " %-*s | %s", this->width, channel->name, data2);
-    } else {
-        sprintf(data, " %-*s | %s", this->width, "UKWN", data2);
-    }
-
-    write(channel->fd, data, strlen(data));
-
-    free(data);
-    free(data2);
-}
-
-void logger_t::vlog(logger_channel_t* channel, char* format, va_list args) {
-    char* data;
-    char* data2;
-    
-    va_list fargs;
-    va_copy(fargs, args);
-
-    int flen = strlen(format);
-    int dlen = 0;
-    for (int i = 0; i < flen; i++) {
-        if (format[i] == '%') {
-            i++;
-            if (format[i] == '%') {
-                dlen++;
-            } else if (format[i] == 's') {
-                dlen += strlen(va_arg(fargs, char*));
-            } else if (format[i] == 'i') {
-                dlen += 32;
-                va_arg(fargs, int);
-            } else if (format[i] == 'x') {
-                dlen += 16;
-                va_arg(fargs, int);
-            } else {
-                dlen++;
-            }
-        } else {
-            dlen++;
-        }
-    }
-    
-    data2 = (char*)malloc(dlen + 1);
-    vsprintf(data2, format, args);
-    printf("%s\n", data2);
     
     data = (char*)malloc(dlen + 5 + this->width);
     if (check_pointer_valid(channel->name)) {

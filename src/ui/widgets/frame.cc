@@ -100,11 +100,15 @@ int frame_t::clicked(int x, int y) {
     return 1;
 }
 
+frame_t::frame_t() {
+    this->item_count = 0;
+    this->items      = (frame_managed_t**)malloc(1);
+}
+
 void* frame_t::operator new(size_t count) {
-    frame_t* _this = malloc(sizeof(frame_t));
-    _this->item_count = 0;
-    _this->items      = (frame_managed_t**)malloc(1);
-    return _this;
+    void* t = malloc(count);
+    memset(t, 0, count);
+    return t;
 }
 
 void frame_t::operator delete(void* address) {

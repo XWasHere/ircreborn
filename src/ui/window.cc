@@ -16,6 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// first c++ header wow
+#include <typeinfo>
 #include <main.h>
 #include <common/util.h>
 #include <ui/uitypes.h>
@@ -24,6 +26,7 @@
 #include <stdlib.h>
 #include <common/attrib.h>
 #include <common/logger.h>
+#include <sys/wait.h>
 
 #ifdef WIN32
 #include <windows.h> // ugh.
@@ -679,6 +682,12 @@ void window_t::show(int all) {
 
             window->handle_bg_tasks(window);
         }
+         
+        timespec sec;
+        timespec rem;
+        sec.tv_sec =  0;
+        sec.tv_nsec = 1000L; 
+        nanosleep(&sec, &rem);
     }
 
     free(proto);
@@ -704,7 +713,8 @@ void window_t::add_widget(widget_t* widget) {
     this->widgets = (widget_t**)realloc(this->widgets, (this->widget_count+1) * sizeof(void*));
     this->widgets[this->widget_count] = widget;
     widget->hovered = 0;
-    this->widget_count++;    
+    this->widget_count++;
+    widget->window_set(this);
 }
 
 void window_t::remove_widget(widget_t* widget) {

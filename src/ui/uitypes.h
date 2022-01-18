@@ -62,16 +62,20 @@ class widget_t {
         widget_t();
         ~widget_t();
 
-        void draw();
-        int  clicked(int x, int y);
-        int  mousein();
-        int  mouseout();
-        int  mousedown(int x, int y);
-        int  mouseup(int x, int y);
-        int  mousemove(int x, int y);
-        int  keypress(uint32_t key, uint16_t mod);
-        int  scroll_up();
-        int  scroll_down();
+        void* operator new(size_t count);
+        void  operator delete(void* addr);
+
+        virtual void draw();
+        virtual int  clicked(int x, int y);
+        virtual int  mousein();
+        virtual int  mouseout();
+        virtual int  mousedown(int x, int y);
+        virtual int  mouseup(int x, int y);
+        virtual int  mousemove(int x, int y);
+        virtual int  keypress(uint32_t key, uint16_t mod);
+        virtual int  scroll_up();
+        virtual int  scroll_down();
+        virtual void window_set(window_t* window);
 };
 
 // death of all good things

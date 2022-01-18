@@ -31,7 +31,7 @@ class menubar_t : public widget_t {
 
     public:
         menubar_t();
-        
+
         void* operator new(size_t count);
         void  operator delete(void* address);
 
@@ -45,6 +45,7 @@ class menubar_t : public widget_t {
         void    draw();
         int     clicked(int x, int y);
         menu_t* add_menu(char* name);
+        void    window_set(window_t* window);
 };
 
 class menu_t : public widget_t {

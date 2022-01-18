@@ -64,7 +64,25 @@ menubar_t::menubar_t() {
 }
 
 void* menubar_t::operator new(size_t count) {
-    return malloc(sizeof(menubar_t));
+    void* t = malloc(count);
+    memset(t, 0, count);
+    return t;
+}
+
+void menubar_t::window_set(window_t* window) {
+    this->window = window;
+    this->container->window = window;
+    
+    for (int i = 0; i < this->menu_count; i++) {
+        this->menus[i]->window = window;
+        this->menus[i]->container->window = window;
+        this->menus[i]->open_button->window = window;
+
+        for (int ii = 0; ii < this->menus[i]->button_count; ii++) {
+            this->menus[i]->buttons[ii]->window = window;
+            this->menus[i]->buttons[ii]->button->window = window;
+        }
+    }
 }
 
 void menubar_t::operator delete(void* address) {
@@ -117,10 +135,13 @@ menu_t::menu_t() {
     this->buttons       = (menubutton_t**)malloc(1);
     
     this->open_button->on_clicked = menubar_t::button_clicked;
+    this->open_button->parent = this;
 }
 
 void* menu_t::operator new(size_t count) {
-    return malloc(count);
+    void* t = malloc(count);
+    memset(t, 0, count);
+    return t;
 }
 
 void menu_t::operator delete(void* address) {
@@ -152,7 +173,10 @@ menu_t* menubar_t::add_menu(char* name) {
 
     menu->container->y = 20;
     menu->container->x = item->x;
-    
+    menu->container->window = this->window;
+    menu->open_button->window = this->window;
+    menu->parent = this;
+
     return menu;
 }
 
@@ -164,7 +188,9 @@ menubutton_t::menubutton_t() {
 }
 
 void* menubutton_t::operator new(size_t count) {
-    return malloc(count);
+    void* t = malloc(count);
+    memset(t, 0, count);
+    return t;
 }
 
 void menubutton_t::operator delete(void* address) {
@@ -177,18 +203,19 @@ menubutton_t* menu_t::add_button(char* name, void(*clicked)()) {
     this->button_count++;
     this->buttons = (menubutton_t**)realloc(this->buttons, sizeof(void*) * this->button_count);
     
-    menubutton_t* button = &menubutton_t();
-
+    menubutton_t* button = new menubutton_t();
     button->button->width = strlen(name) * 10;
-
+    button->button->parent = button;
     button->button->set_text(name);
+    button->parent = this;
+    button->on_click = clicked;
 
     frame_managed_t* item = this->container->add_item(button->button);
     item->x = 0;
     item->y = this->next_button_y;
 
     this->next_button_y += 20;
-
     this->buttons[this->button_count-1] = button;
+
     return button;
 }

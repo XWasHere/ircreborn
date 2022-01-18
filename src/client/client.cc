@@ -432,9 +432,10 @@ void client_main() {
     
     strip->container->bg_color = get_node_rgb(config->theme, "common.primary_color");
     filemenu->open_button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    filemenu->open_button->text_color = get_node_rgb(config->theme, "common.text_color");
     exitbutton->button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
+    exitbutton->button->text_color = get_node_rgb(config->theme, "common.text_color");
     servermenu->open_button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
-
     servermenu->open_button->text_color = get_node_rgb(config->theme, "common.text_color");
     setnicknamebutton->button->bg_color = get_node_rgb(config->theme, "common.secondary_color");
     setnicknamebutton->button->text_color = get_node_rgb(config->theme, "common.text_color");
