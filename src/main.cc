@@ -29,28 +29,28 @@ int CHANNEL_WARN;
 int CHANNEL_FATL;
 int CHANNEL_DBUG;
 
-logger_t logger;
+logger_t* logger;
 
 int main(int argc, char** argv) {
-    logger = logger_t();
+    logger = new logger_t();
 
-    CHANNEL_INFO = logger.add_channel(1, "INFO");
-    CHANNEL_WARN = logger.add_channel(1, "WARN");
-    CHANNEL_FATL = logger.add_channel(1, "FATL");
-    CHANNEL_DBUG = logger.add_channel(1, "DBUG");
+    CHANNEL_INFO = logger->add_channel(1, "INFO");
+    CHANNEL_WARN = logger->add_channel(1, "WARN");
+    CHANNEL_FATL = logger->add_channel(1, "FATL");
+    CHANNEL_DBUG = logger->add_channel(1, "DBUG");
     
     parse_args(argc, argv);
 
-    logger.log(CHANNEL_INFO, "%s v1.0.0\n", args_exec_name);
+    logger->log(CHANNEL_INFO, "%s v1.0.0\n", args_exec_name);
     
     if (args_is_server) {
-        logger.log(CHANNEL_INFO, "starting server\n");
+        logger->log(CHANNEL_INFO, "starting server\n");
         server_main();
     } else if (args_test) {
-        logger.log(CHANNEL_INFO, "running ircreborn tests\n");
+        logger->log(CHANNEL_INFO, "running ircreborn tests\n");
         run_tests();
     } else {
-        logger.log(CHANNEL_INFO, "starting client\n");
+        logger->log(CHANNEL_INFO, "starting client\n");
         client_main();
     }
 }

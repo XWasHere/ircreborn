@@ -127,7 +127,7 @@ void open_set_nickname_dialog() {
 
         delete dialog;
     } else {
-        logger.log(CHANNEL_WARN, "connect to a server before setting your nickname you phycopath\n");
+        logger->log(CHANNEL_WARN, "connect to a server before setting your nickname you phycopath\n");
 
         text   = new label_t();
         ok     = new button_t();

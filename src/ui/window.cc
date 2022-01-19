@@ -543,7 +543,7 @@ void window_t::show(int all) {
 
     while (ret = GetMessage(msg, 0, 0, 0)) {
         if (ret == -1) {
-            logger.log(CHANNEL_FATL, "something broke\n");
+            logger->log(CHANNEL_FATL, "something broke\n");
         } else {
             TranslateMessage(msg);
             DispatchMessage(msg);
@@ -595,7 +595,7 @@ void window_t::show(int all) {
                         if (type == wm_delete->atom) {
                             window->close();
                         } else {
-                            logger.log(CHANNEL_DBUG, "got unknown message from the window manager, ignoring (%i)\n", type);
+                            logger->log(CHANNEL_DBUG, "got unknown message from the window manager, ignoring (%i)\n", type);
                         }
 
                         break;
@@ -618,7 +618,7 @@ void window_t::show(int all) {
                         } else if (event->detail == XCB_BUTTON_INDEX_4 || event->detail == XCB_BUTTON_INDEX_5) {
 
                         } else {
-                            logger.log(CHANNEL_DBUG, "got unknown button press type %i\n", event->detail);
+                            logger->log(CHANNEL_DBUG, "got unknown button press type %i\n", event->detail);
                         }
                         
                         break;
@@ -633,7 +633,7 @@ void window_t::show(int all) {
                         } else if (event->detail == XCB_BUTTON_INDEX_5) {
                             window->scroll_down(event->event_x, event->event_y);
                         } else {
-                            logger.log(CHANNEL_DBUG, "got unknown button press type %i\n", event->detail);
+                            logger->log(CHANNEL_DBUG, "got unknown button press type %i\n", event->detail);
                         }
 
                         break;
@@ -671,7 +671,7 @@ void window_t::show(int all) {
                         break;
                     }
                     default: {
-                        logger.log(CHANNEL_DBUG, "got unknown message from xcb %i\n", e->response_type & ~0x80);
+                        logger->log(CHANNEL_DBUG, "got unknown message from xcb %i\n", e->response_type & ~0x80);
                         break;
                     }
                 }
