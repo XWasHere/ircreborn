@@ -27,9 +27,19 @@ the ircreborn client is configured in "~/.ircreborn/client"
 the format it uses is explained in the following sections
 
 @menu
+* toplevel config options::
 * server config block::
+* themes::
 @end menu
-@node server config block, ircreborn server, configuring the client, configuring the client
+@node toplevel config options, server config block, configuring the client, configuring the client
+heres options that dont fit anywhere else
+
+nick_width - specifies how much padding is in the nickname area.
+
+@example
+nick_width 100
+@end example
+@node server config block, themes, toplevel config options, configuring the client
 this is the server config block :)
 
 @example
@@ -59,6 +69,35 @@ server "example server" @{
     host "127.0.0.1"
     port 10010
     nick "xwashere"
+@}
+@end example
+
+@node themes, ircreborn server, server config block, configuring the client
+this is a theme block:
+
+@example
+theme @{
+
+@}
+@end example
+
+its a bit weird so i'll explain it a different way.
+
+imagine it as a tree: theres branches and leaves
+
+that's a stupid analogy, heres the default as of 19-1-2022!
+
+@example
+theme @{
+    common @{
+        primary_color #000000ff
+        secondary_color #080808ff
+        tertiary_color #1f1f1fff
+        scrollbar_track_color #000000ff
+        scrollbar_button_color #1f1f1fff
+        scrollbar_thumb_color #2f2f2fff
+        text_color #ffffffff
+    @}
 @}
 @end example
 
