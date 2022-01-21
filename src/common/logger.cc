@@ -100,12 +100,9 @@ void logger_t::log(int id, char* format, ...) {
     vsprintf(data2, format, args);
     
     data = (char*)malloc(dlen + 5 + this->width);
-    if (check_pointer_valid(channel->name)) {
-        sprintf(data, " %-*s | %s", this->width, channel->name, data2);
-    } else {
-        sprintf(data, " %-*s | %s", this->width, "UKWN", data2);
-    }
-
+    
+    sprintf(data, " %-*s | %s", this->width, channel->name, data2);
+    
     write(channel->fd, data, strlen(data));
 
     free(data);

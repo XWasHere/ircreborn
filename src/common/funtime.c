@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifdef LAST_RESORT
 #include <setjmp.h>
 #include <signal.h>
 
@@ -52,3 +53,4 @@ int check_pointer_valid(void* addr) {
     sigprocmask(SIG_UNBLOCK, &stuff, 0);
     return valid;
 }
+#endif
