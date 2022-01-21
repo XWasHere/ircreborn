@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <common/attrib.h>
 #include <common/logger.h>
-#include <sys/wait.h>
 
 #ifdef WIN32
 #include <windows.h> // ugh.
@@ -36,6 +35,7 @@
 #include <xcb/xcb.h>
 #include <sys/time.h>
 #include <ui/util/font_search.h>
+#include <sys/wait.h>
 #endif
 
 
@@ -276,31 +276,31 @@ LRESULT proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) {
     switch (message) {
         // please also update the delete code in the xorg part
         case WM_CLOSE: {
-            window_t::close(me);
+            me->close();
             return 0;
         }
         case WM_PAINT: {
-            window_t::paint(me);
+            me->paint();
             return 0;
         }
         case WM_LBUTTONDOWN: {
             ClipCursor(&me->client_rect);
             int cx = LOWORD(otherthing); 
             int cy = HIWORD(otherthing);
-            window_t::left_mouse_down(me, cx, cy);
+            me->left_mouse_down(cx, cy);
             return 0;
         }
         case WM_LBUTTONUP: {
             int cx = LOWORD(otherthing); 
             int cy = HIWORD(otherthing);
             ClipCursor(0);
-            window_t::left_mouse_up(me, cx, cy);
+            me->left_mouse_up(cx, cy);
             return 0;
         }
         case WM_MOUSEMOVE: {
             int cx      = LOWORD(otherthing); 
             int cy      = HIWORD(otherthing);
-            window_t::mouse_move(me, cx, cy);
+            me->mouse_move(cx, cy);
             return 0;
         }
         case WM_MOVE:
@@ -320,11 +320,11 @@ LRESULT proc(HWND window, UINT message, WPARAM thing, LPARAM otherthing) {
             
             SetRect(&me->client_rect, a.x, a.y, b.x, b.y);
 
-            window_t::resized(me, me->client_rect.right - me->client_rect.left, me->client_rect.bottom - me->client_rect.top);
+            me->resized(me->client_rect.right - me->client_rect.left, me->client_rect.bottom - me->client_rect.top);
             return 0;
         }
         case WM_CHAR: {
-            window_t::keypress(me, thing, 0);
+            me->keypress(thing, 0);
             return 0;
         }
         case WM_TIMER: {
@@ -342,7 +342,7 @@ window_t::window_t() {
 #ifdef WIN32
     this->instance                   = GetModuleHandle(0);
     this->window_class.style         = CS_HREDRAW | CS_VREDRAW;
-    this->window_class.lpfnWndProc   = &window_proc;
+    this->window_class.lpfnWndProc   = proc;
     this->window_class.cbClsExtra    = 0;
     this->window_class.cbWndExtra    = 0;
     this->window_class.hInstance     = this->instance;
@@ -533,13 +533,13 @@ void window_t::set_size(int width, int height) {
 
 void window_t::show(int all) {
 #ifdef WIN32
-    ShowWindow(window->window, SW_SHOWDEFAULT);
-    UpdateWindow(window->window);
+    ShowWindow(this->window, SW_SHOWDEFAULT);
+    UpdateWindow(this->window);
 
     MSG* msg = (MSG*)malloc(sizeof(MSG));
     int  ret;
 
-    SetTimer(window->window, 0, 10, 0);
+    SetTimer(this->window, 0, 10, 0);
 
     while (ret = GetMessage(msg, 0, 0, 0)) {
         if (ret == -1) {
@@ -547,7 +547,7 @@ void window_t::show(int all) {
         } else {
             TranslateMessage(msg);
             DispatchMessage(msg);
-            if (window->should_exit) {
+            if (this->should_exit) {
                 break;
             }
         }
@@ -572,7 +572,6 @@ void window_t::show(int all) {
 
     // main loop
     while (!this->should_exit) {
-         XInternAtom(this->display, "a", 0);
         for (int i = 0; i < window_count; i++) {
             window_t* window = windows[i];
             xcb_generic_event_t* e;

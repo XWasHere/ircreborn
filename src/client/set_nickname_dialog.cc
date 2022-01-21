@@ -149,7 +149,7 @@ void open_set_nickname_dialog() {
         text->text_color = get_node_rgb(config->theme, "common.text_color");
 
         ok->type = BUTTON_TEXT;
-        ok->set_text("well shit");
+        ok->set_text("ok");
         ok->bg_color = get_node_rgb(config->theme, "common.secondary_color");
         ok->text_color = get_node_rgb(config->theme, "common.text_color");
 

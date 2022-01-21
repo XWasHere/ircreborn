@@ -146,6 +146,10 @@ class window_t {
         void show(int all);
         void add_widget(widget_t* widget);
         void remove_widget(widget_t* widget);
+
+#ifdef WIN32
+        static window_t* resolve_window(HWND window);
+#endif
 };
 
 #endif

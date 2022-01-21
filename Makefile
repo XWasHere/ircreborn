@@ -6,7 +6,7 @@ CXX_ARGS  ?= -ggdb -Wall
 CXX_FARGS  = -Isrc -lgdi32 -lws2_32 -fpermissive
 CC        = x86_64-w64-mingw32-gcc
 CC_ARGS  ?= -ggdb -Wall
-CC_FARGS  = -Isrc -lgdi32 -lws2_32 -fpermissive
+CC_FARGS  = -Isrc -lgdi32 -lws2_32 # why was -fpermissive here?
 else 
 CXX       ?= g++
 CXX_ARGS  ?= -ggdb -Wall
@@ -16,7 +16,7 @@ CC_ARGS  ?= -ggdb -Wall
 CC_FARGS  = -Isrc -lxcb -lrt -lm -lX11 -lX11-xcb
 endif
 
-OBJS = \
+OBJS_CXX = \
 	build/main.o \
 	build/server/server.o \
 	build/client/client.o \
@@ -25,7 +25,6 @@ OBJS = \
 	build/common/args.o \
 	build/common/util.o \
 	build/common/logger.o \
-	build/common/funtime.o \
 	build/ui/window.o \
 	build/ui/widget.o \
 	build/ui/widgets/button.o \
@@ -42,6 +41,9 @@ OBJS = \
 	build/tests/tests.o \
 	build/compat/compat.o
 
+OBJS_CC = \
+	build/common/funtime.o
+
 DOCS = \
 	build/docs/ircreborn.info
 
@@ -52,22 +54,23 @@ all: ircreborn docs
 ifeq ($(MAKECMDGOALS),clean)
 else ifeq ($(MAKECMDGOALS),binit)
 else
-include $(OBJS:.o=.cc.d)
+include $(OBJS_CXX:.o=.cc.d)
+include $(OBJS_CC:.o=.c.d)
 endif
 
 build/docs/%.info: docs/%.tex
 	makeinfo -o $@ $<
 
 build/%.cc.d: src/%.cc
-	$(CXX) $(CXX_ARGS) $(CXX_FARGS) -M $< -MT $< -o $@
+	$(CXX) $(CXX_ARGS) $(CXX_FARGS) -MM $< -o $@ 
 
-build/%.cc.d: src/%.c
-	$(CC) $(CC_ARGS) $(CC_FARGS) -M $< -MT $< -o $@
+build/%.c.d: src/%.c
+	$(CC) $(CC_ARGS) $(CC_FARGS) -MM $< -o $@
 
 build/%.o: src/%.cc build/%.cc.d
 	$(CXX) $(CXX_ARGS) $(CXX_FARGS) -c $< -o $@
 
-build/%.o: src/%.c
+build/%.o: src/%.c build/%.c.d
 	$(CC) $(CC_ARGS) $(CC_FARGS) -c $< -o $@
 
 binit:
@@ -85,8 +88,8 @@ binit:
 	mkdir -p build/docs
 	mkdir -p build/compat
 
-ircreborn: binit  $(OBJS)
-	$(CXX) $(CXX_ARGS) $(OBJS) -o ircreborn $(CXX_FARGS)
+ircreborn: binit  $(OBJS_CC) $(OBJS_CXX)
+	$(CXX) $(CXX_ARGS) $(OBJS_CC) $(OBJS_CXX) -o ircreborn $(CXX_FARGS)
 
 install: ircreborn
 	install ircreborn                 $(PREFIX)/usr/bin
