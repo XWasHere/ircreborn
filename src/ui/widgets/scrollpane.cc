@@ -39,6 +39,18 @@ scroll_pane_t::scroll_pane_t() {
     this->thumb_dragging   = 0;
 }
 
+scroll_pane_t::~scroll_pane_t() {
+    for (int i = 0; i < this->itemc; i++) {
+        if (this->items[i] != 0) {
+            delete this->items[i]->widget;
+            free(this->items[i]);
+            this->items[i] = 0;
+        }
+    }
+
+    free(this->items);
+}
+
 void* scroll_pane_t::operator new(size_t count) {
     void* t = malloc(count);
     memset(t, 0, count);
@@ -46,15 +58,7 @@ void* scroll_pane_t::operator new(size_t count) {
 }
 
 void scroll_pane_t::operator delete(void* address) {
-    scroll_pane_t* _this = address;
-
-    for (int i = 0; i < _this->itemc; i++) {
-        free(_this->items[i]);
-    }
-
-    free(_this->items);
-
-    return _this;
+    free(address);
 }
 
 scroll_pane_item_t* scroll_pane_t::add_item(widget_t* widget) {
@@ -192,7 +196,7 @@ void scroll_pane_t::draw() {
         maskv
     );
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
-
+    free(r);
     
     r = xcb_alloc_color_reply(
         window->connection,
@@ -217,6 +221,8 @@ void scroll_pane_t::draw() {
     rect[0].width  = 20;
     rect[0].height = this->height;
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
+    free(r);
+    
     r = xcb_alloc_color_reply(
         window->connection,
         xcb_alloc_color(
@@ -240,6 +246,8 @@ void scroll_pane_t::draw() {
     rect[0].width  = 20;
     rect[0].height = 20;
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
+    free(r);
+    
     r = xcb_alloc_color_reply(
         window->connection,
         xcb_alloc_color(
@@ -263,6 +271,8 @@ void scroll_pane_t::draw() {
     rect[0].width  = 20;
     rect[0].height = 20;
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
+    free(r);
+    
     r = xcb_alloc_color_reply(
         window->connection,
         xcb_alloc_color(
@@ -287,6 +297,7 @@ void scroll_pane_t::draw() {
     rect[0].height = csize <= this->height ? 0 : ceil(tsize);
 //    printf("%i %i\n", csize, widget->height);
     xcb_poly_fill_rectangle(window->connection, window->window, window->gc, 1, rect);
+    free(r);
 
     xcb_flush(window->connection);
 #endif

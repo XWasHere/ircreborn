@@ -32,6 +32,8 @@ client_config_theme_tree_node_t* duplicate_node(client_config_theme_tree_node_t*
 rgba_t get_node_rgb(client_config_theme_tree_node_t* root, char* path);
 void _print_theme(client_config_theme_tree_node_t* node, int depth);
 void print_theme(client_config_theme_tree_node_t* root);
+void free_node(client_config_theme_tree_node_t* node, int delete_orphans);
+void theme_tree_fini();
 
 extern client_config_theme_tree_node_t* base_tree;
 

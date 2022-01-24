@@ -154,6 +154,7 @@ void window_t::paint() {
         this->gc,
         1, rect
     );
+    free(bg);
     free(rect);
 #endif
     for (int i = 0; i < this->widget_count; i++) {
@@ -510,6 +511,8 @@ void window_t::set_type(int type) {
         xcb_change_property(this->connection, XCB_PROP_MODE_REPLACE, this->window, wmtype->atom, 4, 32, 1, &wmtypedialog->atom);
     }
 
+    free(wmtype);
+    free(wmtypedialog);
 #endif
 }
 
@@ -679,7 +682,9 @@ void window_t::show(int all) {
                 free(e);
             }
 
-            window->handle_bg_tasks(window);
+            if (window->handle_bg_tasks) {
+                window->handle_bg_tasks(window);
+            }
         }
          
         timespec sec;
@@ -700,13 +705,24 @@ window_t::~window_t() {
 #else
     DestroyWindow(this->window);
 #endif
+   for (int i = 0; i < this->widget_count; i++) {
+        if (this->widgets[i] != 0) {
+            delete this->widgets[i];
+            this->widgets[i] = 0;
+        }
+    }
+
+    this->widget_count = 0;
+
     free(this->widgets);
+
     window_count_2--;
+    window_count--;
     if (window_count_2 == 0) {
         window_count = 0;
         free(windows);
     }
-}
+ }
 
 void window_t::add_widget(widget_t* widget) {
     this->widgets = (widget_t**)realloc(this->widgets, (this->widget_count+1) * sizeof(void*));

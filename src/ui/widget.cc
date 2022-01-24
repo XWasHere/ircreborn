@@ -37,6 +37,10 @@ void* widget_t::operator new(size_t count) {
     return ptr;
 }
 
+void widget_t::operator delete(void* address) {
+    free(address);
+}
+
 widget_t::widget_t() {
     this->x = 0;
     this->y = 0;

@@ -32,7 +32,8 @@ class textbox_t : public widget_t {
 
     public:
         textbox_t();
-
+        ~textbox_t();
+        
         int multiline;
 
         char* text;

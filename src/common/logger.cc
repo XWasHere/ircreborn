@@ -35,7 +35,10 @@ logger_t::logger_t() {
 
 logger_t::~logger_t() {
     for (int i = 0; i < this->channel_count; i++) {
-        if (this->channels[i]->kill_on_clean) free(this->channels[i]);
+        if (this->channels[i]->kill_on_clean) {
+            free(this->channels[i]->name);
+            free(this->channels[i]);
+        }
     }
     free(this->channels);
 }

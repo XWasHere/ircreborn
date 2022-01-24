@@ -53,4 +53,6 @@ int main(int argc, char** argv) {
         logger->log(CHANNEL_INFO, "starting client\n");
         client_main();
     }
+
+    delete logger;
 }

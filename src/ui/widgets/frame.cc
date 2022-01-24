@@ -75,6 +75,8 @@ void frame_t::draw() {
             1,
             &rect
         );
+
+        free(r);
 #endif
     }
 
@@ -112,13 +114,7 @@ void* frame_t::operator new(size_t count) {
 }
 
 void frame_t::operator delete(void* address) {
-    frame_t* _this = address;
-
-    for (int i = 0; i < _this->item_count; i++) {
-        free(_this->items[i]);
-    }
-    
-    free(_this->items);
+    free(address);
 }
 
 frame_managed_t* frame_t::add_item(widget_t* widget) {
@@ -131,4 +127,13 @@ frame_managed_t* frame_t::add_item(widget_t* widget) {
     this->items[this->item_count - 1] = managed;
     
     return managed;
+}
+
+frame_t::~frame_t() {
+    for (int i = 0; i < this->item_count; i++) {
+        delete this->items[i]->widget;
+        free(this->items[i]);
+    }
+
+    free(this->items);
 }

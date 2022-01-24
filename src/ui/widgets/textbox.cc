@@ -223,6 +223,8 @@ void textbox_t::draw() {
     xcb_flush(window->connection);
     
     // bye
+    free(tx);
+    free(r);
     free(rect);
 #endif
 }
@@ -236,6 +238,10 @@ textbox_t::textbox_t() {
     this->submit = textbox_t::default_submit;
 }
 
+textbox_t::~textbox_t() {
+    free(this->text);
+}
+
 void* textbox_t::operator new(size_t count) {
     void* t = malloc(count);
     memset(t, 0, count);
@@ -243,9 +249,5 @@ void* textbox_t::operator new(size_t count) {
 }
 
 void textbox_t::operator delete(void* address) {
-    textbox_t* _this = address;
-
-    if (_this->text != 0) {
-        free(_this->text);
-    }
+    free(address);
 }

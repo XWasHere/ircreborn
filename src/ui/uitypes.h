@@ -60,7 +60,7 @@ class widget_t {
         int hovered;
 
         widget_t();
-        ~widget_t();
+        virtual ~widget_t();
 
         void* operator new(size_t count);
         void  operator delete(void* addr);

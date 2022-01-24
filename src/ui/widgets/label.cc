@@ -201,6 +201,8 @@ void label_t::draw() {
 
     xcb_flush(this->window->connection);
     
+    free(tx);
+    free(bg);
     free(rect);
 #endif
 }
@@ -210,6 +212,8 @@ void label_t::set_text(char* text) {
 
     memset(buf, 0, strlen(text) + 1);
     strcpy(buf, text);
+    
+    free(this->text);
     this->text = buf;
 }
 
@@ -220,7 +224,14 @@ void* label_t::operator new(size_t count) {
 }
 
 void label_t::operator delete(void* address) {
-    label_t* _this = address;
+    free(address);
+}
 
-    free(_this);
+label_t::label_t() {
+    this->text    = malloc(1);
+    this->text[0] = 0;
+}
+
+label_t::~label_t() {
+    free(this->text);
 }

@@ -27,6 +27,9 @@
 
 class label_t : public widget_t {
     public:
+        label_t();
+        ~label_t();
+        
         void* operator new(size_t count);
         void  operator delete(void* address);
         

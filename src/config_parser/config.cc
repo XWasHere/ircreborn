@@ -293,6 +293,8 @@ client_config_t* cfgparser_parse_client_config(int fd) {
                         }
                     }
                 }
+                
+                free(tree);
             } else {
                 die("expected {");
             }
@@ -338,10 +340,18 @@ server_config_t* cfgparser_parse_server_config(int fd) {
 
 void client_config_free(client_config_t* config) {
     for (int i = 0; i < config->server_count; i++) {
-        free(config->servers[i]->host);
-        free(config->servers[i]->name);
+        if (config->servers[i]->host) {
+            free(config->servers[i]->host);
+        }
+        if (config->servers[i]->name) {
+            free(config->servers[i]->name);
+        }
+        if (config->servers[i]->nick) {
+            free(config->servers[i]->nick);
+        }
         free(config->servers[i]);
     }
     free(config->servers);
+    free_node(config->theme, 1);
     free(config);
 }

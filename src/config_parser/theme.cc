@@ -103,11 +103,23 @@ void register_theme_node(char* path, int type) {
         parent->value.branch.children = (client_config_theme_tree_node_t**)realloc(parent->value.branch.children, sizeof(void*) * parent->value.branch.child_count);
         parent->value.branch.children[parent->value.branch.child_count - 1] = node;
     }
+
+    for (int i = 0; i < path_len; i++) {
+        free(p[i]);
+    }
+    free(p);
 }
 
 void set_node_rgb(client_config_theme_tree_node_t* root, char* path, uint32_t value) {
-    client_config_theme_tree_node_t* node = get_theme_node(root, split_theme_path(path));
+    char** path2 = split_theme_path(path);
+
+    client_config_theme_tree_node_t* node = get_theme_node(root, path2);
     memcpy(&node->value.rgba.value, &value, sizeof(uint32_t));
+
+    for (int i = 0; path2[i] != 0; i++) {
+        free(path2[i]);
+    }
+    free(path2);
 }
 
 void set_node_default_rgb(char* path, uint32_t value) {
@@ -138,8 +150,42 @@ client_config_theme_tree_node_t* duplicate_node(client_config_theme_tree_node_t*
 }
 
 rgba_t get_node_rgb(client_config_theme_tree_node_t* root, char* path) {
-    client_config_theme_tree_node_t* out = get_theme_node(root, split_theme_path(path));
+    char** path2 = split_theme_path(path);
+    client_config_theme_tree_node_t* out = get_theme_node(root, path2);
+    
+    for (int i = 0; path2[i] != 0; i++) {
+        free(path2[i]);
+    }
+    free(path2);
+    
     return out->value.rgba.value;
+}
+
+void free_node(client_config_theme_tree_node_t* node, int free_orphaned) {
+    if (free_orphaned) {
+        if (node->type == NODE_TYPE_BRANCH) {
+            for (int i = 0; i < node->value.branch.child_count; i++) {
+                free_node(node->value.branch.children[i], 1);
+                node->value.branch.children[i] = 0;
+            }
+        }
+    }
+
+    if (node->type == NODE_TYPE_BRANCH) {
+        free(node->value.branch.children);
+    } else if (node->type == NODE_TYPE_RGBA) {
+        
+    }
+
+    if (node->name) {
+        free(node->name);
+    }
+
+    free(node);
+}
+
+void theme_tree_fini() {
+    free_node(base_tree, 1);
 }
 
 void _print_theme(client_config_theme_tree_node_t* node, int depth) {

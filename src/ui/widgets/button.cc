@@ -181,6 +181,9 @@ void button_t::draw() {
     xcb_flush(this->window->connection);
     
     // bye
+    free(bd);
+    free(tx);
+    free(bg);
     free(rect);
 #endif
 }
@@ -189,11 +192,21 @@ int button_t::clicked(int x, int y) {
     if (this->on_clicked) this->on_clicked(this, x, y);
 }
 
+button_t::button_t() {
+    this->text = malloc(1);
+    this->text[0] = 0;
+}
+
+button_t::~button_t() {
+    free(this->text);
+}
+
 // safely sets a button's text so it wont break when freeing it
 void button_t::set_text(char* text) {
     char* buf = (char*)malloc(strlen(text) + 1);
     memset(buf, 0, strlen(text) + 1);
     strcpy(buf, text);
+    free(this->text);
     this->text = buf;
     this->text_set = 1;
 }
@@ -205,9 +218,5 @@ void* button_t::operator new(size_t count) {
 }
 
 void button_t::operator delete(void* address) {
-    button_t* _this = address;
-    
-    if (_this->text && _this->text_set) {
-        free(_this->text);
-    }
+    free(address);
 }

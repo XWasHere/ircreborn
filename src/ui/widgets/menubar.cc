@@ -63,6 +63,36 @@ menubar_t::menubar_t() {
     this->next_menu_x= 0;
 }
 
+menubar_t::~menubar_t() {
+    this->container->item_count = 0;
+
+    for (int i = 0; i < this->menu_count; i++) {
+        free(this->container->items[i]);
+        delete this->menus[i];
+    }
+
+    free(this->menus);
+    delete this->container;
+}
+
+menubutton_t::~menubutton_t() {
+    delete this->button;
+}
+
+menu_t::~menu_t() {
+    this->container->item_count = 0;
+
+    for (int i = 0; i < this->button_count; i++) {
+        free(this->container->items[i]);
+        delete this->buttons[i];
+    }
+
+    delete this->open_button;
+    delete this->container;
+    
+    free(this->buttons);
+}
+
 void* menubar_t::operator new(size_t count) {
     void* t = malloc(count);
     memset(t, 0, count);
@@ -86,22 +116,7 @@ void menubar_t::window_set(window_t* window) {
 }
 
 void menubar_t::operator delete(void* address) {
-    menubar_t* _this = address;
-    for (int i = 0; i < _this->menu_count; i++) {
-        menu_t* menu = _this->menus[i];
-
-        for (int i = 0; i < menu->button_count; i++) {
-            menubutton_t* button = menu->buttons[i];
-
-            button->button->~button_t();
-        }
-        menu->container->~frame_t();
-        menu->open_button->~button_t();
-        free(menu->buttons);
-        menu->~menu_t();
-    }
-    free(_this->menus);
-    _this->container->~frame_t();
+    free(address);
 }
 
 int menubar_t::button_clicked(button_t* button, int x, int y) {
@@ -145,9 +160,7 @@ void* menu_t::operator new(size_t count) {
 }
 
 void menu_t::operator delete(void* address) {
-    menu_t* _this = address;
-
-    free(_this);
+    free(address);
 }
 
 menu_t* menubar_t::add_menu(char* name) {
@@ -157,10 +170,8 @@ menu_t* menubar_t::add_menu(char* name) {
     this->menus = (menu_t**)realloc(this->menus, sizeof(void*) * this->menu_count);
     this->menus[this->menu_count - 1] = menu;
     
-    menu->open_button->text = (char*)malloc(strlen(name) + 1);
+    menu->open_button->set_text(name);
     menu->open_button->type = BUTTON_TEXT;
-
-    strcpy(menu->open_button->text, name);
 
     menu->open_button->width = strlen(menu->open_button->text) * 10;
     menu->open_button->height = 20;
@@ -194,9 +205,7 @@ void* menubutton_t::operator new(size_t count) {
 }
 
 void menubutton_t::operator delete(void* address) {
-    menubutton_t* _this = address;
-
-    free(_this);
+    free(address);
 }
 
 menubutton_t* menu_t::add_button(char* name, void(*clicked)()) {

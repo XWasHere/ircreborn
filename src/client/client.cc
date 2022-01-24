@@ -481,20 +481,13 @@ void client_main() {
     main_window->show(1);
     
     // cleanup
-    delete strip;
-    for (int i = 0; i < serverlist->itemc; i++) {
-//        serverlist->items[i]->~();
-    }
-    serverlist->~scroll_pane_t();
-    for (int i = 0; i < messages->itemc; i++) {
-//    messagese->items[i]->widget);
-    }
-    messages->~scroll_pane_t();
-    messagebox->~textbox_t();
-    main_window->~window_t();
+    delete main_window;
+
     for (int i = 0; i < server_count; i++) {
         free(servers[i]);
     }
     free(servers);
+
     client_config_free(config);
+    theme_tree_fini();
 }

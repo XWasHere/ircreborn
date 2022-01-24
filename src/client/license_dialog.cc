@@ -21,23 +21,18 @@
 #include <ui/window.h>
 #include <client/client.h>
 
-static window_t* dialog;
-
-static button_t* ok;
-static label_t*  text0;
-static label_t*  text1;
-static label_t*  text2;
-
-static int lock = 0;
-
 static int ok_clicked(button_t* widget, int x, int y) {
-    dialog->should_exit = 1;
+    widget->window->should_exit = 1;
     return 1;
 }
 
 void open_license_dialog() {
-    if (lock) return;
-    lock = 1;
+    window_t* dialog;
+
+    button_t* ok;
+    label_t*  text0;
+    label_t*  text1;
+    label_t*  text2;
 
     dialog = new window_t();
     
@@ -93,6 +88,4 @@ void open_license_dialog() {
     dialog->show(1);
 
     delete dialog;
-    
-    lock = 0;
 }
