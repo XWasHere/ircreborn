@@ -22,7 +22,7 @@ theres a few features planned at the moment
 
 # Linux (pacman)
 
-to install ircreborn using pacman, just download one of the packages from the releases, then install it with `pacman -U (filename)`. yuo can also build the package from source using makepkg
+to install ircreborn using pacman, just download one of the packages from the releases, then install it with `pacman -U (filename)`. you can also build the package from source using makepkg
 
 # Linux (make)
 
