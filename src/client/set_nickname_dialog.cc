@@ -41,12 +41,12 @@ static int set_nickname_dialog_cancel_clicked(button_t* widget, int x, int y) {
 }
 
 static int set_nickname_dialog_ok_clicked(button_t* widget, int x, int y) {
-    if (sc_connected) {
+    if (sc != 0) {
         set_nickname_t* packet = (set_nickname_t*)malloc(sizeof(set_nickname_t));
         
         packet->nickname = entry->text;
         
-        send_set_nickname(sc, packet);
+//        send_set_nickname(sc, packet);
         
         free(packet);
     }
@@ -64,7 +64,7 @@ void open_set_nickname_dialog() {
     dialog->set_type(WINDOW_WM_TYPE_DIALOG);
     dialog->bg_color = get_node_rgb(config->theme, "common.primary_color");
 
-    if (sc_connected) {
+    if (sc != 0) {
         text   = new label_t();
         entry  = new textbox_t();
         ok     = new button_t();

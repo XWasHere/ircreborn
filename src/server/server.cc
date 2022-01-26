@@ -36,12 +36,11 @@
 #include <common/attrib.h>
 #include <common/logger.h>
 #include <networking/networking.h>
-#include <networking/types.h>
 #include <config_parser/config.h>
 #include <compat/compat.h>
 
 struct client {
-    int fd;
+    ircreborn_connection_t* connection;
     int has_nickname;
     char* nickname;
 };
@@ -53,7 +52,7 @@ struct client** clients;
 
 int find_client_id(int fd) {
     for (int i = 0; i < client_count; i++) {
-        if (clients[i]->fd == fd) return i;
+        if (clients[i]->connection->fd == fd) return i;
     }
     return -1;
 }
@@ -74,12 +73,12 @@ struct client* find_client(int fd) {
 }
 
 void send_client_message(struct client* client, char* msg, char* name) {
-    message_t* message = (message_t*)malloc(sizeof(message_t));
+    message_t* message = malloc(sizeof(message_t));
 
     message->message = msg;
     message->name    = name;
 
-    send_message(client->fd, message);
+//    send_message(client->connection->fd, message);
 
     free(message);
 }
@@ -98,9 +97,9 @@ void disconnect_client(struct client* client, int send_message, int automatic, i
     }
 
     if (send_message) {
-        char* buf = (char*)malloc(SSTRLEN("\"")+strlen(client->nickname)+automatic?SSTRLEN("\" auto disconnected by server"):SSTRLEN("\" disconnected")+has_reason?SSTRLEN(" [ ")+strlen(reason)+SSTRLEN(" ] "):0+1);
-        sprintf(
-            buf,
+        char* buf;
+        asprintf(
+            &buf,
             "\"%s\" %s%s%s%s", 
             client->nickname,
             automatic?"auto-disconnected by server":"disconnected",
@@ -197,6 +196,16 @@ void server_main() {
 #else
             int fd = accept(server, (struct sockaddr*)addr, (socklen_t*)addr_len);
 #endif
+            client_count++;
+            clients = (struct client**)realloc(clients, sizeof(void*) * client_count);
+            struct client* c = (struct client*)malloc(sizeof(struct client));
+            clients[client_count - 1] = c;
+            
+            c->nickname = (char*)malloc(5);
+            strcpy(c->nickname, "anon");
+
+            c->connection = new ircreborn_connection_t(fd);
+                        
             pollfd_count++;
             pollfds = (struct pollfd*)realloc(pollfds, pollfd_count * sizeof(struct pollfd));
             pollfds[pollfd_count - 1].fd = fd;
@@ -210,6 +219,32 @@ void server_main() {
             } else if (pollfds[i].revents & POLLHUP) {
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "connection lost");
             } else if (pollfds[i].revents & POLLIN) {
+                struct client* c = find_client(pollfds[i].fd);
+
+                c->connection->recv_packet();
+
+                ircreborn_packet_t* packet = c->connection->queue_get(0);
+
+                if (packet == 0) {
+                    close(pollfds[i].fd);
+                    disconnect_socket(pollfds[i].fd, 1, 1, 1, "malformed packet");
+                    goto done;
+                }
+                
+                if (packet->opcode == IRCREBORN_PROTO_V1_OP::HELLO) {
+                    logger->log(CHANNEL_DBUG, "GOT HELLO\n");
+
+                    ircreborn_phello_t* p = c->connection->queue_get_hello(1);
+
+                    printf("IDENT \"%s\" PROTO COUNT %i\n", p->ident, p->protocol_count);
+
+                    free(packet);
+                    free(p);
+                } else {
+                    free(c->connection->queue_get(1));
+                }
+                done:;
+/*
                 unused char c;
                 char* msgbuf = 0;
                 unused int   bufpos = 0;
@@ -244,7 +279,7 @@ void server_main() {
                         c->fd = pollfds[i].fd;
                         set_nickname_t* snpacket = (set_nickname_t*)malloc(sizeof(set_nickname_t));
                         snpacket->nickname = "anon";
-                        send_set_nickname(c->fd, snpacket);
+                        send_set_nickname(c->connection->fd, snpacket);
                         free(snpacket);
                     } else if (op == OPCODE_MESSAGE) {
                         struct client* c = find_client(pollfds[i].fd);
@@ -260,7 +295,7 @@ void server_main() {
                         c->nickname = nick->str;
                         packet->nickname = c->nickname;
 
-                        send_set_nickname(c->fd, packet);
+                        send_set_nickname(c->connection->fd, packet);
 
                         free(packet);
                         free(nick);
@@ -269,7 +304,7 @@ void server_main() {
                     free(msgbuf);
                     free(header);
                     fflush(0);
-                }
+                }*/
             }
         }
     }

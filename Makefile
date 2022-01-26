@@ -37,7 +37,6 @@ OBJS_CXX = \
 	build/config_parser/config.o \
 	build/config_parser/theme.o \
 	build/networking/networking.o \
-	build/networking/types.o \
 	build/tests/tests.o \
 	build/compat/compat.o
 

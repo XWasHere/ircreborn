@@ -36,7 +36,6 @@
 #include <config_parser/config.h>
 #include <config_parser/theme.h>
 #include <networking/networking.h>
-#include <networking/types.h>
 #include <client/set_nickname_dialog.h>
 #include <client/license_dialog.h>
 
@@ -54,6 +53,8 @@
 #ifdef WIN32
 WSADATA* wsadata;
 #endif 
+
+uint32_t allowed_protocols[] = { 1U };
 
 struct server {
     client_config_server_t* server;    
@@ -85,8 +86,7 @@ frame_t* dialogthinge;
 button_t* dialogbg;
 
 // server connection
-int sc;
-int sc_connected;
+ircreborn_connection_t* sc;
 
 int nextpos = 0;
 
@@ -103,10 +103,12 @@ int server_list_collapse_button_clicked(widget_t* widget, window_t* window, int 
 int server_button_clicked(button_t* widget, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
+            int fd;
+
             logger->log(CHANNEL_DBUG, "connecting to server %s\n", servers[i]->server->name);
             
-            if ((sc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                sc = 0;
+            if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                fd = 0;
 
 #ifdef WIN32
                 logger->log(CHANNEL_FATL, "socket(): %i\n", WSAGetLastError());
@@ -123,8 +125,8 @@ int server_button_clicked(button_t* widget, int x, int y) {
 
             inet_pton(AF_INET, servers[i]->server->host, &addr->sin_addr);
 
-            if (connect(sc, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
-                sc = 0;
+            if (connect(fd, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
+                fd = 0;
 #ifdef WIN32
                 logger->log(CHANNEL_FATL, "connect(): %s", format_error(WSAGetLastError()));
 #else
@@ -134,27 +136,27 @@ int server_button_clicked(button_t* widget, int x, int y) {
                 return 1;
             }
 
-            hello_t* hi = (hello_t*)malloc(sizeof(hello_t));
-            memset(hi, 0, sizeof(hello_t));
+            sc = new ircreborn_connection_t(fd);
 
-            hi->has_ident = 1; // we have an identity :)
-            hi->ident     = "xutils ircreborn client";
+            ircreborn_phello_t hello;
 
-            send_hello(sc, hi);
+            hello.ident          = "ircreborn_official_client";
+            hello.ident_length   = sizeof("ircreborn_official_client") - 1;
+            hello.protocols      = allowed_protocols;
+            hello.protocol_count = 1;
+
+            sc->send_hello(&hello);
 
             if (servers[i]->server->nick) {
                 set_nickname_t* setn = (set_nickname_t*)malloc(sizeof(set_nickname_t));
                 setn->nickname = servers[i]->server->nick;
 
-                send_set_nickname(sc, setn);
+//                send_set_nickname(sc->fd, setn);
 
                 free(setn);
             }
 
-            sc_connected = 1;
-
             free(addr);
-            free(hi);
             return 1;
         }
     }
@@ -207,7 +209,7 @@ struct server* server_list_add_server(scroll_pane_t* serverlist, client_config_s
 }
 
 void message_submit(textbox_t* tb, char* text, int len) {
-    if (sc_connected) {
+    if (sc != 0) {
         message_t* msg = (message_t*)malloc(sizeof(message_t));
 
         msg->message = (char*)malloc(len + 1);
@@ -216,7 +218,7 @@ void message_submit(textbox_t* tb, char* text, int len) {
         memset(msg->message, 0,    len + 1);
         memcpy(msg->message, text, len);
 
-        send_message(sc, msg);
+//        send_message(sc->fd, msg);
 
         free(msg->message);
         free(msg);
@@ -272,18 +274,19 @@ void client_add_message(window_t* window, char* message, char* name) {
 }
 
 void client_run_tasks(window_t* window) {
-    if (sc_connected) {
+/*
+    if (sc != 0) {
 #ifdef WIN32
         unsigned long data = 0;
         ioctlsocket(sc, FIONREAD, &data);
 #else
         int data = 0;
-        ioctl(sc, FIONREAD, &data);
+        ioctl(sc->fd, FIONREAD, &data);
 #endif
         if (data) {
             char* head = (char*)malloc(9);
             memset(head, 0, 9);
-            recv(sc, head, 8, 0);
+            recv(sc->fd, head, 8, 0);
 
             int op  = read_int(head);
             int len = read_int(head + 4);
@@ -293,7 +296,7 @@ void client_run_tasks(window_t* window) {
             // it wont crash
             char* body = (char*)malloc(len + 1);
             memset(body, 0, len + 1);
-            recv(sc, body, len, 0);
+            recv(sc->fd, body, len, 0);
 
             if (op == OPCODE_MESSAGE) {
                 nstring_t* msg  = read_string(body);
@@ -322,6 +325,7 @@ void client_run_tasks(window_t* window) {
             free(head);
         }
     }
+*/
 }
 
 void client_recalculate_sizes(window_t* window) {
@@ -387,6 +391,8 @@ void client_main() {
     set_node_default_rgb("common.scrollbar_thumb_color", RGBA(0x2f2f2fff));
     register_theme_node("common.text_color", NODE_TYPE_RGBA);
     set_node_default_rgb("common.text_color", RGBA(0xffffffff));
+
+    sc = 0;
 
 #ifdef WIN32
     wsadata = (WSADATA*)malloc(sizeof(WSADATA));
