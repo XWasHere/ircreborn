@@ -107,9 +107,11 @@ int ircreborn_connection::recv_packet() {
         // the packet headers instead
         if (data) {
             uint32_t length;
-
-            length = read_int(&length);
-
+            uint32_t* tmp = malloc(4);
+            
+            recv(this->fd, tmp, 4, 0);
+            length = read_int(tmp);
+            
             uint8_t* msg = malloc(length);
             recv(this->fd, msg, length, 0);
 
@@ -191,7 +193,7 @@ int ircreborn_connection::send_hello(ircreborn_phello_t* packet) {
 
 ircreborn_phello_t* ircreborn_connection::queue_get_hello(int consume) {
     if (this->protocol_version == 1) {
-        ircreborn_packet_t* in = this->queue_get(0);
+        ircreborn_packet_t* in = this->queue_get(consume);
 
         ircreborn_phello_t* packet = malloc(sizeof(ircreborn_phello_t));
         
@@ -208,6 +210,8 @@ ircreborn_phello_t* ircreborn_connection::queue_get_hello(int consume) {
         for (int i = 0; i < packet->protocol_count; i++) {
             packet->protocols[i] = read_int(in->payload + 4 + packet->ident_length + 4 + sizeof(uint32_t) * i);
         }
+        
+        printf("%i\n", packet->protocol_count);
 
         return packet;
     }
