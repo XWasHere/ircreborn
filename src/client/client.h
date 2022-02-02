@@ -20,11 +20,11 @@
 #define IRCREBORN_CLIENT_CLIENT_H
 
 #include <config_parser/config.h>
+#include <networking/networking.h>
 
 void client_main();
 
-extern int sc_connected;
-extern int sc;
-extern client_config_t* config;
+extern ircreborn_connection_t* connection;
+extern client_config_t*        config;
 
 #endif

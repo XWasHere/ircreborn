@@ -28,9 +28,7 @@ uint32_t read_int(void* buf);
 #define IRCREBORN_PROTO_V1_OP (uint8_t)__IRCREBORN_PROTO_V1_OP
 enum struct __IRCREBORN_PROTO_V1_OP : uint8_t {
     HELLO,
-    SELECT_PROTO,
-    SELECT_PROTO_FAIL,
-    SELECT_PROTO_ACCEPT,
+    SET_PROTO,
     SEND_MESSAGE,
     RECV_MESSAGE,
     SET_NICKNAME,
@@ -51,7 +49,7 @@ struct ircreborn_packet {
     uint8_t* payload;
 };
 
-// hello. sent to initiate protocol negotiation
+// hello. sent to begin protocol selection
 typedef struct ircreborn_phello ircreborn_phello_t;
 struct ircreborn_phello {
     // client identification string
@@ -61,25 +59,15 @@ struct ircreborn_phello {
     // supported protocol versions
     int       protocol_count;
     uint32_t* protocols;
+
+    // which side selects the protocol. 0 for server 1 for client. (only applicable to client)
+    int       master;
 };
 
-// requests to use a protocol
-typedef struct ircreborn_pselproto ircreborn_pselproto_t;
-struct ircreborn_pselproto {
-    uint32_t* protocol;
-};
-
-// refuses a protocol          (client->server)
-// aborts protocol negotiation (server->client)
-typedef struct ircreborn_pselfail ircreborn_pselfail_t;
-struct ircreborn_pselfail {
-
-};
-
-// accepts a protocol
-typedef struct ircreborn_pselacc ircreborn_pselaccept_t;
-struct ircreborn_pselaccept {
-
+// selects a protocol
+typedef struct ircreborn_pset_proto ircreborn_pset_proto_t;
+struct ircreborn_pset_proto {
+    uint32_t protocol;
 };
 
 // it sends a message
@@ -140,18 +128,28 @@ struct ircreborn_connection {
     ~ircreborn_connection();
 
     // send a packet
-    int send_packet(ircreborn_packet_t* packet);
-    int send_hello(ircreborn_phello_t* packet);
-
+    int send_packet          (ircreborn_packet_t* packet);
+    int send_hello           (ircreborn_phello_t* packet);
+    int send_set_proto       (ircreborn_pset_proto_t* packet);
+    int send_set_nickname    (ircreborn_pset_nickname_t* packet);
+    int send_nickname_updated(ircreborn_pnickname_updated_t* packet);
+    int send_recv_message    (ircreborn_precv_message_t* packet);
+    int send_send_message    (ircreborn_psend_message_t* packet);
+    
     // recieve a packet and add it to the queue  
     int recv_packet();
 
     // add a packet to the queue
-    void                queue_add(ircreborn_packet_t* packet);
-    // get a packet from the queue
-    ircreborn_packet_t* queue_get      (int consume);
-    ircreborn_phello_t* queue_get_hello(int consume);
+    void queue_add(ircreborn_packet_t* packet);
 
+    // get a packet from the queue
+    ircreborn_packet_t*            queue_get                 (int consume);
+    ircreborn_phello_t*            queue_get_hello           (int consume);
+    ircreborn_pset_proto_t*        queue_get_set_proto       (int consume);
+    ircreborn_pset_nickname_t*     queue_get_set_nickname    (int consume);
+    ircreborn_pnickname_updated_t* queue_get_nickname_updated(int consume);
+    ircreborn_precv_message_t*     queue_get_recv_message    (int consume);
+    ircreborn_psend_message_t*     queue_get_send_message    (int consume);
 };
 
 #endif

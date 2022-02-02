@@ -86,7 +86,9 @@ frame_t* dialogthinge;
 button_t* dialogbg;
 
 // server connection
-ircreborn_connection_t* sc;
+int connection_state = 0;
+char* await_set_nickname_data = 0;
+ircreborn_connection_t* connection = 0;
 
 int nextpos = 0;
 
@@ -136,24 +138,20 @@ int server_button_clicked(button_t* widget, int x, int y) {
                 return 1;
             }
 
-            sc = new ircreborn_connection_t(fd);
-
+            connection              = new ircreborn_connection_t(fd);
+            connection_state        = 0;
+            await_set_nickname_data = 0;
+            
             ircreborn_phello_t hello;
-
-            hello.ident          = "ircreborn_official_client";
-            hello.ident_length   = sizeof("ircreborn_official_client") - 1;
+            hello.ident          = "IRCREBORN_REFERENCE_CLIENT";
+            hello.ident_length   = 26;
             hello.protocols      = allowed_protocols;
             hello.protocol_count = 1;
-
-            sc->send_hello(&hello);
+            hello.master         = 0;
+            connection->send_hello(&hello);
 
             if (servers[i]->server->nick) {
-                set_nickname_t* setn = (set_nickname_t*)malloc(sizeof(set_nickname_t));
-                setn->nickname = servers[i]->server->nick;
-
-//                send_set_nickname(sc->fd, setn);
-
-                free(setn);
+                await_set_nickname_data = servers[i]->server->nick;
             }
 
             free(addr);
@@ -209,19 +207,11 @@ struct server* server_list_add_server(scroll_pane_t* serverlist, client_config_s
 }
 
 void message_submit(textbox_t* tb, char* text, int len) {
-    if (sc != 0) {
-        message_t* msg = (message_t*)malloc(sizeof(message_t));
-
-        msg->message = (char*)malloc(len + 1);
-        msg->name    = ""; // ignored
-
-        memset(msg->message, 0,    len + 1);
-        memcpy(msg->message, text, len);
-
-//        send_message(sc->fd, msg);
-
-        free(msg->message);
-        free(msg);
+    if (connection != 0) {
+        ircreborn_psend_message_t packet;
+        packet.message        = text;
+        packet.message_length = len;
+        connection->send_send_message(&packet);
 
         tb->cursorpos = 0;
         tb->textlen = 0;
@@ -274,6 +264,70 @@ void client_add_message(window_t* window, char* message, char* name) {
 }
 
 void client_run_tasks(window_t* window) {
+    if (connection != 0) {
+#ifdef WIN32
+        unsigned long data = 0;
+        ioctlsocket(sc, FIONREAD, &data);
+#else
+        int data = 0;
+        ioctl(connection->fd, FIONREAD, &data);
+#endif
+
+        if (data) {
+            connection->recv_packet();
+
+            ircreborn_packet_t* packet = connection->queue_get(0);
+
+            if (packet == 0) {
+                delete connection;
+                connection = 0;
+                return;
+            }
+            
+            if (packet->opcode == IRCREBORN_PROTO_V1_OP::HELLO) { 
+                ircreborn_packet_t* p = connection->queue_get(1);
+
+                free(p);
+            } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::SET_PROTO) {
+                ircreborn_pset_proto_t* p = connection->queue_get_set_proto(1);
+                connection->protocol_version = p->protocol;
+                logger->log(CHANNEL_DBUG, "using proto %i\n", connection->protocol_version);
+                
+                // if we just opened the connection, set the users nickname
+                if (connection_state == 0) {
+                    if (await_set_nickname_data) {
+                        ircreborn_pset_nickname_t packet;
+                        packet.nickname        = await_set_nickname_data;
+                        packet.nickname_length = strlen(await_set_nickname_data);
+                        connection->send_set_nickname(&packet);
+
+                        connection_state = 1;
+                    }
+                }
+
+                free(p);
+            } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::NICKNAME_UPDATED) {
+                ircreborn_pnickname_updated_t* p = connection->queue_get_nickname_updated(1);
+
+                char* notify_message = (char*)malloc(SSTRLEN("you are now known as \"") + p->nickname_length + sizeof("\""));
+                sprintf(notify_message, "you are now known as \"%s\"", p->nickname);
+
+                client_add_message(window, notify_message, " == ");
+                
+                free(p->nickname);
+                free(p);
+                free(notify_message);
+            } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::RECV_MESSAGE) {
+                ircreborn_precv_message_t* p = connection->queue_get_recv_message(1);
+
+                client_add_message(window, p->message, p->author);
+
+                free(p);
+            } else {
+                free(connection->queue_get(1));
+            }
+        }
+    }
 /*
     if (sc != 0) {
 #ifdef WIN32
@@ -391,8 +445,6 @@ void client_main() {
     set_node_default_rgb("common.scrollbar_thumb_color", RGBA(0x2f2f2fff));
     register_theme_node("common.text_color", NODE_TYPE_RGBA);
     set_node_default_rgb("common.text_color", RGBA(0xffffffff));
-
-    sc = 0;
 
 #ifdef WIN32
     wsadata = (WSADATA*)malloc(sizeof(WSADATA));

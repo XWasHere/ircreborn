@@ -41,6 +41,9 @@
 
 struct client {
     ircreborn_connection_t* connection;
+    
+    int state;
+
     int has_nickname;
     char* nickname;
 };
@@ -49,6 +52,11 @@ int             pollfd_count = 0;
 struct pollfd*  pollfds;
 int             client_count = 0;
 struct client** clients;
+
+uint32_t protocol_count = 1;
+uint32_t protocols[] = {
+    1
+};
 
 int find_client_id(int fd) {
     for (int i = 0; i < client_count; i++) {
@@ -78,14 +86,22 @@ void send_client_message(struct client* client, char* msg, char* name) {
     message->message = msg;
     message->name    = name;
 
-//    send_message(client->connection->fd, message);
+    ircreborn_precv_message_t packet;
+    packet.message        = msg;
+    packet.message_length = strlen(msg);
+    packet.author         = name;
+    packet.author_length  = strlen(name);
+    client->connection->send_recv_message(&packet);
 
     free(message);
 }
 
 void send_all_message(char* msg, char* name) {
     for (int i = 0; i < client_count; i++) {
-        send_client_message(clients[i], msg, name);
+        // dont send messages to clients that arent ready
+        if (clients[i]->state == 2) {
+            send_client_message(clients[i], msg, name);
+        }
     }
 }
 
@@ -122,6 +138,19 @@ void disconnect_socket(int fd, int send_message, int automatic, int has_reason, 
         pollfds[i] = pollfds[i + 1];
     }
     pollfd_count--;
+}
+
+void set_nickname(struct client* c, char* nick) {
+    int nlen = strlen(nick);
+
+    c->nickname = malloc(nlen+1);
+    memset(c->nickname, 0, nlen+1);
+    memcpy(c->nickname, nick, nlen);
+
+    ircreborn_pnickname_updated_t packet;
+    packet.nickname_length = nlen;
+    packet.nickname        = nick;
+    c->connection->send_nickname_updated(&packet);
 }
 
 void server_main() {
@@ -205,7 +234,15 @@ void server_main() {
             strcpy(c->nickname, "anon");
 
             c->connection = new ircreborn_connection_t(fd);
-                        
+            c->state = 0;
+
+            ircreborn_phello_t hello;
+            hello.ident = "IRCREBORN_REFERENCE_SERVER";
+            hello.ident_length = 27;
+            hello.protocol_count = protocol_count;
+            hello.protocols = protocols;
+            c->connection->send_hello(&hello);
+
             pollfd_count++;
             pollfds = (struct pollfd*)realloc(pollfds, pollfd_count * sizeof(struct pollfd));
             pollfds[pollfd_count - 1].fd = fd;
@@ -232,17 +269,64 @@ void server_main() {
                 }
                 
                 if (packet->opcode == IRCREBORN_PROTO_V1_OP::HELLO) {
-                    logger->log(CHANNEL_DBUG, "GOT HELLO\n");
-
                     ircreborn_phello_t* p = c->connection->queue_get_hello(1);
 
-                    printf("IDENT \"%s\" PROTO COUNT %i\n", p->ident, p->protocol_count);
+                    if (p->master) {
+                        // set connection to wait for selection
+                        c->state = 1;
+                    } else {
+                        uint32_t sel = 0;
 
-                    free(packet);
+                        for (int i = 0; i < p->protocol_count; i++) {
+                            for (int ii = 0; ii < protocol_count; ii++) {
+                                if (p->protocols[i] == protocols[ii]) {
+                                    if (sel < protocols[ii]) {
+                                        sel = protocols[ii];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (sel != 0) {
+                            ircreborn_pset_proto_t sp;
+                            sp.protocol = sel;
+                            c->connection->send_set_proto(&sp);
+                            c->connection->protocol_version = sel;
+                            c->state = 2;
+
+                            set_nickname(c, "anon");
+                        } else {
+                            disconnect_client(c, 0, 1, 1, "not supported");
+                        }
+                    }
+
+                    free(p);
+                } else if ((packet->opcode == IRCREBORN_PROTO_V1_OP::SET_PROTO) && (c->state == 1)) {
+                    ircreborn_pset_proto_t* p = c->connection->queue_get_set_proto(1);
+                    c->connection->protocol_version = p->protocol;
+                    c->state = 2;
+                    
+                    free(p);
+
+                    set_nickname(c, "anon");
+                } else if ((packet->opcode == IRCREBORN_PROTO_V1_OP::SET_NICKNAME) && (c->state == 2)) {
+                    ircreborn_pset_nickname_t* p = c->connection->queue_get_set_nickname(1);
+
+                    set_nickname(c, p->nickname);
+
+                    free(p);
+                } else if ((packet->opcode == IRCREBORN_PROTO_V1_OP::SEND_MESSAGE) && (c->state == 2)) {
+                    ircreborn_psend_message_t* p = c->connection->queue_get_send_message(1);
+
+                    send_all_message(p->message, c->nickname);
+
                     free(p);
                 } else {
+                    // drop the broken packet.
                     free(c->connection->queue_get(1));
                 }
+
                 done:;
 /*
                 unused char c;
