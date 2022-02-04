@@ -82,19 +82,12 @@ struct client* find_client(int fd) {
 }
 
 void send_client_message(struct client* client, char* msg, char* name) {
-    message_t* message = malloc(sizeof(message_t));
-
-    message->message = msg;
-    message->name    = name;
-
     ircreborn_precv_message_t packet;
     packet.message        = msg;
     packet.message_length = strlen(msg);
     packet.author         = name;
     packet.author_length  = strlen(name);
     client->connection->send_recv_message(&packet);
-
-    free(message);
 }
 
 void send_all_message(char* msg, char* name) {
@@ -173,6 +166,7 @@ void server_main() {
 
     struct sigaction* ono = malloc(sizeof(struct sigaction));
 
+    //TODO: make send_packet in networking.cc return an error if it cant send the message
     sigaction(SIGPIPE, no, ono); // ignore the annoying broken pipe signal.
 #endif
     char* config_path = args_config_path;
@@ -342,67 +336,6 @@ void server_main() {
                 }
 
                 done:;
-/*
-                unused char c;
-                char* msgbuf = 0;
-                unused int   bufpos = 0;
-
-                void* header = malloc(8);
-                int   buflen = 0;
-                int   op     = 0;
-
-                if (recv(pollfds[i].fd, (char*)header, 8, 0) == 0) {
-                    logger->log(CHANNEL_DBUG, "got 0 bytes of data. assuming broken connection. kicking\n");
-                    close(pollfds[i].fd);
-                    disconnect_socket(pollfds[i].fd, 1, 1, 1, "read error");
-                } else {
-                    op     = read_int(header);
-                    buflen = read_int(header + 4);
-                    
-                    msgbuf = (char*)malloc(buflen + 1);
-                    memset(msgbuf, 0, buflen + 1);
-
-                    unused int res = recv(pollfds[i].fd, msgbuf, buflen, 0);
-
-                    if (op == OPCODE_HELLO) {
-                        unused int has_ident    = read_bool(msgbuf);
-                        unused nstring_t* ident = read_string(msgbuf + 1);
-                        client_count++;
-                        clients = (struct client**)realloc(clients, sizeof(void*) * client_count);
-                        struct client* c = (struct client*)malloc(sizeof(struct client));
-                        clients[client_count - 1] = c;
-                        c->nickname = (char*)malloc(5);
-                        
-                        strcpy(c->nickname, "anon");
-                        c->fd = pollfds[i].fd;
-                        set_nickname_t* snpacket = (set_nickname_t*)malloc(sizeof(set_nickname_t));
-                        snpacket->nickname = "anon";
-                        send_set_nickname(c->connection->fd, snpacket);
-                        free(snpacket);
-                    } else if (op == OPCODE_MESSAGE) {
-                        struct client* c = find_client(pollfds[i].fd);
-                        nstring_t* imsg = read_string(msgbuf);
-                        send_all_message(imsg->str, c->nickname);
-                    } else if (op == OPCODE_SET_NICKNAME) {
-                        struct client* c = find_client(pollfds[i].fd);
-                        nstring_t* nick = read_string(msgbuf);
-                        set_nickname_t* packet = (set_nickname_t*)malloc(sizeof(set_nickname_t));
-
-                        logger->log(CHANNEL_DBUG, "client set nickname %s -> %s\n", c->nickname, nick->str);
-
-                        c->nickname = nick->str;
-                        packet->nickname = c->nickname;
-
-                        send_set_nickname(c->connection->fd, packet);
-
-                        free(packet);
-                        free(nick);
-                    }
-
-                    free(msgbuf);
-                    free(header);
-                    fflush(0);
-                }*/
             }
         }
     }

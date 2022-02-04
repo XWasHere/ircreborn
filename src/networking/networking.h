@@ -20,10 +20,11 @@
 #define IRCREBORN_NETWORKING_H
 
 #include <stdint.h>
-#include <networking/packet.h>
 
 void write_int(void* buf, uint32_t i);
 uint32_t read_int(void* buf);
+void write_bool(void* buf, uint8_t value);
+uint8_t read_bool(void* buf);
 
 #define IRCREBORN_PROTO_V1_OP (uint8_t)__IRCREBORN_PROTO_V1_OP
 enum struct __IRCREBORN_PROTO_V1_OP : uint8_t {

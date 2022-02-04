@@ -328,58 +328,6 @@ void client_run_tasks(window_t* window) {
             }
         }
     }
-/*
-    if (sc != 0) {
-#ifdef WIN32
-        unsigned long data = 0;
-        ioctlsocket(sc, FIONREAD, &data);
-#else
-        int data = 0;
-        ioctl(sc->fd, FIONREAD, &data);
-#endif
-        if (data) {
-            char* head = (char*)malloc(9);
-            memset(head, 0, 9);
-            recv(sc->fd, head, 8, 0);
-
-            int op  = read_int(head);
-            int len = read_int(head + 4);
-
-            // the nice thing about doing it this way, is even 
-            // if the client gets a message it doesn't recognize,
-            // it wont crash
-            char* body = (char*)malloc(len + 1);
-            memset(body, 0, len + 1);
-            recv(sc->fd, body, len, 0);
-
-            if (op == OPCODE_MESSAGE) {
-                nstring_t* msg  = read_string(body);
-                nstring_t* name = read_string(body + 4 + msg->len); 
-
-                client_add_message(window, msg->str, name->str);
-
-                free(msg->str);
-                free(msg);
-                free(name->str);
-                free(name);
-            } else if (op == OPCODE_SET_NICKNAME) {
-                nstring_t* nick = read_string(body);
-                
-                char* notify_message = (char*)malloc(SSTRLEN("you are now known as \"") + nick->len + sizeof("\""));
-                sprintf(notify_message, "you are now known as \"%s\"", nick->str);
-
-                client_add_message(window, notify_message, " == ");
-                
-                free(nick->str);
-                free(nick);
-                free(notify_message);
-            }
-
-            free(body);
-            free(head);
-        }
-    }
-*/
 }
 
 void client_recalculate_sizes(window_t* window) {
