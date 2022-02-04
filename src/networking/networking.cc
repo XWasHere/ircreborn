@@ -65,10 +65,13 @@ ircreborn_connection::ircreborn_connection(int fd) {
     this->protocol_version = 1;
     
     this->queue        = malloc(sizeof(void*) * 256);
+    memset(queue, 0, sizeof(void*) * 256);
     this->queue_bottom = 0;
     this->queue_size   = 256;
     this->queue_inuse  = 0;
     this->queue_top    = 0;
+    
+    this->next_id = 0;
 }
 
 ircreborn_connection::~ircreborn_connection() {
@@ -84,6 +87,7 @@ int ircreborn_connection::send_packet(ircreborn_packet_t* packet) {
             + packet->payload_length; // payload
 
         uint8_t* data = malloc(length + 4);
+        memset(data, 0, length + 4);
 
         write_int(data, length);
         write_int(data + 4, this->next_id);
@@ -153,6 +157,7 @@ void ircreborn_connection::queue_add(ircreborn_packet_t* packet) {
     if (this->queue_top == this->queue_size) {
         this->queue_size += 256;
         this->queue = realloc(this->queue, sizeof(void*) * this->queue_size);
+        memset(this->queue + sizeof(void*) * (this->queue_size - 256), 0, sizeof(void*) * 256);
     }
 
     this->queue[this->queue_top] = packet;
@@ -172,13 +177,14 @@ ircreborn_packet_t* ircreborn_connection::queue_get(int consume) {
 int ircreborn_connection::send_hello(ircreborn_phello_t* packet) {
     if (this->protocol_version == 1) {
         uint32_t payload_length = 0
-            + 4                      // ident length
-            + packet->ident_length   // ident
-            + 4                      // protocols length
-            + packet->protocol_count // protocols
-            + 1;                     // master
+            + 4                          // ident length
+            + packet->ident_length       // ident
+            + 4                          // protocols length
+            + packet->protocol_count * 4 // protocols
+            + 1;                         // master
         
         uint8_t* payload = malloc(payload_length);
+        memset(payload, 0, payload_length);
 
         write_int(payload, packet->ident_length);
         memcpy(payload+4, packet->ident, packet->ident_length);
@@ -212,11 +218,11 @@ ircreborn_phello_t* ircreborn_connection::queue_get_hello(int consume) {
         memcpy(packet->ident, in->payload + 4, packet->ident_length);
 
         packet->protocol_count = read_int(in->payload + 4 + packet->ident_length);
-        packet->protocols = malloc(sizeof(uint32_t) * packet->protocol_count);
-        memset(packet->protocols, 0, sizeof(uint32_t) * packet->protocol_count);
+        packet->protocols = malloc(4 * packet->protocol_count);
+        memset(packet->protocols, 0, 4 * packet->protocol_count);
         
         for (int i = 0; i < packet->protocol_count; i++) {
-            packet->protocols[i] = read_int(in->payload + 4 + packet->ident_length + 4 + sizeof(uint32_t) * i);
+            packet->protocols[i] = read_int(in->payload + 4 + packet->ident_length + 4 + 4 * i);
         }
         
         packet->master = read_bool(in->payload+4+packet->ident_length+4+packet->protocol_count*4);
@@ -233,6 +239,8 @@ int ircreborn_connection::send_set_proto(ircreborn_pset_proto_t* packet) {
             + 4; // chosen protocol
 
         uint8_t* payload = malloc(payload_length);
+        memset(payload, 0, payload_length);
+        
         write_int(payload, packet->protocol);
 
         ircreborn_packet_t packet2;
@@ -268,6 +276,8 @@ int ircreborn_connection::send_set_nickname(ircreborn_pset_nickname_t* packet) {
             + packet->nickname_length; // content
 
         uint8_t* payload = malloc(payload_length);
+        memset(payload, 0, payload_length);
+
         write_int(payload, packet->nickname_length);
         memcpy(payload+4, packet->nickname, packet->nickname_length);
 
@@ -306,6 +316,8 @@ int ircreborn_connection::send_nickname_updated(ircreborn_pnickname_updated_t* p
             + packet->nickname_length; // content
 
         uint8_t* payload = malloc(payload_length);
+        memset(payload, 0, payload_length);
+        
         write_int(payload, packet->nickname_length);
         memcpy(payload+4, packet->nickname, packet->nickname_length);
 
@@ -346,6 +358,7 @@ int ircreborn_connection::send_recv_message(ircreborn_precv_message_t* packet) {
             + packet->author_length; // author
         
         uint8_t* payload = malloc(payload_length);
+        memset(payload, 0, payload_length);
 
         write_int(payload, packet->message_length);
         memcpy(payload+4, packet->message, packet->message_length);
@@ -395,6 +408,8 @@ int ircreborn_connection::send_send_message(ircreborn_psend_message_t* packet) {
             + packet->message_length;  // content
 
         uint8_t* payload = malloc(payload_length);
+        memset(payload, 0, payload_length);
+        
         write_int(payload, packet->message_length);
         memcpy(payload+4, packet->message, packet->message_length);
 

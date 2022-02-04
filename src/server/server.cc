@@ -25,6 +25,7 @@
 #ifdef WIN32
 #include <winsock2.h>
 #else
+#include <sys/signal.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <poll.h>
@@ -161,6 +162,18 @@ void server_main() {
         logger->log(CHANNEL_FATL, "%s", format_error(WSAGetLastError()));
         exit(1);
     }
+#else
+    sigset_t bm;
+    sigemptyset(&bm);
+
+    struct sigaction* no = malloc(sizeof(struct sigaction));
+    no->sa_flags = 0;
+    no->sa_mask  = bm;
+    no->sa_handler = SIG_IGN;
+
+    struct sigaction* ono = malloc(sizeof(struct sigaction));
+
+    sigaction(SIGPIPE, no, ono); // ignore the annoying broken pipe signal.
 #endif
     char* config_path = args_config_path;
     if (config_path == 0) {
@@ -241,17 +254,18 @@ void server_main() {
             hello.ident_length = 27;
             hello.protocol_count = protocol_count;
             hello.protocols = protocols;
+            hello.master = 0;
             c->connection->send_hello(&hello);
 
             pollfd_count++;
             pollfds = (struct pollfd*)realloc(pollfds, pollfd_count * sizeof(struct pollfd));
             pollfds[pollfd_count - 1].fd = fd;
             pollfds[pollfd_count - 1].events = POLLIN;
+            pollfds[pollfd_count - 1].revents = 0;
         }
 
-        for (int i = 1; i < pollfd_count; i++) {
+        for (int i = 1; i < pollfd_count; i++) {            
             if (pollfds[i].revents & POLLERR) {
-                logger->log(CHANNEL_FATL, "error\n");
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "fatal error");
             } else if (pollfds[i].revents & POLLHUP) {
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "connection lost");
@@ -392,4 +406,11 @@ void server_main() {
             }
         }
     }
+
+#ifndef WIN32
+    sigaction(SIGPIPE, ono, no);
+
+    free(ono);
+    free(no);
+#endif
 }

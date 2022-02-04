@@ -144,7 +144,7 @@ int server_button_clicked(button_t* widget, int x, int y) {
             
             ircreborn_phello_t hello;
             hello.ident          = "IRCREBORN_REFERENCE_CLIENT";
-            hello.ident_length   = 26;
+            hello.ident_length   = 27;
             hello.protocols      = allowed_protocols;
             hello.protocol_count = 1;
             hello.master         = 0;
