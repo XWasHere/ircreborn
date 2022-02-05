@@ -143,6 +143,9 @@ struct ircreborn_connection {
     // add a packet to the queue
     void queue_add(ircreborn_packet_t* packet);
 
+    // free unused resources
+    void queue_compact();
+
     // get a packet from the queue
     ircreborn_packet_t*            queue_get                 (int consume);
     ircreborn_phello_t*            queue_get_hello           (int consume);

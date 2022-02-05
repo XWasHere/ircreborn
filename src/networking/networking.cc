@@ -166,6 +166,7 @@ ircreborn_packet_t* ircreborn_connection::queue_get(int consume) {
     ircreborn_packet_t* packet = this->queue[this->queue_bottom];
     
     if (consume) {
+        this->queue[this->queue_bottom] = 0;
         this->queue_bottom++;
     }
 
@@ -225,8 +226,9 @@ ircreborn_phello_t* ircreborn_connection::queue_get_hello(int consume) {
         
         packet->master = read_bool(in->payload+4+packet->ident_length+4+packet->protocol_count*4);
 
+        free(in->payload);
         free(in);
-
+    
         return packet;
     }
 }
@@ -261,6 +263,7 @@ ircreborn_pset_proto_t* ircreborn_connection::queue_get_set_proto(int consume) {
         ircreborn_pset_proto_t* packet = malloc(sizeof(ircreborn_pset_proto_t));
         packet->protocol = read_int(in->payload);
 
+        free(in->payload);
         free(in);
 
         return packet;
@@ -301,6 +304,7 @@ ircreborn_pset_nickname_t* ircreborn_connection::queue_get_set_nickname(int cons
         memset(packet->nickname, 0, packet->nickname_length + 1);
         memcpy(packet->nickname, in->payload + 4, packet->nickname_length);
 
+        free(in->payload);
         free(in);
 
         return packet;
@@ -341,6 +345,7 @@ ircreborn_pnickname_updated_t* ircreborn_connection::queue_get_nickname_updated(
         memset(packet->nickname, 0, packet->nickname_length + 1);
         memcpy(packet->nickname, in->payload + 4, packet->nickname_length);
 
+        free(in->payload);
         free(in);
 
         return packet;
@@ -393,6 +398,7 @@ ircreborn_precv_message_t* ircreborn_connection::queue_get_recv_message(int cons
         memset(packet->author, 0, packet->author_length+1);
         memcpy(packet->author, in->payload + 4 + packet->message_length + 4, packet->author_length);
         
+        free(in->payload);
         free(in);
 
         return packet;
@@ -433,8 +439,15 @@ ircreborn_psend_message_t* ircreborn_connection::queue_get_send_message(int cons
         memset(packet->message, 0, packet->message_length + 1);
         memcpy(packet->message, in->payload + 4, packet->message_length);
 
+        free(in->payload);
         free(in);
 
         return packet;
+    }
+}
+
+void ircreborn_connection::queue_compact() {
+    if (this->queue_bottom > 0) {
+
     }
 }

@@ -16,7 +16,12 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+
 #include <stdio.h>
+#include <stdlib.h>
+#ifndef WIN32
+#include <signal.h>
+#endif
 #include <common/args.h>
 #include <common/util.h>
 #include <client/client.h>
@@ -42,17 +47,36 @@ int main(int argc, char** argv) {
     parse_args(argc, argv);
 
     logger->log(CHANNEL_INFO, "%s v1.0.0\n", args_exec_name);
-    
+
+#ifndef WIN32
+    sigset_t bm;
+    sigemptyset(&bm);
+
+    struct sigaction* no = malloc(sizeof(struct sigaction));
+    no->sa_flags = 0;
+    no->sa_mask  = bm;
+    no->sa_handler = SIG_IGN;
+
+    struct sigaction* ono = malloc(sizeof(struct sigaction));
+
+    //TODO: make send_packet in networking.cc return an error if it cant send the message
+    sigaction(SIGPIPE, no, ono); // ignore the annoying broken pipe signal.
+#endif
+
     if (args_is_server) {
         logger->log(CHANNEL_INFO, "starting server\n");
         server_main();
-    } else if (args_test) {
-        logger->log(CHANNEL_INFO, "running ircreborn tests\n");
-        run_tests();
     } else {
         logger->log(CHANNEL_INFO, "starting client\n");
         client_main();
     }
+
+#ifndef WIN32
+    sigaction(SIGPIPE, ono, no);
+
+    free(ono);
+    free(no);
+#endif
 
     delete logger;
 }

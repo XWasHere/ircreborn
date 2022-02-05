@@ -287,6 +287,7 @@ void client_run_tasks(window_t* window) {
             if (packet->opcode == IRCREBORN_PROTO_V1_OP::HELLO) { 
                 ircreborn_packet_t* p = connection->queue_get(1);
 
+                free(p->payload);
                 free(p);
             } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::SET_PROTO) {
                 ircreborn_pset_proto_t* p = connection->queue_get_set_proto(1);

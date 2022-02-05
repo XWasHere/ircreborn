@@ -43,6 +43,8 @@
 struct client {
     ircreborn_connection_t* connection;
     
+    int queue_gc_ticks;
+
     int state;
 
     int has_nickname;
@@ -155,19 +157,6 @@ void server_main() {
         logger->log(CHANNEL_FATL, "%s", format_error(WSAGetLastError()));
         exit(1);
     }
-#else
-    sigset_t bm;
-    sigemptyset(&bm);
-
-    struct sigaction* no = malloc(sizeof(struct sigaction));
-    no->sa_flags = 0;
-    no->sa_mask  = bm;
-    no->sa_handler = SIG_IGN;
-
-    struct sigaction* ono = malloc(sizeof(struct sigaction));
-
-    //TODO: make send_packet in networking.cc return an error if it cant send the message
-    sigaction(SIGPIPE, no, ono); // ignore the annoying broken pipe signal.
 #endif
     char* config_path = args_config_path;
     if (config_path == 0) {
@@ -242,6 +231,7 @@ void server_main() {
 
             c->connection = new ircreborn_connection_t(fd);
             c->state = 0;
+            c->queue_gc_ticks = 0;
 
             ircreborn_phello_t hello;
             hello.ident = "IRCREBORN_REFERENCE_SERVER";
@@ -265,6 +255,13 @@ void server_main() {
                 disconnect_socket(pollfds[i].fd, 1, 1, 1, "connection lost");
             } else if (pollfds[i].revents & POLLIN) {
                 struct client* c = find_client(pollfds[i].fd);
+
+                c->queue_gc_ticks++;
+
+                if (c->queue_gc_ticks > 255) {
+                    c->connection->queue_compact();
+                    c->queue_gc_ticks = 0;
+                }
 
                 c->connection->recv_packet();
 
@@ -309,6 +306,8 @@ void server_main() {
                         }
                     }
 
+                    free(p->ident);
+                    free(p->protocols);
                     free(p);
                 } else if ((packet->opcode == IRCREBORN_PROTO_V1_OP::SET_PROTO) && (c->state == 1)) {
                     ircreborn_pset_proto_t* p = c->connection->queue_get_set_proto(1);
@@ -323,27 +322,25 @@ void server_main() {
 
                     set_nickname(c, p->nickname);
 
+                    free(p->nickname);
                     free(p);
                 } else if ((packet->opcode == IRCREBORN_PROTO_V1_OP::SEND_MESSAGE) && (c->state == 2)) {
                     ircreborn_psend_message_t* p = c->connection->queue_get_send_message(1);
 
                     send_all_message(p->message, c->nickname);
 
+                    free(p->message);
                     free(p);
                 } else {
                     // drop the broken packet.
-                    free(c->connection->queue_get(1));
+                    ircreborn_packet_t* p = c->connection->queue_get(1);
+                    
+                    free(p->payload);
+                    free(p);
                 }
 
                 done:;
             }
         }
     }
-
-#ifndef WIN32
-    sigaction(SIGPIPE, ono, no);
-
-    free(ono);
-    free(no);
-#endif
 }
