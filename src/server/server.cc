@@ -109,15 +109,25 @@ void disconnect_client(struct client* client, int send_message, int automatic, i
     }
 
     if (send_message) {
-        char* buf;
-        asprintf(
-            &buf,
+        int len = 1; // "
+        len += strlen(client->nickname);
+        len += 2; // " 
+        len += automatic?SSTRLEN("auto-disconnected by server"):SSTRLEN("disconnected");
+        len += has_reason?SSTRLEN(" [ ")+strlen(reason)+SSTRLEN(" ]"):0;
+        len += 1;
+
+        char* buf = malloc(len);
+        memset(buf, 0, len);
+
+        sprintf(
+            buf,
             "\"%s\" %s%s%s%s", 
             client->nickname,
             automatic?"auto-disconnected by server":"disconnected",
             has_reason?" [ ":"",
             has_reason?reason:"",
             has_reason?" ]":"");
+        
         send_all_message(buf, "==");
         free(buf);
     }

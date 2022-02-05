@@ -267,7 +267,7 @@ void client_run_tasks(window_t* window) {
     if (connection != 0) {
 #ifdef WIN32
         unsigned long data = 0;
-        ioctlsocket(sc, FIONREAD, &data);
+        ioctlsocket(connection->fd, FIONREAD, &data);
 #else
         int data = 0;
         ioctl(connection->fd, FIONREAD, &data);

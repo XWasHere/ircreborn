@@ -121,7 +121,7 @@ int ircreborn_connection::recv_packet() {
         // the packet headers instead
         if (data) {
             uint32_t length;
-            uint32_t* tmp = malloc(4);
+            uint8_t* tmp = malloc(4);
             
             recv(this->fd, tmp, 4, 0);
             length = read_int(tmp);
