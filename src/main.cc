@@ -27,7 +27,10 @@
 int CHANNEL_INFO;
 int CHANNEL_WARN;
 int CHANNEL_FATL;
-int CHANNEL_DBUG;
+int CHANNEL_VBS0;
+
+__attribute__ (( alias("CHANNEL_VBS0") )) 
+extern int CHANNEL_DBUG;
 
 logger_t* logger;
 
@@ -37,9 +40,11 @@ int main(int argc, char** argv) {
     CHANNEL_INFO = logger->add_channel(1, "INFO");
     CHANNEL_WARN = logger->add_channel(1, "WARN");
     CHANNEL_FATL = logger->add_channel(1, "FATL");
-    CHANNEL_DBUG = logger->add_channel(1, "DBUG");
-    
+    CHANNEL_VBS0 = logger->add_channel(1, "VBS0");
+
     parse_args(argc, argv);
+
+    logger->channels[CHANNEL_VBS0]->enabled = args_verbose > 0;
 
     logger->log(CHANNEL_INFO, "%s v1.0.0\n", args_exec_name);
     
