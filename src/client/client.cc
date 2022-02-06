@@ -229,6 +229,8 @@ void message_submit(textbox_t* tb, char* text, int len) {
         tb->text[0] = 0; 
 
         client_recalculate_sizes(main_window);
+        
+        tb->draw();
     }
 }
 

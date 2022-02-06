@@ -39,6 +39,9 @@ class scroll_pane_item_t : public widget_t {
 
 struct scroll_pane_t : public widget_t {
     public:
+        int                  ticks_for_update;
+        int                  ticks;
+        
         scroll_pane_item_t** items;
         int                  itemc;
 
