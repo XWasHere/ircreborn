@@ -34,6 +34,11 @@ void textbox_t::default_submit(textbox_t* tb, char* c, int d) {};
 
 int textbox_t::keypress(uint32_t key, uint16_t mod) {
     unsigned char K = key & 0xff; // for some reason it comes out as 0xFF(key)
+
+    if (key == 0) {
+        return 1;
+    }
+    
 #ifdef WIN32
     if (key == 8) {
 #else
@@ -68,7 +73,7 @@ int textbox_t::keypress(uint32_t key, uint16_t mod) {
         this->cursorpos++;
         this->text[this->cursorpos] = 0;
     }
-
+    
     if (this->on_keypress) this->on_keypress(this, key, mod);
 
     this->draw();
