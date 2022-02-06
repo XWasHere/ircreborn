@@ -1,10 +1,10 @@
-# ircreborn
+# IrcReborn
 
-## what is this
+## What Is This
 
 well. ircreborn was created because i felt that all the good platforms had too many paywalled features. 
 
-## planned features
+## Planned Features
 
 theres a few features planned at the moment
 
@@ -18,13 +18,13 @@ theres a few features planned at the moment
 - [ ] emojis
 - [ ] themes
 
-## install
+## Install
 
-# Linux (pacman)
+### Linux (pacman)
 
 to install ircreborn using pacman, just download one of the packages from the releases, then install it with `pacman -U (filename)`. you can also build the package from source using makepkg
 
-# Linux (make)
+### Linux (make)
 
 installing on linux should hopefully be pretty easy. you'll need libxcb installed
 
@@ -34,6 +34,6 @@ make
 make install
 ```
 
-# Windows
+### Windows
 
 to install on windows, just download ircreborn-win32.exe from the releases. you dont really need to install anything it should work out of the box.
