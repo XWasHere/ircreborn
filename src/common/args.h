@@ -24,6 +24,7 @@ extern int   args_is_server;
 extern char* args_config_path;
 extern int   args_listen_port;
 extern int   args_test;
+extern int   args_verbose;
 
 void parse_args(int argc, char** argv);
 

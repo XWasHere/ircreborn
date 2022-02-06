@@ -32,6 +32,9 @@ struct logger_channel {
 
     // the channel file descriptor
     int fd;
+
+    // self explanatory
+    int enabled;
 };
 
 // logger

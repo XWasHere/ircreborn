@@ -28,12 +28,14 @@ int   args_is_server;
 char* args_config_path;
 int   args_listen_port;
 int   args_test;
+int   args_verbose;
 
 void parse_args(int argc, char** argv) {
     args_exec_name = argv[0];
     args_config_path = 0;
     args_listen_port = 0;
-    
+    args_verbose = 0;
+
 #define next goto common_args_next;
 
     for (int i = 1; i < argc; i++) {
@@ -50,6 +52,9 @@ void parse_args(int argc, char** argv) {
             next;
         } else if (STREQ(argv[i], "--test")) {
             args_test = 1;
+            next;
+        } else if (STREQ(argv[i], "--verbose")) {
+            args_verbose++;
             next;
         }
 

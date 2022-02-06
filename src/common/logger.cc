@@ -53,7 +53,8 @@ int logger_t::add_channel(int fd, char* name) {
     channel->kill_on_clean = 1;
     channel->fd = fd;
     channel->name = (char*)malloc(strlen(name) + 1);
-    
+    channel->enabled = 1;
+
     strcpy(channel->name, name);
 
     int width = strlen(name);
@@ -69,7 +70,8 @@ void logger_t::log(int id, char* format, ...) {
     va_start(args, format);
     
     logger_channel_t* channel = this->channels[id];
-
+    if (!channel->enabled) return;
+    
     char* data;
     char* data2;
     

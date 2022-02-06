@@ -18,6 +18,7 @@
 
 #include <networking/networking.h>
 #include <common/util.h>
+#include <main.h>
 
 #include <unistd.h>
 #include <string.h>
@@ -113,7 +114,7 @@ int ircreborn_connection::recv_packet() {
         ioctlsocket(this->fd, FIONREAD, &data);
 #else
         int data = 0;
-        ioctl(this->fd, FIONREAD, &data);
+        int res = ioctl(this->fd, FIONREAD, &data);
 #endif
         
         // how much data? who cares?
@@ -138,7 +139,8 @@ int ircreborn_connection::recv_packet() {
             memcpy(packet->payload, msg + 9, packet->payload_length);
 
             free(msg);
-
+            free(tmp);
+            
             queue_add(packet);
 
             return 1;
