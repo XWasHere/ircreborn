@@ -49,6 +49,8 @@ struct client {
 
     int has_nickname;
     char* nickname;
+
+    int disconnected;
 };
 
 int             pollfd_count = 0;
@@ -132,18 +134,33 @@ void disconnect_client(struct client* client, int send_message, int automatic, i
         free(buf);
     }
 
+    if (!client->disconnected) {
+        ircreborn_pdisconnect_t p;
+        client->connection->send_disconnect(&p);
+    }
+
+    close(client->connection->fd);
+    
+    for (int i = client->connection->fd; i < pollfd_count - 1; i++) {
+        pollfds[i] = pollfds[i + 1];
+    }
+    
     client_count--;
+    pollfd_count--;
 }
 
+//TODO(xwashere): probably merge disconnect_client into this. no reason not to.
 void disconnect_socket(int fd, int send_message, int automatic, int has_reason, char* reason) {
     int cid = find_client_id(fd);
     if (cid != -1) {
         disconnect_client(clients[cid], send_message, automatic, has_reason, reason);
+    } else {
+        close(fd);
+        for (int i = fd; i < pollfd_count - 1; i++) {
+            pollfds[i] = pollfds[i + 1];
+        }
+        pollfd_count--;
     }
-    for (int i = fd; i < pollfd_count - 1; i++) {
-        pollfds[i] = pollfds[i + 1];
-    }
-    pollfd_count--;
 }
 
 void set_nickname(struct client* c, char* nick) {
@@ -177,9 +194,17 @@ void server_main() {
 #else
         strcat(config_path, getenv("HOME"));
 #endif
-        strcat(config_path, "/.ircreborn/server");
+        strcat(config_path, "/.ircreborn/server"); 
     }
 
+    /*
+        >try to support friends
+        >want to say something nice
+        >keep rewriting the message instead of sending it because you feel like it's rude or sounds like you dont care
+        >give up
+        >dont send anything
+        >feel like crap
+    */
     logger->log(CHANNEL_INFO, "reading config from %s\n", config_path);
 
     int configfd = open(config_path, O_RDONLY | O_CREAT);
@@ -268,7 +293,7 @@ void server_main() {
 
                 c->queue_gc_ticks++;
 
-                if (c->queue_gc_ticks > 255) {
+                if (c->queue_gc_ticks > 100) {
                     c->connection->queue_compact();
                     c->queue_gc_ticks = 0;
                 }
@@ -278,7 +303,6 @@ void server_main() {
                 ircreborn_packet_t* packet = c->connection->queue_get(0);
 
                 if (packet == 0) {
-                    close(pollfds[i].fd);
                     disconnect_socket(pollfds[i].fd, 1, 1, 1, "malformed packet");
                     goto done;
                 }
@@ -312,7 +336,7 @@ void server_main() {
 
                             set_nickname(c, "anon");
                         } else {
-                            disconnect_client(c, 0, 1, 1, "not supported");
+                            disconnect_socket(pollfds[i].fd, 0, 1, 1, "not supported");
                         }
                     }
 
@@ -341,8 +365,15 @@ void server_main() {
 
                     free(p->message);
                     free(p);
+                } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::DISCONNECT) {
+                    ircreborn_pdisconnect_t* p = c->connection->queue_get_disconnect(1);
+
+                    c->disconnected = 1;
+                    disconnect_socket(pollfds[i].fd, 0, 0, 1, "disconnected");
+
+                    free(p);
                 } else {
-                    // drop the broken packet.
+                    // ignore the broken packet.
                     ircreborn_packet_t* p = c->connection->queue_get(1);
                     
                     free(p->payload);

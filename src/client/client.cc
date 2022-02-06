@@ -92,6 +92,20 @@ ircreborn_connection_t* connection = 0;
 
 int nextpos = 0;
 
+void client_disconnect() {
+    if (connection) {
+        ircreborn_pdisconnect_t p;
+        connection->send_disconnect(&p);
+
+        close(connection->fd);
+
+        delete connection;
+
+        connection = 0;
+        connection_state = 0;
+    }
+}
+
 void exit_button_clicked() {
     logger->log(CHANNEL_DBUG, "user requested exit. goodbye\n");
     main_window->should_exit = 1;
@@ -105,6 +119,10 @@ int server_list_collapse_button_clicked(widget_t* widget, window_t* window, int 
 int server_button_clicked(button_t* widget, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
+            if (connection) {
+                client_disconnect();
+            }
+
             int fd;
 
             logger->log(CHANNEL_DBUG, "connecting to server %s\n", servers[i]->server->name);
@@ -324,6 +342,12 @@ void client_run_tasks(window_t* window) {
                 client_add_message(window, p->message, p->author);
 
                 free(p);
+            } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::DISCONNECT) {
+                ircreborn_pdisconnect_t* p = connection->queue_get_disconnect(1);
+
+                client_disconnect();
+
+                free(p);
             } else {
                 free(connection->queue_get(1));
             }
@@ -488,6 +512,10 @@ void client_main() {
     main_window->show(1);
     
     // cleanup
+    if (connection) {
+        client_disconnect();
+    }
+    
     delete main_window;
 
     for (int i = 0; i < server_count; i++) {

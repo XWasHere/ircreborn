@@ -446,8 +446,53 @@ ircreborn_psend_message_t* ircreborn_connection::queue_get_send_message(int cons
     }
 }
 
+ircreborn_pdisconnect_t* ircreborn_connection::queue_get_disconnect(int consume) {
+    if (this->protocol_version == 1) {
+        ircreborn_packet_t* in = this->queue_get(consume);
+
+        ircreborn_pdisconnect_t* packet = malloc(sizeof(ircreborn_pdisconnect_t));
+
+        free(in->payload);
+        free(in);
+
+        return packet;
+    }
+}
+
+int ircreborn_connection::send_disconnect(ircreborn_pdisconnect_t* packet) {
+    if (this->protocol_version == 1) {
+        ircreborn_packet_t packet2;
+        
+        uint8_t* payload = malloc(1);
+
+        packet2.payload_length = 0;
+        packet2.payload = payload;
+        packet2.opcode = IRCREBORN_PROTO_V1_OP::DISCONNECT;
+
+        int res = this->send_packet(&packet2);
+
+        free(payload);
+
+        return res;
+    }
+}
+
 void ircreborn_connection::queue_compact() {
     if (this->queue_bottom > 0) {
+        uint32_t ns = this->queue_top - this->queue_bottom;
 
+        if (ns == 0) {
+            this->queue = realloc(queue, 256);
+            this->queue_bottom = 0;
+            this->queue_top = 0;
+        } else {
+            ircreborn_packet_t** nq = malloc(ns - (ns % 256) + 256);
+            memset(nq, 0, ns - (ns % 256) + 256);
+            memcpy(nq, this->queue + (this->queue_bottom * sizeof(void*)), ns * sizeof(void*));
+            this->queue_top -= this->queue_bottom;
+            this->queue_bottom = 0;
+            free(this->queue);
+            this->queue = nq;
+        }
     }
 }

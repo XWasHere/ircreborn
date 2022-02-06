@@ -33,7 +33,8 @@ enum struct __IRCREBORN_PROTO_V1_OP : uint8_t {
     SEND_MESSAGE,
     RECV_MESSAGE,
     SET_NICKNAME,
-    NICKNAME_UPDATED
+    NICKNAME_UPDATED,
+    DISCONNECT
 };
 
 // packet
@@ -107,6 +108,11 @@ struct ircreborn_pnickname_updated {
     char* nickname;
 };
 
+typedef struct ircreborn_pdisconnect ircreborn_pdisconnect_t;
+struct ircreborn_pdisconnect {
+
+};
+
 typedef struct ircreborn_connection ircreborn_connection_t;
 struct ircreborn_connection {
     // socket fd
@@ -136,7 +142,8 @@ struct ircreborn_connection {
     int send_nickname_updated(ircreborn_pnickname_updated_t* packet);
     int send_recv_message    (ircreborn_precv_message_t* packet);
     int send_send_message    (ircreborn_psend_message_t* packet);
-    
+    int send_disconnect      (ircreborn_pdisconnect_t* packet);
+
     // recieve a packet and add it to the queue  
     int recv_packet();
 
@@ -154,6 +161,7 @@ struct ircreborn_connection {
     ircreborn_pnickname_updated_t* queue_get_nickname_updated(int consume);
     ircreborn_precv_message_t*     queue_get_recv_message    (int consume);
     ircreborn_psend_message_t*     queue_get_send_message    (int consume);
+    ircreborn_pdisconnect_t*       queue_get_disconnect      (int consume);
 };
 
 #endif
