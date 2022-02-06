@@ -341,6 +341,8 @@ void client_run_tasks(window_t* window) {
 
                 client_add_message(window, p->message, p->author);
 
+                free(p->author);
+                free(p->message);
                 free(p);
             } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::DISCONNECT) {
                 ircreborn_pdisconnect_t* p = connection->queue_get_disconnect(1);
