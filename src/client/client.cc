@@ -55,6 +55,8 @@
 WSADATA* wsadata;
 #endif 
 
+void client_recalculate_sizes(window_t* window);
+
 struct server {
     client_config_server_t* server;    
     button_t* button;
@@ -89,6 +91,7 @@ int sc;
 int sc_connected;
 
 int nextpos = 0;
+int lastmmod = 0;
 
 void exit_button_clicked() {
     logger->log(CHANNEL_DBUG, "user requested exit. goodbye\n");
@@ -224,6 +227,8 @@ void message_submit(textbox_t* tb, char* text, int len) {
         tb->cursorpos = 0;
         tb->textlen = 0;
         tb->text[0] = 0; 
+
+        client_recalculate_sizes(main_window);
     }
 }
 
@@ -335,11 +340,6 @@ void client_recalculate_sizes(window_t* window) {
     serverlist->width = 200;
     serverlist->height = window->height - serverlist->y;
     
-    messages->x = serverlist->x + serverlist->width;
-    messages->y = 20;
-    messages->width = window->width - messages->x;
-    messages->height = window->height - messages->y - 20;
-
     char* t = messagebox->text;
     int tl =  messagebox->textlen;
 
@@ -348,6 +348,15 @@ void client_recalculate_sizes(window_t* window) {
     for (int i = 0; i < tl; i++) {
         if (t[i] == '\n') mh += 20;
     }
+
+    messages->pos += lastmmod;
+    messages->pos -= mh;
+    lastmmod = mh;
+
+    messages->x = serverlist->x + serverlist->width;
+    messages->y = 20;
+    messages->width = window->width - messages->x;
+    messages->height = window->height - messages->y - mh;
 
     messagebox->x = serverlist->x + serverlist->width;
     messagebox->y = window->height - mh;
@@ -368,6 +377,7 @@ void client_recalculate_sizes(window_t* window) {
 
 void handle_mb_kp(textbox_t* tb, uint32_t key, uint16_t mod) {
     client_recalculate_sizes(tb->window);
+    messages_thing->draw();
 }
 
 void client_main() {
