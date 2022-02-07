@@ -1,6 +1,6 @@
 /*
     ircreborn (the bad discord alternative)
-    Copyright (C) 2021 IRCReborn Devs
+    Copyright (C) 2022 IRCReborn Devs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@ scroll_pane_t::scroll_pane_t() {
     this->itemc            = 0;
     this->items            = (scroll_pane_item_t**)malloc(1);
     this->thumb_dragging   = 0;
+    this->ticks_for_update = 10;
+    this->ticks            = 0;
 }
 
 scroll_pane_t::~scroll_pane_t() {
@@ -370,30 +372,48 @@ int scroll_pane_t::mouseout() {
 
 int scroll_pane_t::mousemove(int x, int y) {
     if (this->thumb_dragging) {
-        int a = ceil((-y + this->thumb_drag_src + this->y + 20) * (double)(this->csize)) / (this->height-40);
-        a = a < 0 ? a : 0;
-        a = a > -this->csize + (this->csize / (this->height - 40)) * this->height ? a : -this->csize + (this->csize / (this->height - 40)) * this->height;
-        this->pos = a;
-        if (this->pos != this->prev_pos) {
-            this->prev_pos = this->pos;
-            this->draw();
+        // what the hell. for some reason the ui completely broke when i added this if statement.
+        if (this->ticks >= this->ticks_for_update) {
+            // what was i thinking when i wrote the old code for this
+            int a = ceil((-y + this->thumb_drag_src + this->y + 20) * (double)(this->csize)) / (this->height-40);
+            this->pos = a;
+            if (this->pos != this->prev_pos) {
+                if (this->pos < -this->csize + this->height + 10) {
+                    this->pos = -this->csize + this->height;
+                } else if (this->pos > -10) {
+                    this->pos = 0;
+                }
+
+                this->prev_pos = this->pos;
+                this->draw();
+            }
+            this->ticks = 0;
         }
+        this->ticks++;
     }
 
     return 1;
 }
 
 int scroll_pane_t::scroll_up() {
-    this->pos += 10;
-    
+    if (this->pos < -10) {
+        this->pos += 10;
+    } else {
+        this->pos = 0;
+    }
+
     this->draw();
 
     return 1;
 }
 
 int scroll_pane_t::scroll_down() {
-    this->pos -= 10;
-    
+    if (this->pos > -this->csize + this->height + 10) {
+        this->pos -= 10;
+    } else {
+        this->pos = -this->csize + this->height;
+    }
+
     this->draw();
     
     return 1;

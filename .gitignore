@@ -2,7 +2,8 @@
 /ircreborn
 /ircreborn.exe
 
-# this is where i test things like the pkgbuild
+# this is where i test things like the pkgbuild. almost always specific to my device
 /private
+/scripts/inspect_proto
 
 .vscode

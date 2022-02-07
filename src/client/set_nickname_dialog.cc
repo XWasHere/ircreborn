@@ -1,6 +1,6 @@
 /*
     ircreborn (the bad discord alternative)
-    Copyright (C) 2021 IRCReborn Devs
+    Copyright (C) 2022 IRCReborn Devs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,14 +41,11 @@ static int set_nickname_dialog_cancel_clicked(button_t* widget, int x, int y) {
 }
 
 static int set_nickname_dialog_ok_clicked(button_t* widget, int x, int y) {
-    if (sc_connected) {
-        set_nickname_t* packet = (set_nickname_t*)malloc(sizeof(set_nickname_t));
-        
-        packet->nickname = entry->text;
-        
-        send_set_nickname(sc, packet);
-        
-        free(packet);
+    if (connection != 0) {
+        ircreborn_pset_nickname_t packet;
+        packet.nickname        = entry->text;
+        packet.nickname_length = strlen(entry->text);
+        connection->send_set_nickname(&packet);
     }
     
     dialog->should_exit = 1;
@@ -64,7 +61,7 @@ void open_set_nickname_dialog() {
     dialog->set_type(WINDOW_WM_TYPE_DIALOG);
     dialog->bg_color = get_node_rgb(config->theme, "common.primary_color");
 
-    if (sc_connected) {
+    if (connection != 0) {
         text   = new label_t();
         entry  = new textbox_t();
         ok     = new button_t();

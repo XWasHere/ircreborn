@@ -1,6 +1,6 @@
 /*
     ircreborn (the bad discord alternative)
-    Copyright (C) 2021 IRCReborn Devs
+    Copyright (C) 2022 IRCReborn Devs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,6 +34,11 @@ void textbox_t::default_submit(textbox_t* tb, char* c, int d) {};
 
 int textbox_t::keypress(uint32_t key, uint16_t mod) {
     unsigned char K = key & 0xff; // for some reason it comes out as 0xFF(key)
+
+    if (key == 0) {
+        return 1;
+    }
+    
 #ifdef WIN32
     if (key == 8) {
 #else
@@ -68,7 +73,7 @@ int textbox_t::keypress(uint32_t key, uint16_t mod) {
         this->cursorpos++;
         this->text[this->cursorpos] = 0;
     }
-
+    
     if (this->on_keypress) this->on_keypress(this, key, mod);
 
     this->draw();
@@ -175,6 +180,20 @@ void textbox_t::draw() {
     int c = 0;
     int d = 0;
 
+    int w = 0;
+
+    xcb_query_font_reply_t* qfr;
+    xcb_charinfo_t* cinfo = xcb_query_font_char_infos(
+        qfr = xcb_query_font_reply(
+            this->window->connection,
+            xcb_query_font_unchecked(
+                this->window->connection,
+                this->window->main_font
+            ),
+            NULL
+        )
+    );
+
     for (int i = 0; i < len; i++) {
         if (this->text[i] == '\n') {
             xcb_image_text_8(
@@ -188,11 +207,30 @@ void textbox_t::draw() {
             );
             linecount++;
             c = 0;
+            w = 0;
+        } else if (w > this->width) {
+            xcb_image_text_8(
+                window->connection, 
+                c,
+                window->window,
+                window->gc,
+                this->x + 3,
+                this->y + 17 + 20 * linecount,
+                this->text + d - c
+            );
+            linecount++;
+            c = 0;
+            w = 0;
+            w += cinfo[this->text[i]].character_width;
+            c++;
         } else {
             c++;
+            w += cinfo[this->text[i]].character_width;
         }
         d++;
     }
+
+    free(qfr);
 
     xcb_image_text_8(
         window->connection, 
@@ -227,6 +265,37 @@ void textbox_t::draw() {
     free(r);
     free(rect);
 #endif
+}
+
+int textbox_t::calc_height() {
+    int h = 20;
+
+#ifdef linux
+    int w = 0;
+
+    xcb_query_font_reply_t* r = xcb_query_font_reply(
+        this->window->connection,
+        xcb_query_font_unchecked(
+            this->window->connection,
+            this->window->main_font
+        ),
+        NULL
+    );
+
+    for (int i = 0; this->text[i] != 0; i++) {
+        w += xcb_query_font_char_infos(r)[this->text[i]].character_width;
+        if (this->text[i] == '\n') {
+            h += 20;
+        } else if (w > this->width) {
+            h += 20;
+            w = 0;
+        }
+    }
+
+    free(r);
+#endif
+
+    return h;
 }
 
 textbox_t::textbox_t() {

@@ -1,6 +1,6 @@
 /*
     ircreborn (the bad discord alternative)
-    Copyright (C) 2021 IRCReborn Devs
+    Copyright (C) 2022 IRCReborn Devs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@
 #define IRCREBORN_CLIENT_CLIENT_H
 
 #include <config_parser/config.h>
+#include <networking/networking.h>
 
 void client_main();
 
-extern int sc_connected;
-extern int sc;
-extern client_config_t* config;
+extern ircreborn_connection_t* connection;
+extern client_config_t*        config;
 
 #endif

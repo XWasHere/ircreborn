@@ -1,6 +1,6 @@
 /*
     ircreborn (the bad discord alternative)
-    Copyright (C) 2021 IRCReborn Devs
+    Copyright (C) 2022 IRCReborn Devs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,13 +21,12 @@
 #include <string.h>
 
 #include <common/util.h>
-#include <networking/types.h>
 
 #include <tests/util.h>
 #include <tests/tests.h>
 
 int run_tests() {
-    TEST(nettype_int, {
+/*    TEST(nettype_int, {
         int in    = 42069;
         char* out = (char*)malloc(255);
 
@@ -76,6 +75,6 @@ int run_tests() {
 
         free(out);
     });
-
+*/
     return 0;
 }

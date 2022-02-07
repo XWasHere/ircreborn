@@ -1,6 +1,6 @@
 /*
     ircreborn (the bad discord alternative)
-    Copyright (C) 2021 IRCReborn Devs
+    Copyright (C) 2022 IRCReborn Devs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@
 #include <config_parser/config.h>
 #include <config_parser/theme.h>
 #include <networking/networking.h>
-#include <networking/types.h>
 #include <client/set_nickname_dialog.h>
 #include <client/license_dialog.h>
 
@@ -55,9 +54,20 @@
 WSADATA* wsadata;
 #endif 
 
+void client_recalculate_sizes(window_t* window);
+uint32_t allowed_protocols[] = { 1U };
+
 struct server {
     client_config_server_t* server;    
     button_t* button;
+};
+
+struct message {
+    scroll_pane_item_t* author_item;
+    scroll_pane_item_t* message_item;
+
+    label_t* author_label;
+    label_t* message_label;
 };
 
 struct server** servers;
@@ -85,10 +95,29 @@ frame_t* dialogthinge;
 button_t* dialogbg;
 
 // server connection
-int sc;
-int sc_connected;
+int connection_state = 0;
+char* await_set_nickname_data = 0;
+ircreborn_connection_t* connection = 0;
 
 int nextpos = 0;
+int lastmmod = 0;
+
+int       message_count;
+message** message_items;
+
+void client_disconnect() {
+    if (connection) {
+        ircreborn_pdisconnect_t p;
+        connection->send_disconnect(&p);
+
+        close(connection->fd);
+
+        delete connection;
+
+        connection = 0;
+        connection_state = 0;
+    }
+}
 
 void exit_button_clicked() {
     logger->log(CHANNEL_DBUG, "user requested exit. goodbye\n");
@@ -103,10 +132,16 @@ int server_list_collapse_button_clicked(widget_t* widget, window_t* window, int 
 int server_button_clicked(button_t* widget, int x, int y) {
     for (int i = 0; i < server_count; i++) {
         if (servers[i]->button == widget) {
+            if (connection) {
+                client_disconnect();
+            }
+
+            int fd;
+
             logger->log(CHANNEL_DBUG, "connecting to server %s\n", servers[i]->server->name);
             
-            if ((sc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                sc = 0;
+            if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                fd = 0;
 
 #ifdef WIN32
                 logger->log(CHANNEL_FATL, "socket(): %i\n", WSAGetLastError());
@@ -123,8 +158,8 @@ int server_button_clicked(button_t* widget, int x, int y) {
 
             inet_pton(AF_INET, servers[i]->server->host, &addr->sin_addr);
 
-            if (connect(sc, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
-                sc = 0;
+            if (connect(fd, (struct sockaddr*)addr, sizeof(struct sockaddr)) == -1) {
+                fd = 0;
 #ifdef WIN32
                 logger->log(CHANNEL_FATL, "connect(): %s", format_error(WSAGetLastError()));
 #else
@@ -134,27 +169,23 @@ int server_button_clicked(button_t* widget, int x, int y) {
                 return 1;
             }
 
-            hello_t* hi = (hello_t*)malloc(sizeof(hello_t));
-            memset(hi, 0, sizeof(hello_t));
-
-            hi->has_ident = 1; // we have an identity :)
-            hi->ident     = "xutils ircreborn client";
-
-            send_hello(sc, hi);
+            connection              = new ircreborn_connection_t(fd);
+            connection_state        = 0;
+            await_set_nickname_data = 0;
+            
+            ircreborn_phello_t hello;
+            hello.ident          = "IRCREBORN_REFERENCE_CLIENT";
+            hello.ident_length   = 27;
+            hello.protocols      = allowed_protocols;
+            hello.protocol_count = 1;
+            hello.master         = 0;
+            connection->send_hello(&hello);
 
             if (servers[i]->server->nick) {
-                set_nickname_t* setn = (set_nickname_t*)malloc(sizeof(set_nickname_t));
-                setn->nickname = servers[i]->server->nick;
-
-                send_set_nickname(sc, setn);
-
-                free(setn);
+                await_set_nickname_data = servers[i]->server->nick;
             }
 
-            sc_connected = 1;
-
             free(addr);
-            free(hi);
             return 1;
         }
     }
@@ -207,23 +238,19 @@ struct server* server_list_add_server(scroll_pane_t* serverlist, client_config_s
 }
 
 void message_submit(textbox_t* tb, char* text, int len) {
-    if (sc_connected) {
-        message_t* msg = (message_t*)malloc(sizeof(message_t));
-
-        msg->message = (char*)malloc(len + 1);
-        msg->name    = ""; // ignored
-
-        memset(msg->message, 0,    len + 1);
-        memcpy(msg->message, text, len);
-
-        send_message(sc, msg);
-
-        free(msg->message);
-        free(msg);
+    if (connection != 0) {
+        ircreborn_psend_message_t packet;
+        packet.message        = text;
+        packet.message_length = len;
+        connection->send_send_message(&packet);
 
         tb->cursorpos = 0;
         tb->textlen = 0;
         tb->text[0] = 0; 
+
+        client_recalculate_sizes(main_window);
+        
+        tb->draw();
     }
 }
 
@@ -234,17 +261,8 @@ void client_add_message(window_t* window, char* message, char* name) {
     msgl->style = STYLE_NBB | STYLE_NBR;
     namel->style = STYLE_NBB;
 
-    int lines = 1;
-    int len = strlen(message);
-    for (int i = 0; i < len; i++) {
-        if (message[i] == '\n') lines++;
-    }
-
-    msgl->width = strlen(message) * 10;
-    msgl->height = 20 * lines;
-    
-    namel->width = config->nickname_width;
-    namel->height = 20;
+    scroll_pane_item_t* msgli  = messages_thing->add_item(msgl);
+    scroll_pane_item_t* nameli = messages_thing->add_item(namel);
 
     msgl->set_text(message);
     msgl->bg_color = get_node_rgb(config->theme, "common.primary_color");
@@ -253,8 +271,12 @@ void client_add_message(window_t* window, char* message, char* name) {
     namel->bg_color = get_node_rgb(config->theme, "common.primary_color");
     namel->text_color = get_node_rgb(config->theme, "common.text_color");
 
-    scroll_pane_item_t* msgli  = messages_thing->add_item(msgl);
-    scroll_pane_item_t* nameli = messages_thing->add_item(namel);
+    msgl->width = main_window->width - config->nickname_width - 220;
+    int height = msgl->calc_height();
+    msgl->height = height;
+    
+    namel->width = config->nickname_width;
+    namel->height = height;
 
     msgli->x = config->nickname_width;
     msgli->y = label_count * 20;
@@ -262,64 +284,95 @@ void client_add_message(window_t* window, char* message, char* name) {
     nameli->x = 0;
     nameli->y = label_count * 20;
 
-    label_count += lines;
+    label_count += height / 20;
 
     if (label_count * 20 > messages_thing->height) {
         messages_thing->pos = -(label_count * 20 - messages_thing->height);
     }
 
+    message_count++;
+    message_items = realloc(message_items, message_count * sizeof(void*));
+    message_items[message_count - 1] = malloc(sizeof(struct message));
+    message_items[message_count - 1]->author_label = namel;
+    message_items[message_count - 1]->message_label = msgl;
+    message_items[message_count - 1]->author_item = nameli;
+    message_items[message_count - 1]->message_item = msgli;
+    
     messages_thing->draw();
 }
 
 void client_run_tasks(window_t* window) {
-    if (sc_connected) {
+    if (connection != 0) {
 #ifdef WIN32
         unsigned long data = 0;
-        ioctlsocket(sc, FIONREAD, &data);
+        ioctlsocket(connection->fd, FIONREAD, &data);
 #else
         int data = 0;
-        ioctl(sc, FIONREAD, &data);
+        ioctl(connection->fd, FIONREAD, &data);
 #endif
+
         if (data) {
-            char* head = (char*)malloc(9);
-            memset(head, 0, 9);
-            recv(sc, head, 8, 0);
+            connection->recv_packet();
 
-            int op  = read_int(head);
-            int len = read_int(head + 4);
+            ircreborn_packet_t* packet = connection->queue_get(0);
 
-            // the nice thing about doing it this way, is even 
-            // if the client gets a message it doesn't recognize,
-            // it wont crash
-            char* body = (char*)malloc(len + 1);
-            memset(body, 0, len + 1);
-            recv(sc, body, len, 0);
+            if (packet == 0) {
+                delete connection;
+                connection = 0;
+                return;
+            }
+            
+            if (packet->opcode == IRCREBORN_PROTO_V1_OP::HELLO) { 
+                ircreborn_packet_t* p = connection->queue_get(1);
 
-            if (op == OPCODE_MESSAGE) {
-                nstring_t* msg  = read_string(body);
-                nstring_t* name = read_string(body + 4 + msg->len); 
-
-                client_add_message(window, msg->str, name->str);
-
-                free(msg->str);
-                free(msg);
-                free(name->str);
-                free(name);
-            } else if (op == OPCODE_SET_NICKNAME) {
-                nstring_t* nick = read_string(body);
+                free(p->payload);
+                free(p);
+            } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::SET_PROTO) {
+                ircreborn_pset_proto_t* p = connection->queue_get_set_proto(1);
+                connection->protocol_version = p->protocol;
+                logger->log(CHANNEL_DBUG, "using proto %i\n", connection->protocol_version);
                 
-                char* notify_message = (char*)malloc(SSTRLEN("you are now known as \"") + nick->len + sizeof("\""));
-                sprintf(notify_message, "you are now known as \"%s\"", nick->str);
+                // if we just opened the connection, set the users nickname
+                if (connection_state == 0) {
+                    if (await_set_nickname_data) {
+                        ircreborn_pset_nickname_t packet;
+                        packet.nickname        = await_set_nickname_data;
+                        packet.nickname_length = strlen(await_set_nickname_data);
+                        connection->send_set_nickname(&packet);
+
+                        connection_state = 1;
+                    }
+                }
+
+                free(p);
+            } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::NICKNAME_UPDATED) {
+                ircreborn_pnickname_updated_t* p = connection->queue_get_nickname_updated(1);
+
+                char* notify_message = (char*)malloc(SSTRLEN("you are now known as \"") + p->nickname_length + sizeof("\""));
+                sprintf(notify_message, "you are now known as \"%s\"", p->nickname);
 
                 client_add_message(window, notify_message, " == ");
                 
-                free(nick->str);
-                free(nick);
+                free(p->nickname);
+                free(p);
                 free(notify_message);
-            }
+            } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::RECV_MESSAGE) {
+                ircreborn_precv_message_t* p = connection->queue_get_recv_message(1);
 
-            free(body);
-            free(head);
+                client_add_message(window, p->message, p->author);
+
+                free(p->author);
+                free(p->message);
+                free(p);
+            } else if (packet->opcode == IRCREBORN_PROTO_V1_OP::DISCONNECT) {
+                ircreborn_pdisconnect_t* p = connection->queue_get_disconnect(1);
+
+                client_disconnect();
+
+                free(p);
+            } else {
+                free(connection->queue_get(1));
+            }
         }
     }
 }
@@ -335,19 +388,19 @@ void client_recalculate_sizes(window_t* window) {
     serverlist->width = 200;
     serverlist->height = window->height - serverlist->y;
     
-    messages->x = serverlist->x + serverlist->width;
-    messages->y = 20;
-    messages->width = window->width - messages->x;
-    messages->height = window->height - messages->y - 20;
-
     char* t = messagebox->text;
     int tl =  messagebox->textlen;
 
-    int mh = 20;
+    int mh = messagebox->calc_height();
 
-    for (int i = 0; i < tl; i++) {
-        if (t[i] == '\n') mh += 20;
-    }
+    messages->pos += lastmmod;
+    messages->pos -= mh;
+    lastmmod = mh;
+
+    messages->x = serverlist->x + serverlist->width;
+    messages->y = 20;
+    messages->width = window->width - messages->x;
+    messages->height = window->height - messages->y - mh;
 
     messagebox->x = serverlist->x + serverlist->width;
     messagebox->y = window->height - mh;
@@ -358,6 +411,16 @@ void client_recalculate_sizes(window_t* window) {
         servers[i]->button->width = serverlist->width - 20;
     }
 
+    int npos = 0;
+
+    for (int i = 0; i < message_count; i++) {
+        message_items[i]->message_label->width = main_window->width - config->nickname_width - 220;
+        message_items[i]->message_label->height = message_items[i]->message_label->calc_height();
+        message_items[i]->author_label->height = message_items[i]->message_label->height;
+        message_items[i]->message_item->y = npos;
+        message_items[i]->author_item->y = npos;
+        npos += message_items[i]->message_label->height;
+    }
 /*
     serverlistcollapsebtnw->x = 200;
     serverlistcollapsebtnw->y = 20;
@@ -368,6 +431,7 @@ void client_recalculate_sizes(window_t* window) {
 
 void handle_mb_kp(textbox_t* tb, uint32_t key, uint16_t mod) {
     client_recalculate_sizes(tb->window);
+    messages_thing->draw();
 }
 
 void client_main() {
@@ -417,6 +481,8 @@ void client_main() {
     free(config_path);
 
     servers = (struct server**)malloc(1);
+    message_items = malloc(1);
+    message_count = 0;
 
     main_window = new window_t();
     
@@ -481,12 +547,21 @@ void client_main() {
     main_window->show(1);
     
     // cleanup
+    if (connection) {
+        client_disconnect();
+    }
+    
     delete main_window;
 
     for (int i = 0; i < server_count; i++) {
         free(servers[i]);
     }
     free(servers);
+
+    for (int i = 0; i < message_count; i++) {
+        free(message_items[i]);
+    }
+    free(message_items);
 
     client_config_free(config);
     theme_tree_fini();
