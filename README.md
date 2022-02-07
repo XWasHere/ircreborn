@@ -1,4 +1,4 @@
-# IrcReborn
+# IRCReborn
 
 ## What Is This
 

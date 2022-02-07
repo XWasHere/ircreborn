@@ -1,6 +1,6 @@
 /*
     ircreborn (the bad discord alternative)
-    Copyright (C) 2021 IRCReborn Devs
+    Copyright (C) 2022 IRCReborn Devs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
 #ifndef NETWORKING_TYPES_H
 #define NETWORKING_TYPES_H
 

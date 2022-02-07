@@ -1,6 +1,6 @@
 /*
     ircreborn (the bad discord alternative)
-    Copyright (C) 2021 IRCReborn Devs
+    Copyright (C) 2022 IRCReborn Devs
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
