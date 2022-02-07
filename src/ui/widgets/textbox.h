@@ -54,6 +54,7 @@ class textbox_t : public widget_t {
         int keypress(uint32_t key, uint16_t mod);
         int clicked(int x, int y);
         void draw();
+        int calc_height();
 };
 
 widget_t* textbox_init();

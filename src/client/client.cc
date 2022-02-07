@@ -62,6 +62,14 @@ struct server {
     button_t* button;
 };
 
+struct message {
+    scroll_pane_item_t* author_item;
+    scroll_pane_item_t* message_item;
+
+    label_t* author_label;
+    label_t* message_label;
+};
+
 struct server** servers;
 int             server_count;
 char**          labels;
@@ -92,6 +100,9 @@ int sc_connected;
 
 int nextpos = 0;
 int lastmmod = 0;
+
+int       message_count;
+message** message_items;
 
 void exit_button_clicked() {
     logger->log(CHANNEL_DBUG, "user requested exit. goodbye\n");
@@ -241,17 +252,8 @@ void client_add_message(window_t* window, char* message, char* name) {
     msgl->style = STYLE_NBB | STYLE_NBR;
     namel->style = STYLE_NBB;
 
-    int lines = 1;
-    int len = strlen(message);
-    for (int i = 0; i < len; i++) {
-        if (message[i] == '\n') lines++;
-    }
-
-    msgl->width = strlen(message) * 10;
-    msgl->height = 20 * lines;
-    
-    namel->width = config->nickname_width;
-    namel->height = 20;
+    scroll_pane_item_t* msgli  = messages_thing->add_item(msgl);
+    scroll_pane_item_t* nameli = messages_thing->add_item(namel);
 
     msgl->set_text(message);
     msgl->bg_color = get_node_rgb(config->theme, "common.primary_color");
@@ -260,8 +262,12 @@ void client_add_message(window_t* window, char* message, char* name) {
     namel->bg_color = get_node_rgb(config->theme, "common.primary_color");
     namel->text_color = get_node_rgb(config->theme, "common.text_color");
 
-    scroll_pane_item_t* msgli  = messages_thing->add_item(msgl);
-    scroll_pane_item_t* nameli = messages_thing->add_item(namel);
+    msgl->width = main_window->width - config->nickname_width - 220;
+    int height = msgl->calc_height();
+    msgl->height = height;
+    
+    namel->width = config->nickname_width;
+    namel->height = height;
 
     msgli->x = config->nickname_width;
     msgli->y = label_count * 20;
@@ -269,12 +275,20 @@ void client_add_message(window_t* window, char* message, char* name) {
     nameli->x = 0;
     nameli->y = label_count * 20;
 
-    label_count += lines;
+    label_count += height / 20;
 
     if (label_count * 20 > messages_thing->height) {
         messages_thing->pos = -(label_count * 20 - messages_thing->height);
     }
 
+    message_count++;
+    message_items = realloc(message_items, message_count * sizeof(void*));
+    message_items[message_count - 1] = malloc(sizeof(struct message));
+    message_items[message_count - 1]->author_label = namel;
+    message_items[message_count - 1]->message_label = msgl;
+    message_items[message_count - 1]->author_item = nameli;
+    message_items[message_count - 1]->message_item = msgli;
+    
     messages_thing->draw();
 }
 
@@ -345,11 +359,7 @@ void client_recalculate_sizes(window_t* window) {
     char* t = messagebox->text;
     int tl =  messagebox->textlen;
 
-    int mh = 20;
-
-    for (int i = 0; i < tl; i++) {
-        if (t[i] == '\n') mh += 20;
-    }
+    int mh = messagebox->calc_height();
 
     messages->pos += lastmmod;
     messages->pos -= mh;
@@ -369,6 +379,16 @@ void client_recalculate_sizes(window_t* window) {
         servers[i]->button->width = serverlist->width - 20;
     }
 
+    int npos = 0;
+
+    for (int i = 0; i < message_count; i++) {
+        message_items[i]->message_label->width = main_window->width - config->nickname_width - 220;
+        message_items[i]->message_label->height = message_items[i]->message_label->calc_height();
+        message_items[i]->author_label->height = message_items[i]->message_label->height;
+        message_items[i]->message_item->y = npos;
+        message_items[i]->author_item->y = npos;
+        npos += message_items[i]->message_label->height;
+    }
 /*
     serverlistcollapsebtnw->x = 200;
     serverlistcollapsebtnw->y = 20;
@@ -429,6 +449,8 @@ void client_main() {
     free(config_path);
 
     servers = (struct server**)malloc(1);
+    message_items = malloc(1);
+    message_count = 0;
 
     main_window = new window_t();
     
@@ -499,6 +521,11 @@ void client_main() {
         free(servers[i]);
     }
     free(servers);
+
+    for (int i = 0; i < message_count; i++) {
+        free(message_items[i]);
+    }
+    free(message_items);
 
     client_config_free(config);
     theme_tree_fini();

@@ -557,6 +557,11 @@ void window_t::show(int all) {
     }
 #else
 
+    int exposed      = 0;
+    int resizing     = 0;
+    int nwidth       = 0;
+    int nheight      = 0;
+
     // see https://marc.info/?l=freedesktop-xcb&m=129381953404497 for the close solution
 
     // this bullshit just for a close event
@@ -584,7 +589,7 @@ void window_t::show(int all) {
                     // repaint
                     case XCB_EXPOSE: {
                         unused xcb_expose_event_t* event = (xcb_expose_event_t*)e;
-                        window->paint();
+                        exposed = 1;
                         break;
                     }
                     case XCB_CLIENT_MESSAGE: {
@@ -604,7 +609,9 @@ void window_t::show(int all) {
                     }
                     case XCB_CONFIGURE_NOTIFY: {
                         unused xcb_configure_notify_event_t* event = (xcb_configure_notify_event_t*)e;
-                        window->resized(event->width, event->height);                    
+                        resizing = 1;
+                        nwidth = event->width;
+                        nheight = event->height;
                         break;
                     }
                     case XCB_MOTION_NOTIFY: {
@@ -682,6 +689,17 @@ void window_t::show(int all) {
                 free(e);
             }
 
+            if (resizing) {
+                window->resized(nwidth, nheight);
+                window->paint();
+                resizing = 0;
+            }
+
+            if (exposed) {
+                window->paint();
+                exposed = 0;
+            }
+            
             if (window->handle_bg_tasks) {
                 window->handle_bg_tasks(window);
             }

@@ -41,6 +41,7 @@ class label_t : public widget_t {
 
         void set_text(char* text);
         void draw();
+        int calc_height();
 };
 
 #endif
